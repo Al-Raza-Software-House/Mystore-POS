@@ -1,0 +1,8 @@
+{
+  "workbench.colorTheme": "One Dark Pro Bold",
+  "files.exclude": {
+    "**/client": true,
+    "**/node_modules": true
+  },
+  "editor.fontSize": 16
+}

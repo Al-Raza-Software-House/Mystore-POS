@@ -1,0 +1,28 @@
+{
+  "name": "mystore",
+  "version": "1.0.0",
+  "description": "POS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db": "mongod",
+    "server": "nodemon --ignore client/",
+    "client": "cd ./client && npm run start",
+    "start": "concurrently --kill-others \"npm run db\" \"npm run server\" \"npm run client\"",
+    "heroku-postbuild": "npm install --prefix client && npm run build --prefix client"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.933.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "moment-timezone": "^0.5.33",
+    "mongoose": "^5.12.14",
+    "request": "^2.88.2"
+  }
+}
