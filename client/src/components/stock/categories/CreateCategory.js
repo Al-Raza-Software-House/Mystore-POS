@@ -109,9 +109,9 @@ const onSubmit = (values, dispatch, { storeId }) => {
   dispatch(showProgressBar());
   return axios.post('/api/categories/create', {storeId, ...values}).then( response => {
     dispatch(hideProgressBar());
-    if(response.data._id)
+    if(response.data.category._id)
     {
-      dispatch( createCategory(storeId, response.data) );
+      dispatch( createCategory(storeId, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("New category added") );
     }
 

@@ -1,14 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Box, Typography } from '@material-ui/core'
-import { connect, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import Property from './Property';
-import { loadItemProperties } from '../../../store/actions/itemPropertiesActions';
 
-function ItemProperties({ loadItemProperties }) {
-
-  useEffect(() => {
-    loadItemProperties();
-  }, [loadItemProperties])
+function ItemProperties() {
 
   const { properties } = useSelector( state =>  ({
       storeId: state.stores.selectedStoreId,
@@ -41,4 +36,4 @@ function ItemProperties({ loadItemProperties }) {
     )
 }
 
-export default connect(null, { loadItemProperties  })(ItemProperties);
+export default ItemProperties;

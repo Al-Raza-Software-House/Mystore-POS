@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
-const { userRoles } = require('../../utils/constants');
+const { userRoles, storeStates } = require('../../utils/constants');
 
 const storeUsersSchema = new mongoose.Schema({
   userId: {
@@ -42,6 +42,20 @@ const storeConfiguration = new mongoose.Schema({
   allowNegativeInventory: Boolean
 });
 
+const dataUpdatedSchema = new mongoose.Schema({
+  stores: Date,
+  videos: Date,
+  itemProperties: Date,
+  categories: Date,
+  items: Date,
+  adjustmentReasons: Date,
+  suppliers: Date,
+  customers: Date,
+  banks: Date,
+  accountHeads: Date,
+  deleteActivity: Date
+})
+
 const storeSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -54,20 +68,31 @@ const storeSchema = new mongoose.Schema({
   businessType: Number, 
   status: Number,
 
-  openingDate: Date,
-  lastVisited: Date,
-  lastActivity: Date,
-  lastPayment: Date,
-  expiryDate: Date,
   monthlyPricing: Number,
   discountCode: String,
   currency: String,
-  createdOn: Date,
+  
+  creationDate: Date,
+  openingDate: Date, //when store physically established
+
+  lastVisited: Date, //when last visited by user
+  lastActivity: Date, // any record add/updated/deleted
+  lastUpdated: Date, //when store record updatd, except from time stamps
+
+  lastPayment: Date, //when was last transaction
+  expiryDate: Date, //when subscription expires
   
   users: [storeUsersSchema],
   registors: [registorSchema],
   receiptSettings: receiptSettingsSchema,
-  configuration: storeConfiguration
+  configuration: storeConfiguration,
+  dataUpdated: dataUpdatedSchema,
+  accountHeadIds: {
+    Sales: mongoose.Schema.Types.ObjectId,
+    Purchase: mongoose.Schema.Types.ObjectId,
+    CustomerReceipt: mongoose.Schema.Types.ObjectId,
+    SupplierPayment: mongoose.Schema.Types.ObjectId,
+  }
 });
 
 storeSchema.virtual('users.record',{
@@ -81,24 +106,44 @@ storeSchema.set('toObject', { virtuals: true });
 storeSchema.set('toJSON', { virtuals: true });
 
 storeSchema.statics.isOwner = function(storeId, userId) {
-  return this.findOne({_id: storeId, 'users.userId': userId, 'users.userRole': userRoles.USER_ROLE_OWNER});
+  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, 'users.userId': userId, 'users.userRole': userRoles.USER_ROLE_OWNER});
 };
 
 storeSchema.statics.isManager = function(storeId, userId) {
-  return this.findOne({_id: storeId, 'users.userId': userId, 'users.userRole': { $in: [userRoles.USER_ROLE_OWNER, userRoles.USER_ROLE_MANAGER] } });
+  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, 'users.userId': userId, 'users.userRole': { $in: [userRoles.USER_ROLE_OWNER, userRoles.USER_ROLE_MANAGER] } });
 };
 
 storeSchema.statics.isStoreUser = function(storeId, userId) {
-  return this.findOne({_id: storeId, 'users.userId': userId});
+  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, 'users.userId': userId});
 };
 
+//any entity data fetched from server
 storeSchema.methods.updateLastVisited = function(){
   this.lastVisited = moment().tz('Asia/Karachi').toDate();
   return this.save();
 }
 
+//any activity performed on items, categories or other store entities
 storeSchema.methods.updateLastActivity = function(){
-  this.lastActivity = moment().tz('Asia/Karachi').toDate();
+  const now = moment().tz('Asia/Karachi').toDate();
+  this.lastActivity = now;
+  this.lastVisited = now;
+  return this.save();
+}
+
+//store record/settings udpate
+storeSchema.methods.updateLastUpdated = function(){
+  const now = moment().tz('Asia/Karachi').toDate();
+  this.lastUpdated = now;
+  this.lastActivity = now;
+  this.lastVisited = now;
+  return this.save();
+}
+
+//store record/settings udpate
+storeSchema.methods.logCollectionLastUpdated = function(collection, time=null){
+  const now = time ? time : moment().tz('Asia/Karachi').toDate();
+  this.dataUpdated[collection] = now;
   return this.save();
 }
 

@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, Typography } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { deleteCategory, loadCategories } from '../../../store/actions/categoryActions';
+import { deleteCategory } from '../../../store/actions/categoryActions';
 import { categoryTypes } from '../../../utils/constants';
 
-function Categories({ storeId, categories, deleteCategory, loadCategories }) {
-  useEffect(()=> {
-    loadCategories();
-  }, [loadCategories]);
+function Categories({ storeId, categories, deleteCategory }) {
   return(
     <>
     {
@@ -126,4 +123,4 @@ const mapStateToProps = state => {
 }
 
 
-export default connect(mapStateToProps, { loadCategories, deleteCategory })(Categories);
+export default connect(mapStateToProps, { deleteCategory })(Categories);

@@ -7,7 +7,9 @@ export const actionTypes = {
   STORE_CREATED: 'storeCreated',
   STORE_SELECTED: 'storeSelected',
   STORE_DELETED: 'storeDeleted',
-  STORE_UPDATED: 'storeUpdated'
+  STORE_UPDATED: 'storeUpdated',
+
+  LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged', //cannot put in system actions, it creates chicken egg problem both files importing form each other
 }
 
 //Load All stores
@@ -26,11 +28,10 @@ export const loadStores = () => {
 }
 
 //Load single store
-export const loadStore = (storeId) => {
+export const loadSelectedStore = () => {
   return (dispatch, getState) => {
-    dispatch(showProgressBar());
+    const storeId = getState().stores.selectedStoreId;
     axios.get('/api/stores', {params: { storeId }}).then( ({ data }) => {
-      dispatch(hideProgressBar());
       dispatch( updateStore(storeId, data) );
     }).catch( err => err );
   }
@@ -58,7 +59,8 @@ export const removeUser = (userId) => {
     dispatch(showProgressBar());
     axios.post('/api/stores/removeUser', { storeId, userId }).then( ({ data }) => {
       dispatch(hideProgressBar());
-      dispatch( updateStore(storeId, data) );
+      dispatch( updateStore(storeId, data.store) );
+      dispatch( storesStampChanged(storeId, data.now) );
       dispatch( showSuccess('User removed from store') );
     }).catch( err => err );
   }
@@ -75,3 +77,8 @@ export const loadBillingHistory = (storeId) => {
     }).catch( err => err);
   }
 }
+
+export const storesStampChanged = (storeId, newStamp) => {
+  return { type: actionTypes.LAST_UPDATED_SINGLE_STAMP_CHANGED, storeId, collectionName: 'stores', newStamp }
+}
+

@@ -134,9 +134,9 @@ function AddSupplier(props){
 
 const onSubmit = (values, dispatch, { storeId, formName }) => {
   return axios.post('/api/suppliers/create', {storeId, ...values}).then( response => {
-    if(response.data._id)
+    if(response.data.supplier._id)
     {
-      dispatch( createSupplier(storeId, response.data) );
+      dispatch( createSupplier(storeId, response.data.supplier, response.data.now, response.data.lastAction) );
       dispatch( change(formName, 'supplierId', response.data._id) );
       dispatch( showSuccess("New supplier created") );
     }

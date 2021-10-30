@@ -127,9 +127,9 @@ const onSubmit = (values, dispatch, props) => {
   dispatch(showProgressBar());
   return axios.post('/api/categories/update', {...match.params, ...values}).then( response => {
     dispatch(hideProgressBar());
-    if(response.data._id)
+    if(response.data.category._id)
     {
-      dispatch( updateCategory(match.params.storeId, match.params.categoryId, response.data) );
+      dispatch( updateCategory(match.params.storeId, match.params.categoryId, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("Category updated") );
     }
 

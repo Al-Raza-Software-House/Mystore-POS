@@ -133,10 +133,10 @@ function AddItemProperty(props){
 
 const onSubmit = (values, dispatch, { storeId, propertyId, formName }) => {
   return axios.post('/api/itemProperties/addPropertyValue', {storeId, propertyId, ...values}).then( response => {
-    if(response.data._id)
+    if(response.data.properties._id)
     {
       const values = response.data[propertyId].values;
-      dispatch( updateItemProperties(storeId, response.data) );
+      dispatch( updateItemProperties(storeId, response.data.properties, response.data.now, response.data.lastAction) );
       dispatch( change(formName, propertyId, values[values.length - 1]._id ) );
       dispatch( showSuccess("New property value added") );
     }

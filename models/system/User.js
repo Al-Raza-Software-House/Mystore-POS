@@ -28,9 +28,9 @@ const userSchema = new mongoose.Schema({
   status: Number,
   language: String,
   
+  creationDate: Date,
   lastVisited: Date,
   lastUpdated: Date,
-  createdOn: Date,
 });
 
 userSchema.methods.updateLastVisited = function(){

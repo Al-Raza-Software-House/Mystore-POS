@@ -18,6 +18,7 @@ const authCheck = async (req, res, done) => {
     let user = await User.findById(decoded.uid);
     if(!user)
       throw new Error("User not found");
+    await user.updateLastVisited();
     user = user.toObject();
     if(user.status <= 0)
       throw new Error("Account is disabled");

@@ -4,7 +4,7 @@ import { compose } from 'redux';
 import { reduxForm, Field, SubmissionError, initialize } from 'redux-form';
 import { Box, makeStyles, Button } from '@material-ui/core';
 import FormMessage from '../library/FormMessage';
-import {  updateStore } from '../../store/actions/storeActions';
+import {  storesStampChanged, updateStore } from '../../store/actions/storeActions';
 import axios from 'axios';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import SwitchInput from '../library/form/SwitchInput';
@@ -53,9 +53,10 @@ const onSubmit = (values, dispatch, {  showProgressBar, hideProgressBar, selecte
   showProgressBar();
   return axios.post('/api/stores/configuration', { id: selectedStoreId,  configuration: values}).then( response => {
     hideProgressBar();
-    if(response.data._id)
+    if(response.data.store._id)
     {
-      dispatch( updateStore(selectedStoreId, response.data) );
+      dispatch( updateStore(selectedStoreId, response.data.store) );
+      dispatch( storesStampChanged(selectedStoreId, response.data.now) );
       dispatch( initialize('storeConfiguration', values) );
       dispatch( showSuccess("Configuration updated") );
     }

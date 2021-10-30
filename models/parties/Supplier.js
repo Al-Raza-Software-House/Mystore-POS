@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const moment = require("moment-timezone");
 
 const supplierSchema = new mongoose.Schema({
   storeId: {
@@ -14,10 +15,18 @@ const supplierSchema = new mongoose.Schema({
   address: String,
   openingBalance: Number,
   currentBalance: Number,
-  dateCreated: Date,
+
+  creationDate: Date,
   lastUpdated: Date,
   lastPayment: Date,
   lastPurchase: Date,
 })
+
+//store record/settings udpate
+supplierSchema.methods.updateLastUpdated = function(){
+  const now = moment().tz('Asia/Karachi').toDate();
+  this.lastUpdated = now;
+  return this.save();
+}
 
 module.exports = mongoose.model('supplier', supplierSchema);

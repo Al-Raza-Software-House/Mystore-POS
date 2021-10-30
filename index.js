@@ -48,7 +48,7 @@ mongoose.connect(process.env.MONGODB_URI, mongooseConfig)
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use((req, res, next) => setTimeout(next, 900));
+app.use((req, res, next) => setTimeout(next, 1200));
 app.use(express.static( path.join(__dirname, '/client/build') ));
 app.use('/fonts', express.static( path.join(__dirname, '/assets/fonts') ));
 app.use('/images', express.static( path.join(__dirname, '/images') ));
@@ -58,11 +58,14 @@ app.use('/images', express.static( path.join(__dirname, '/images') ));
 
 // app.use('/api/posts', require('./routes/posts'));
 // app.use('/api/topics', require('./routes/topics'));
+app.use('/api/accounts', require('./routes/accounts'));
 app.use('/api/suppliers', require('./routes/suppliers'));
+app.use('/api/customers', require('./routes/customers'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/services', require('./routes/services'));
 
 app.use('/api/itemProperties', require('./routes/itemProperties'));
+app.use('/api/adjustmentReasons', require('./routes/adjustmentReasons'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api/stores', require('./routes/stores'));

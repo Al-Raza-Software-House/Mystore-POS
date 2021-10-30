@@ -10,17 +10,15 @@ export const actionTypes = {
   ITEM_PROPERTY_VALUE_ADDED: 'itemPropertyValueAdded',
   ITEM_PROPERTY_VALUE_UPDATED: 'itemPropertyValueUpdated',
   ITEM_PROPERTY_VALUE_DELETED: 'itemPropertyValueDeleted',
+
+  LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged', //cannot put in system actions, it creates chicken egg problem both files importing form each other
 }
 
 export const loadItemProperties = () => {
   return (dispatch, getState) => {
     const state = getState();
     const storeId = state.stores.selectedStoreId;
-    if(!state.itemProperties[storeId])
-      dispatch(showProgressBar());
     axios.get('/api/itemProperties', { params: { storeId } }).then( ({ data }) => {
-      if(!state.itemProperties[storeId])
-        dispatch(hideProgressBar());
       dispatch({ type: actionTypes.ITEM_PROPERTIES_LOADED, storeId, properties: data });
     }).catch( err => err );
   }
@@ -31,7 +29,7 @@ export const deletePropertyValue = (storeId, propertyId, valueId) => {
     dispatch(showProgressBar());
     axios.post('/api/itemProperties/deletePropertyValue', { storeId, propertyId, valueId }).then( ({ data }) => {
       dispatch(hideProgressBar());
-      dispatch( updateItemProperties( storeId, data ) );
+      dispatch( updateItemProperties( storeId, data.properties, data.now, data.lastAction ) );
       dispatch( showSuccess('Value deleted') );
     }).catch( err => {
       dispatch( hideProgressBar() );
@@ -40,6 +38,13 @@ export const deletePropertyValue = (storeId, propertyId, valueId) => {
   }
 }
 
-export const updateItemProperties = (storeId, properties) => {
-  return { type: actionTypes.ITEM_PROPERTIES_UPDATED, storeId, properties }
+export const updateItemProperties = (storeId, properties, now, lastAction) => {
+  return (dispatch, getState) => {
+    dispatch( { type: actionTypes.ITEM_PROPERTIES_UPDATED, storeId, properties } );
+    dispatch( itemPropertiesStampChanged(storeId, now) );
+  }
+}
+
+export const itemPropertiesStampChanged = (storeId, newStamp) => {
+  return { type: actionTypes.LAST_UPDATED_SINGLE_STAMP_CHANGED, storeId, collectionName: 'itemProperties', newStamp }
 }

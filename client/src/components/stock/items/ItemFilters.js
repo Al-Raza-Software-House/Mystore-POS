@@ -69,21 +69,22 @@ const areFiltersApplied = (filters) => {
   let filtersApplied = false;
   for(let key in filters)
   {
+    if(!filters.hasOwnProperty(key)) continue;
     if(typeof filters[key] === 'object')
       for(let subKey in filters[key])
       {
+        if(!filters[key].hasOwnProperty(subKey)) continue;
         if(filters[key][subKey] !== defaultFilters[key][subKey])
         {
           filtersApplied = true;
           break;
         }
       }
-    if(filtersApplied) break;
-    if(filters[key] !== defaultFilters[key])
+    else if(filters[key] !== defaultFilters[key])
     {
       filtersApplied = true;
-      break;
     }
+    if(filtersApplied) break;
   }
   return filtersApplied;
 }

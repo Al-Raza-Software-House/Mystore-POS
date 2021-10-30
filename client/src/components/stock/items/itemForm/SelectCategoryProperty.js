@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Button, CircularProgress, makeStyles, Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core';
@@ -21,11 +21,14 @@ function SelectCategoryProperty(props) {
       category: categories.find(item => item._id === categoryId)
     }
   })
+  const lastCategory = useRef();
 
   const dispatch = useDispatch();
   
   useEffect(() => {
-      dispatch( change(formName, `categoryPropertyValues.${propertyId}`, null ) );
+      if(lastCategory.current && lastCategory.current !== categoryId) //use Ref to prevent empty properties  on page load edit item, if category changes, empty properties
+        dispatch( change(formName, `categoryPropertyValues.${propertyId}`, null ) );
+      lastCategory.current = categoryId;
   }, [categoryId, dispatch, formName, propertyId]);
 
   return(
@@ -141,10 +144,10 @@ function AddCategoryProperty(props){
 
 const onSubmit = (values, dispatch, { storeId, categoryId, propertyId, formName }) => {
   return axios.post('/api/categories/addPropertyValue', {storeId, categoryId, propertyId, ...values}).then( response => {
-    if(response.data._id)
+    if(response.data.category._id)
     {
       const values = response.data[propertyId].values;
-      dispatch( updateCategory(storeId, categoryId, response.data) );
+      dispatch( updateCategory(storeId, categoryId, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( change(formName, propertyId, values[values.length - 1]._id ) );
       dispatch( showSuccess("New property value added") );
     }

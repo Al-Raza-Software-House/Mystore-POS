@@ -93,9 +93,9 @@ const onSubmit = (values, dispatch, { category }) => {
     ...values
   }
   return axios.post('/api/categories/addSize', data).then( response => {
-    if(response.data._id)
+    if(response.data.category._id)
     {
-      dispatch( updateCategory(category.storeId, category._id, response.data) );
+      dispatch( updateCategory(category.storeId, category._id, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("New size added") );
     }
 

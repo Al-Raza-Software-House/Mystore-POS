@@ -15,7 +15,6 @@ import ItemCode from './itemForm/ItemCode';
 import TextInput from '../../library/form/TextInput';
 import SelectSupplier from './itemForm/SelectSupplier';
 import CheckboxInput from '../../library/form/CheckboxInput';
-import DateInput from '../../library/form/DateInput';
 import SelectCategoryProperty from './itemForm/SelectCategoryProperty';
 import SelectItemProperty from './itemForm/SelectItemProperty';
 import UploadFile from '../../library/UploadFile';
@@ -223,7 +222,7 @@ function CreateItem(props){
           <Field
             component={TextInput}
             label="Item Description"
-            name="itemDescription"
+            name="description"
             placeholder="Item description..."
             fullWidth={true}
             disabled={!categoryId}
@@ -234,20 +233,7 @@ function CreateItem(props){
           />
         </Box>
 
-        <Box width={{ xs: '100%', md: '31%' }} display="inline-flex" flexDirection="column" justifyContent="space-between" alignSelf="flex-start">
-          <Field
-            component={DateInput}
-            label="Expiry Date"
-            name="expiryDate"
-            dateFormat="DD MMMM, YYYY"
-            fullWidth={true}
-            inputVariant="outlined"
-            disablePast
-            margin="dense"
-            emptyLabel=""
-            clearable
-            disabled={!categoryId}
-          />
+        <Box width={{ xs: '100%', md: '31%' }} display="inline-flex" flexDirection="column" justifyContent="center" alignSelf="flex-start">
 
           <Field
             component={CheckboxInput}
@@ -620,7 +606,7 @@ const validate = (values, props) => {
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
   const categoryId = formSelector(state, 'categoryId');
-  const categories = state.categories[storeId];
+  const categories = state.categories[storeId] ? state.categories[storeId] : [];
   const category = categories.find(item => item._id === categoryId);
   return{
     storeId,

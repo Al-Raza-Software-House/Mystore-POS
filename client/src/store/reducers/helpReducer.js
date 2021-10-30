@@ -13,6 +13,12 @@ const helpReducer = (state = initState, action) => {
         videos: action.videos,
         allLoaded: true
       }
+    case actionTypes.VIDEO_DELETED:
+      const newVideos = state.videos.filter(element => element._id !== action.videoId)
+      return{
+        ...state,
+        videos: newVideos,
+      }
     default:
       return state;
   }

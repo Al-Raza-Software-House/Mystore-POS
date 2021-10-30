@@ -11,6 +11,10 @@ import categoryReducer from './categoryReducer';
 import itemPropertiesReducer from './itemPropertiesReducer';
 import supplierReducer from './supplierReducer';
 import itemReducer from './itemReducer';
+import adjustmentReasonsReducer from './adjustmentReasonsReducer';
+import accountsReducer from './accountsReducer';
+import customerReducer from './customerReducer';
+import systemReducer from './systemReducer';
 
 function storeageReducer(state = { loaded: false }, action) {
     switch (action.type) {
@@ -26,19 +30,26 @@ function storeageReducer(state = { loaded: false }, action) {
 }
 
 export const staticReducers = {
+  //signin, signup, logout, reset Password, user profile settings
   auth: authReducer,
-  items: itemReducer,
-  categories: categoryReducer,
-  itemProperties: itemPropertiesReducer,
-
-  suppliers: supplierReducer,
-  stores: storeReducer,
-  help: helpReducer,
-  
+  system: systemReducer,
+  //General
   form: formReducer,
   progressBar: progressReducer,
   alert: alertReducer,
-  storage: storeageReducer 
+  storage: storeageReducer, //IndexedDB persistant Storage
+  //Stock Module
+  items: itemReducer,
+  categories: categoryReducer,
+  itemProperties: itemPropertiesReducer,
+  adjustmentReasons: adjustmentReasonsReducer,
+
+  suppliers: supplierReducer,
+  customers: customerReducer,
+
+  accounts: accountsReducer,
+  stores: storeReducer,
+  help: helpReducer,
 }
 const rootReducer = combineReducers(staticReducers);
 

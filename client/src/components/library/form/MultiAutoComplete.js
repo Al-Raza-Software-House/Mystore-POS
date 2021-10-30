@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Autocomplete from '@material-ui/lab/Autocomplete';
-import { TextField, makeStyles, Box, FormHelperText } from '@material-ui/core';
+import { TextField, makeStyles, Box, FormHelperText, Chip } from '@material-ui/core';
 import clsx from 'clsx';
 
 const useStyles = makeStyles(theme => ({
@@ -54,6 +54,15 @@ const MultiAutoComplete = ({
         inputValue={inputValue}
         
         value={value ? value : []}
+        renderTags={(tagValue, getTagProps) =>
+          tagValue.map((option, index) => (
+            <Chip
+              label={option.title}
+              {...getTagProps({ index })}
+              disabled={ option.preventDelete ? true : false }
+            />
+          ))
+        }
       />
       <FormHelperText error={ invalid }>
         {

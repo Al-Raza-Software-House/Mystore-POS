@@ -11,6 +11,10 @@ import Properties from './categories/Properties';
 import ItemProperties from './itemProperties/ItemProperties';
 import CreateItem from './items/CreateItem';
 import Items from './items/Items';
+import EditItem from './items/EditItem';
+import AdjustmentReasons from './adjustmentReasons/AdjustmentReasons';
+import CreateAdjustmentReason from './adjustmentReasons/CreateAdjustmentReason';
+import EditAdjustmentReason from './adjustmentReasons/EditAdjustmentReason';
 
 
 const useStyles = makeStyles(theme => ({
@@ -23,8 +27,7 @@ const menues = [
   {to: '/stock', title: 'Items'},
   {to: '/stock/categories', title: 'Categories'},
   {to: '/stock/itemProperties', title: 'Item Properties'},
-  {to: '/stock/adjustment', title: 'Adjustment'},
-  {to: '/stock/audit', title: 'Audit'},
+  {to: '/stock/adjustmentReasons', title: 'Adjustment Reasons'},
 ]
 
 function StockRouter({ loadVideos }){
@@ -43,12 +46,20 @@ function StockRouter({ loadVideos }){
         <Box px={3} pt={2} >
           <Switch>
             <Route path="/stock/items/create" component={CreateItem} />
+            <Route path="/stock/items/edit/:storeId/:itemId" component={EditItem} />
+
             <Route path="/stock/categories/properties/:storeId/:categoryId" component={Properties} />
             <Route path="/stock/categories/variants/:storeId/:categoryId" component={Variants} />
             <Route path="/stock/categories/edit/:storeId/:categoryId" component={EditCategory} />
             <Route path="/stock/categories/create" component={CreateCategory} />
             <Route path="/stock/categories" component={Categories} />
+
             <Route path="/stock/itemProperties" component={ItemProperties} />
+
+            <Route path="/stock/adjustmentReasons/create" component={CreateAdjustmentReason} />
+            <Route path="/stock/adjustmentReasons/edit/:storeId/:reasonId" component={EditAdjustmentReason} />
+            <Route path="/stock/adjustmentReasons" component={AdjustmentReasons} />
+
             <Route path="/stock" component={Items} />
           </Switch>
         </Box>

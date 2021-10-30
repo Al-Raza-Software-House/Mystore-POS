@@ -4,7 +4,7 @@ import { Field, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import RadioInput from '../library/form/RadioInput';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
-import {  updateStore } from '../../store/actions/storeActions';
+import {  storesStampChanged, updateStore } from '../../store/actions/storeActions';
 import { userTypes } from '../../utils/constants';
 import { showSuccess } from '../../store/actions/alertActions';
 
@@ -76,9 +76,10 @@ const onSubmit = (values, dispatch, { storeId, item, handleClose }) => {
   dispatch(showProgressBar());
   return axios.post('/api/stores/updateUser', values).then( response => {
     dispatch(hideProgressBar());
-    if(response.data._id)
+    if(response.data.store._id)
     {
-      dispatch(updateStore(storeId, response.data));
+      dispatch(updateStore(storeId, response.data.store));
+      dispatch( storesStampChanged(storeId, response.data.now) );
       dispatch( showSuccess("User role updated") );
       handleClose();
     }

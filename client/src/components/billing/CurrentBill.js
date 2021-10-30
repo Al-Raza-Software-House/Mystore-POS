@@ -7,7 +7,7 @@ import { reduxForm, Field, SubmissionError, formValueSelector } from 'redux-form
 import SelectInput from '../library/form/SelectInput';
 import { monthsList } from '../../utils/constants';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
-import { loadStore, updateStore } from '../../store/actions/storeActions';
+import { loadSelectedStore, updateStore, storesStampChanged } from '../../store/actions/storeActions';
 import axios from 'axios';
 import TextInput from '../library/form/TextInput';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,18 +15,17 @@ import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { amber } from '@material-ui/core/colors';
 
 function CurrentBill(props){
-  const { selectedMonths, store, loadStore, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty } = props;
+  const { selectedMonths, store, loadSelectedStore, storesStampChanged, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty } = props;
   const timer = useRef();
   const [paymentCompleted, setPaymentCompleted] = useState(false);
-  
-  useEffect(() => {
-    loadStore(store._id);
-  }, [loadStore, store._id]);
+
 
   const ping = useCallback(() => {
     axios.get('/api/billing/ping', { params: { storeId: store._id, txnId: store.paymentTxnId } }).then(({ data }) => {
-      if(data.success){
-        loadStore(store._id);
+      if(data.success)
+      {
+        loadSelectedStore();
+        storesStampChanged(store._id, data.lastUpdated);
         setPaymentCompleted(true);
       }
       else
@@ -34,7 +33,7 @@ function CurrentBill(props){
     }).catch(err => {
       timer.current = setTimeout(ping, 6000);
     });
-  }, [store._id, store.paymentTxnId, loadStore]);
+  }, [store._id, store.paymentTxnId, loadSelectedStore]);
 
   useEffect(() => {
     if(timer.current)
@@ -190,7 +189,7 @@ const onSubmit = (values, dispatch, { store }) => {
 }
 
 export default compose(
-  connect(mapStateToProps, { loadStore }),
+  connect(mapStateToProps, { loadSelectedStore, storesStampChanged }),
   reduxForm({
     'form': 'extendSubscription',
     validate,

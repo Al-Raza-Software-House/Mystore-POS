@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { loadStores } from '../../store/actions/storeActions';
+import { loadStores, selectStore } from '../../store/actions/storeActions';
 import { Box, Paper, makeStyles, Typography, Button } from '@material-ui/core';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,12 +14,17 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-function  Stores({ loadStores, stores, allLoaded, selectedStoreId }) {
+function  Stores({ loadStores, stores, allLoaded, selectedStoreId, selectStore }) {
   const classes = useStyles();
 
   useEffect(() => {
       loadStores();
   }, [loadStores]);
+
+  useEffect(() => {
+      if(allLoaded && stores.length === 0 && selectedStoreId)
+        selectStore(null, null);
+  }, [allLoaded, stores, selectStore, selectedStoreId]);
 
   return(
     <Box p={3}>
@@ -64,4 +69,4 @@ const mapStateToProps = (state) => {
   }
 }
 
-export default connect(mapStateToProps, { loadStores })(Stores);
+export default connect(mapStateToProps, { loadStores, selectStore })(Stores);

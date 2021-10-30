@@ -83,9 +83,9 @@ const onSubmit = (values, dispatch, { storeId, propertyId, value }) => {
     title: values.title
   }
   return axios.post('/api/itemProperties/editPropertyValue', data).then( response => {
-    if(response.data._id)
+    if(response.data.properties._id)
     {
-      dispatch( updateItemProperties(storeId, response.data) );
+      dispatch( updateItemProperties(storeId, response.data.properties, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("Value updated") );
     }
 

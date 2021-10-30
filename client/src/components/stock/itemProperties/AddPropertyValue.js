@@ -83,9 +83,9 @@ const onSubmit = (values, dispatch, { properties, propertyId }) => {
     ...values
   }
   return axios.post('/api/itemProperties/addPropertyValue', data).then( response => {
-    if(response.data._id)
+    if(response.data.properties._id)
     {
-      dispatch( updateItemProperties(properties.storeId, response.data) );
+      dispatch( updateItemProperties(properties.storeId, response.data.properties, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("New value added") );
     }
 

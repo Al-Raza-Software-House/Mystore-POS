@@ -14,8 +14,33 @@ const categoryTypes = {
   CATEGORY_TYPE_VARIANT: 2
 }
 
+const itemTypesFilter = {
+  LOW_STOCK_ITEMS: 1,
+  OVER_STOCK_ITEMS: 2,
+  EXPIRED_ITEMS: 3,
+  SERVICE_ITEMS: 4,
+  ACTIVE_ITEMS: 5,
+  INACTIVE_ITEMS: 6,
+}
+
+const stockTxnTypes = {
+  TXN_TYPE_PURCHASE: 1,
+  TXN_TYPE_VENDOR_RETURN: 2,
+  TXN_TYPE_SALE: 3,
+  TXN_TYPE_ADJUSTMENT: 4
+}
+
+const accountHeadTypes = {
+  ACCOUNT_HEAD_TYPE_INCOME: 1,
+  ACCOUNT_HEAD_TYPE_EXPENSE: 2,
+  ACCOUNT_HEAD_TYPE_GENERAL: 3
+}
+
 module.exports = {
   storeStates,
   userRoles,
-  categoryTypes
+  categoryTypes,
+  itemTypesFilter,
+  stockTxnTypes,
+  accountHeadTypes
 }

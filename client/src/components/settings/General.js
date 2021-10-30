@@ -5,7 +5,7 @@ import { reduxForm, Field, SubmissionError, initialize } from 'redux-form';
 import { Box, makeStyles, Button } from '@material-ui/core';
 import FormMessage from '../library/FormMessage';
 import TextInput from '../library/form/TextInput';
-import {  updateStore } from '../../store/actions/storeActions';
+import {  storesStampChanged, updateStore } from '../../store/actions/storeActions';
 import axios from 'axios';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import { showSuccess } from '../../store/actions/alertActions';
@@ -121,10 +121,11 @@ const onSubmit = (values, dispatch, {  showProgressBar, hideProgressBar, selecte
   showProgressBar();
   return axios.post('/api/stores/update', { id: selectedStoreId,  ...values}).then( response => {
     hideProgressBar();
-    if(response.data._id)
+    if(response.data.store._id)
     {
-      dispatch( updateStore(selectedStoreId, response.data) );
-      dispatch( initialize('storeGeneralSettings', response.data) );
+      dispatch( updateStore(selectedStoreId, response.data.store) );
+      dispatch( storesStampChanged(selectedStoreId, response.data.now) );
+      dispatch( initialize('storeGeneralSettings', response.data.store) );
       dispatch( showSuccess("Store info updated") );
     }
 

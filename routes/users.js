@@ -6,6 +6,7 @@ const { createAuthUser, createJwtToken } = require('../utils');
 const moment = require('moment-timezone');
 const { authCheck } = require('../utils/middlewares');
 const { storeStates } = require('../utils/constants');
+const axios = require('axios');
 
 router.post('/signup', async (req, res) => {
   try
@@ -29,7 +30,15 @@ router.post('/signup', async (req, res) => {
     if(!req.body.pin) //step 1 generate verification pin
     {
       const pin = Math.floor(100000 + Math.random() * 900000);
-      console.log("Pin is "+pin);
+      let smsParams = {
+        api_token: process.env.SMP_API_TOKEN,
+        api_secret: process.env.SMS_API_SECRET,
+        to: req.body.phone,
+        from: process.env.SMS_FROM,
+        message: `${pin} is your verification code to create account on mystore.pk`,
+      }
+      const response = await axios.post("https://lifetimesms.com/json", smsParams); 
+      console.log(response.data);     
       user.set("verificationPin", await bcrypt.hash(''+pin, 10));
       await user.save();
     }else if(!(await bcrypt.compare(req.body.pin, user.verificationPin)) ) //step#2 verify pin
@@ -46,7 +55,7 @@ router.post('/signup', async (req, res) => {
       const currentTime = moment().tz('Asia/Karachi').toDate();
       user.set("lastVisited", currentTime);
       user.set("lastUpdated", currentTime);
-      user.set("createdOn", currentTime);
+      user.set("creationDate", currentTime);
       await user.save();
       let userObj = user.toObject();
       const response = {
@@ -100,12 +109,22 @@ router.post('/resetPassword', async (req, res) => {
       throw new Error("Not registered, Please create new account");
     else if(user.status === 0)
       throw new Error("Account is disabled");
-    
+    const currentTime = moment().tz('Asia/Karachi').toDate();
     if(!req.body.pin) //step 1 generate verification pin
     {
       const pin = Math.floor(100000 + Math.random() * 900000);
-      console.log("Pin is "+pin);
+      
+      let smsParams = {
+        api_token: process.env.SMP_API_TOKEN,
+        api_secret: process.env.SMS_API_SECRET,
+        to: req.body.phone,
+        from: process.env.SMS_FROM,
+        message: `${pin} is your pin to reset password on mystore.pk`,
+      }
+      await axios.post("https://lifetimesms.com/json", smsParams);
+
       user.set("verificationPin", await bcrypt.hash(""+pin, 10));
+      user.set("lastUpdated", currentTime);
       await user.save();
     }else if(!(await bcrypt.compare(''+req.body.pin, user.verificationPin)) ) //step#2 verify pin
     {
@@ -114,6 +133,7 @@ router.post('/resetPassword', async (req, res) => {
     {
       user.set('password', await bcrypt.hash(req.body.password, 10) );
       user.set("verificationPin", '');
+      user.set("lastUpdated", currentTime);
       await user.save();
     }
     res.send({success: true});
@@ -171,8 +191,10 @@ router.post('/settings', async (req, res) => {
       if( !( await bcrypt.compare(req.body.currentPassword, result.password)) )
         throw new Error('Current password is invalid');
     }
+    const currentTime = moment().tz('Asia/Karachi').toDate();
     const data = {
-      name : req.body.name
+      name : req.body.name,
+      lastUpdated: currentTime
     };
     if(req.body.newPassword)
       data.password = await bcrypt.hash(req.body.newPassword, 10);

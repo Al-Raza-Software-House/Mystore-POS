@@ -31,7 +31,6 @@ export const loadAuth = () => {
 
 export const logOut = (msg) => {
   return (dispatch, getState) => {
-    localStorage.removeItem(process.env.REACT_APP_JWT_TOKEN);
     dispatch( {
       type: actionTypes.LOGOUT_SUCCESS,
       message: typeof msg === 'string' ? msg : "Logged out, Please login to continue"

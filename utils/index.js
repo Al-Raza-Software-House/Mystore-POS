@@ -3,7 +3,6 @@ const AWS = require('aws-sdk');
 const moment = require('moment-timezone');
 
 const fs = require('fs')
-const request = require('request');
 const { resolve } = require('path');
 
 const createJwtToken = (user, expire_in_hours = 5 * 365 * 24) => {
@@ -72,22 +71,10 @@ const publicS3Object = async (key) => {
   });
 }
 
-const downloadImage = (url, path) => {
-  return new Promise((resolve, reject) => {
-    request.head(url, (err, res, body) => {
-      if(err) reject(err);
-      request(url)
-        .pipe(fs.createWriteStream(path))
-        .on('close', () => resolve(path))
-    })
-  });
-}
-
 module.exports = { 
   createJwtToken, 
   getS3ImageUrl, 
   createAuthUser,
   deleteS3Object,
-  downloadImage,
   publicS3Object
 };

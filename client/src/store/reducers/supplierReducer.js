@@ -7,15 +7,37 @@ const supplierReducer = (state = initState, action) => {
   switch(action.type)
   {
     case actionTypes.SUPPLIERS_LOADED:
+      suppliers = state[action.storeId] ? state[action.storeId] : [];
       return{
         ...state,
-        [action.storeId]: action.suppliers
+        [action.storeId]: [...suppliers, ...action.suppliers]
+      }
+    case actionTypes.EMPTY_SUPPLIERS:
+      return{
+        ...state,
+        [action.storeId]: []
+      }
+    case actionTypes.SYNC_SUPPLIERS:
+      suppliers = state[action.storeId] ? state[action.storeId] : [];
+      let masterSuppliers = [...suppliers];
+      action.suppliers.reverse(); //keep the newly created suppliers in of array, ,
+      for(let i=0; i<action.suppliers.length; i++)
+      {
+        let supplierIndex = masterSuppliers.findIndex(item => item._id === action.suppliers[i]._id);
+        if(supplierIndex >= 0)
+          masterSuppliers[supplierIndex] = action.suppliers[i]; //replace/update item
+        else
+          masterSuppliers = [action.suppliers[i], ...masterSuppliers]; //new item
+      }
+      return{
+        ...state,
+        [action.storeId]: masterSuppliers
       }
     case actionTypes.SUPPLIER_CREATED:
       suppliers = state[action.storeId] ? state[action.storeId] : [];
       return{
         ...state,
-         [action.storeId]: [...suppliers, action.supplier]
+         [action.storeId]: [action.supplier, ...suppliers]
       }
     case actionTypes.SUPPLIER_UPDATED:
       suppliers = state[action.storeId] ? state[action.storeId] : [];

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Button, CircularProgress, makeStyles, Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core';
@@ -23,9 +23,12 @@ function SelectCategorySize(props) {
   })
 
   const dispatch = useDispatch();
+  const lastCategory = useRef();
   
   useEffect(() => {
+    if(lastCategory.current && lastCategory.current !== categoryId)
       dispatch( change(formName, 'sizes', [] ) );
+    lastCategory.current = categoryId;
   }, [categoryId, dispatch, formName]);
 
   return(
@@ -156,9 +159,9 @@ function AddCategorySize(props){
 
 const onSubmit = (values, dispatch, { storeId, categoryId }) => {
   return axios.post('/api/categories/addSize', { storeId, categoryId, ...values }).then( response => {
-    if(response.data._id)
+    if(response.data.category._id)
     {
-      dispatch( updateCategory(storeId, categoryId, response.data) );
+      dispatch( updateCategory(storeId, categoryId, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("New size added") );
     }
 

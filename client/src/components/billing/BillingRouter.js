@@ -1,9 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { makeStyles, Paper, Box, Typography } from '@material-ui/core';
 import StyledTabs from '../library/StyledTabs';
 import { Route, Switch } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { loadVideos } from '../../store/actions/helpActions';
 import BillingHistory from './BillingHistory';
 import CurrentBill from './CurrentBill';
 
@@ -18,11 +16,8 @@ const menues = [
   {to: '/billing/history', title: 'History'},
 ]
 
-function BillingRouter({ loadVideos }){
+function BillingRouter(){
   const classes = useStyles();
-  useEffect(() => {
-    loadVideos();
-  }, [loadVideos]);
 
   return(
     <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
@@ -48,4 +43,4 @@ function BillingRouter({ loadVideos }){
   )
 }
 
-export default connect(null, { loadVideos })(BillingRouter);
+export default BillingRouter;

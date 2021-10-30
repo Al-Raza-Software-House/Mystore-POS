@@ -16,9 +16,11 @@ router.post('/pay', async (req, res) => {
     let store = await Store.findById(req.body.storeId);    
     if(store === null)
       throw new Error("Invalid request");
-
+    
     if(!(await Store.isManager(req.body.storeId, req.user._id) ))
       throw new Error("Invalid Request");
+
+    await store.updateLastActivity();
     const now = moment().tz('Asia/Karachi');
     let expiry = moment(store.expiryDate);
     if(now.isAfter(expiry)) //if store is already expired, count expiry from today
@@ -58,14 +60,15 @@ router.get('/ping', async (req, res) => {
     let store = await Store.findById(req.query.storeId);    
     if(store === null)
       throw new Error("Invalid request");
-
+    const lastUpdated = store.dataUpdated.stores;
     if(!(await Store.isManager(req.query.storeId, req.user._id) ))
       throw new Error("Invalid Request");
     const txn = await BillingTransaction.findOne({ storeId: req.query.storeId, _id: req.query.txnId });
     if(txn === null) throw new Error("invalid request");
 
     res.json({
-      success: txn.transactionStatus === 'completed'
+      success: txn.transactionStatus === 'completed',
+      lastUpdated
     });
   }catch(err)
   {
@@ -82,9 +85,9 @@ router.get('/transactions', async (req, res) => {
     let store = await Store.findById(req.query.storeId);    
     if(store === null)
       throw new Error("Invalid request");
-
     if(!(await Store.isManager(req.query.storeId, req.user._id) ))
       throw new Error("Invalid Request");
+    await store.updateLastVisited();
       
     const txns = await BillingTransaction.find({ storeId: req.query.storeId, transactionStatus: 'completed' }).sort({ time: -1 });
     res.json(txns);
@@ -111,6 +114,7 @@ router.post('/easypaisaCB', async (req, res) => {
     let txn = await BillingTransaction.findOne({ storeId: req.body.storeId, transactionId: req.body.transactionId });
     if(txn === null)
       throw new Error("Invalid request");
+    await store.updateLastActivity();
     const now = moment().tz('Asia/Karachi').toDate();
 
     let record = {
@@ -119,9 +123,11 @@ router.post('/easypaisaCB', async (req, res) => {
     }
     await BillingTransaction.findOneAndUpdate({ storeId: req.body.storeId, transactionId: req.body.transactionId }, record);
     record = {
-      expiryDate: txn.nextExpiryDate
+      expiryDate: txn.nextExpiryDate,
+      lastPayment: now
     }
     await Store.findByIdAndUpdate(req.body.storeId, record);
+    await store.logCollectionLastUpdated('stores');
     res.json({ success: true });
   }catch(err)
   {

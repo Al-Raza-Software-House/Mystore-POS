@@ -15,7 +15,7 @@ const categoryReducer = (state = initState, action) => {
       categories = state[action.storeId] ? state[action.storeId] : [];
       return{
         ...state,
-         [action.storeId]: [...categories, action.category]
+         [action.storeId]: [action.category, ...categories]
       }
     case actionTypes.CATEGORY_UPDATED:
       categories = state[action.storeId] ? state[action.storeId] : [];

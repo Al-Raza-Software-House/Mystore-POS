@@ -14,6 +14,14 @@ import axios from 'axios';
 import { userTypes } from '../../utils/constants';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import { showSuccess } from '../../store/actions/alertActions';
+import { actionTypes as itemPropertiesActions } from '../../store/actions/itemPropertiesActions';
+import { actionTypes as categoryActions } from '../../store/actions/categoryActions';
+import { actionTypes as itemActions } from '../../store/actions/itemActions';
+import { actionTypes as adjustmentReasonActions } from '../../store/actions/adjustmentReasonActions';
+import { actionTypes as supplierActions } from '../../store/actions/supplierActions';
+import { actionTypes as customerActions } from '../../store/actions/customerActions';
+import { actionTypes as accountActions } from '../../store/actions/accountActions'; //banks and heads actions
+import { lastUpdatedStampsChanged, masterDataLoaded } from '../../store/actions/systemActions';
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -126,13 +134,29 @@ const CreateStore = (props) => {
 
 const onSubmit = (values, dispatch, {  showProgressBar, hideProgressBar }) => {
   showProgressBar();
-  return axios.post('/api/stores/create', values).then( response => {
+  return axios.post('/api/stores/create', values).then( ({ data }) => {
     hideProgressBar();
-    if(response.data._id)
+    if(data.store)
     {
-      dispatch( createStore(response.data) );
-      dispatch( selectStore(response.data._id, userTypes.USER_ROLE_OWNER) );
+      dispatch( createStore(data.store) );
+      //init redux store master data structure for current store
+      dispatch({ type: itemActions.ITEMS_LOADED, storeId: data.store._id, items: [], totalRecords: 0 });
+      dispatch({ type: categoryActions.CATEGORIES_LOADED, storeId: data.store._id, categories: [] });
+      dispatch({ type: itemPropertiesActions.ITEM_PROPERTIES_LOADED, storeId: data.store._id, properties: data.itemProperties });
+      dispatch({ type: adjustmentReasonActions.ADJUST_REASONS_LOADED, storeId: data.store._id, reasons: data.adjustmentReasons });
+
+      dispatch({ type: supplierActions.SUPPLIERS_LOADED, storeId: data.store._id, suppliers: [] });
+      dispatch({ type: customerActions.CUSTOMERS_LOADED, storeId: data.store._id, customers: [] });
+
+      dispatch({ type: accountActions.ACCOUNT_HEADS_LOADED, storeId: data.store._id, heads: data.accountHeads });
+      dispatch({ type: accountActions.BANKS_LOADED, storeId: data.store._id, banks: data.banks });
+
       dispatch( showSuccess("New store created") );
+      
+      dispatch( masterDataLoaded(data.store._id) );
+      dispatch( lastUpdatedStampsChanged(data.store._id, data.store.dataUpdated) );
+      
+      dispatch( selectStore(data.store._id, userTypes.USER_ROLE_OWNER) );
     }
 
   }).catch(err => {

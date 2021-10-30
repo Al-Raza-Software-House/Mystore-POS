@@ -14,7 +14,7 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import { createCategory } from '../../../../store/actions/categoryActions';
 
 function SelectCategory(props) {
-  const { storeId, formName, categories, addNewRecord=true } = props;
+  const { storeId, formName, categories, addNewRecord=true, disabled=false } = props;
   return(
     <>
     <Box display="flex">
@@ -29,6 +29,7 @@ function SelectCategory(props) {
         fullWidth={true}
         style={{ flexGrow: 1 }}
         addNewRecord={addNewRecord}
+        disabled={disabled}
       />
       { addNewRecord && <AddCategoryForm storeId={storeId} formName={formName} /> }
     </Box>
@@ -148,9 +149,9 @@ function AddCategory(props){
 
 const onSubmit = (values, dispatch, { storeId, formName }) => {
   return axios.post('/api/categories/create', {storeId, ...values}).then( response => {
-    if(response.data._id)
+    if(response.data.category._id)
     {
-      dispatch( createCategory(storeId, response.data) );
+      dispatch( createCategory(storeId, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( change(formName, 'categoryId', response.data._id) );
       dispatch( showSuccess("New category created") );
     }

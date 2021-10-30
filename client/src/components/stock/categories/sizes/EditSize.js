@@ -95,9 +95,9 @@ const onSubmit = (values, dispatch, { storeId, categoryId, size }) => {
     title: values.title
   }
   return axios.post('/api/categories/editSize', data).then( response => {
-    if(response.data._id)
+    if(response.data.category._id)
     {
-      dispatch( updateCategory(storeId, categoryId, response.data) );
+      dispatch( updateCategory(storeId, categoryId, response.data.category, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("Size updated") );
     }
 

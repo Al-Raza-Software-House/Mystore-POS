@@ -8,7 +8,7 @@ import PasswordField from '../library/form/PasswordField';
 import TextInput from '../library/form/TextInput';
 import RadioInput from '../library/form/RadioInput';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
-import {  updateStore } from '../../store/actions/storeActions';
+import {  storesStampChanged, updateStore } from '../../store/actions/storeActions';
 import { userTypes } from '../../utils/constants';
 import { connect } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
@@ -178,9 +178,10 @@ const onSubmit = (values, dispatch, { id, wizard, setWizard, closeDialog }) => {
       if(response.data.newUser) //user not exist, create it first with signup
       {
         return signUp(values, dispatch, { wizard, setWizard });
-      }else if(response.data._id)
+      }else if(response.data.store._id)
       {
-        dispatch(updateStore(id, response.data));
+        dispatch(updateStore(id, response.data.store));
+        dispatch( storesStampChanged(id, response.data.now) );
         dispatch( showSuccess("User added to store") );
         closeDialog();
       }

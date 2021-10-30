@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
-import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Typography } from '@material-ui/core';
+import React, { useMemo, useState } from 'react';
+import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Typography, Popover, IconButton, makeStyles } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faPencilAlt, faTrash,  faArrowAltCircleUp } from '@fortawesome/free-solid-svg-icons';
 import { connect, useSelector } from 'react-redux';
-import { loadItems, resetItems } from '../../../store/actions/itemActions';
+import { loadItems, resetItems, deleteItem } from '../../../store/actions/itemActions';
 import ItemFilters from './ItemFilters';
 import { formValueSelector } from 'redux-form';
+import { Link } from 'react-router-dom';
+import AdjustStock from './AdjustStock';
 
 const formSelector = formValueSelector('itemListFilters');
 
@@ -40,17 +42,17 @@ const columns = [
 
 const filtersHeight = 172;
 
-function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItems, itemsLoaded, categoriesMap, loadItems, resetItems }) {
+function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItems, itemsLoaded, categoriesMap, loadItems, resetItems, deleteItem }) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [moreFilters, setMoreFilters] = React.useState(false);
   const filterRef = React.useRef();
 
   React.useEffect(() => {
-    if(filterRef.current !== filters && page !== 0)//filters changed, reset to page 0
+    if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0
       setPage(0);
     filterRef.current = filters;
-    if(filteredItems.length === 0 && !loadingItems && !itemsLoaded)// on Page load or filters changed
+    if(filteredItems.length === 0 && !loadingItems && !itemsLoaded)// on Page load or filters changed or reset button
       loadItems(rowsPerPage); 
 }, [filters, filteredItems.length, loadingItems, itemsLoaded, loadItems, page, rowsPerPage]);
 
@@ -111,18 +113,8 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => {
-                return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row._id}>
-                    <TableCell>{ row.itemCode }</TableCell>
-                    <TableCell>{ row.itemName }</TableCell>
-                    <TableCell>{ categoriesMap[row.categoryId] ? categoriesMap[row.categoryId] : "" }</TableCell>
-                    <TableCell align="center">{ row.costPrice.toLocaleString('en-US') }</TableCell>
-                    <TableCell align="center">{ row.salePrice.toLocaleString('en-US') }</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                );
-              })}
+              {rows.map( (row) => (<Item key={row._id} item={row} categoriesMap={categoriesMap} storeId={storeId} deleteItem={deleteItem} />) )
+              }
             </TableBody>
           </Table>
         </TableContainer>
@@ -139,6 +131,81 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
       
     }
     </>
+  )
+}
+
+const useStyles = makeStyles(theme => ({
+  actionBtn: {
+    fontSize: '1.3rem',
+    padding: '4px 12px'
+  }
+}))
+
+function Item({ item, categoriesMap, storeId, deleteItem }){
+  const classes = useStyles();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+  return(
+    <>
+    <TableRow hover role="checkbox" tabIndex={-1} >
+      <TableCell>{ item.itemCode }</TableCell>
+      <TableCell>{ item.itemName }</TableCell>
+      <TableCell>{ categoriesMap[item.categoryId] ? categoriesMap[item.categoryId] : "" }</TableCell>
+      <TableCell align="center">{ item.costPrice.toLocaleString('en-US') }</TableCell>
+      <TableCell align="center">{ item.salePrice.toLocaleString('en-US') }</TableCell>
+      <TableCell align="right">
+        
+        
+        {
+          item.isServiceItem ? null :
+          <>
+            <AdjustStock storeId={storeId} itemId={item._id} />
+
+            <IconButton onClick={(event) => handleClick(event) } className={classes.actionBtn} title="Add Stock">
+              <FontAwesomeIcon icon={faArrowAltCircleUp} size="xs" />
+            </IconButton>
+          </>
+        }
+        <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id }  className={classes.actionBtn} title="Edit Item">
+          <FontAwesomeIcon icon={faPencilAlt} size="xs" />
+        </IconButton>
+        <IconButton onClick={(event) => handleClick(event) } className={classes.actionBtn} title="Delete Item">
+          <FontAwesomeIcon icon={faTrash} size="xs" />
+        </IconButton>
+
+      </TableCell>
+    </TableRow>
+    <Popover 
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        >
+        <Box py={2} px={4} textAlign="center">
+          <Typography gutterBottom>All variants/packings(if any) of this item will also be deleted.</Typography>
+          <Typography gutterBottom>Do you want to delete <b>{item.itemName}</b> item from store?</Typography>
+          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteItem(storeId, item._id)}>
+            Delete Item
+          </Button>
+        </Box>
+      </Popover>
+  </>
   )
 }
 
@@ -167,4 +234,4 @@ const mapStateToProps = state => {
   }
 }
 
-export default connect(mapStateToProps, { loadItems, resetItems })(Items);
+export default connect(mapStateToProps, { loadItems, resetItems, deleteItem })(Items);

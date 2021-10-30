@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
@@ -12,6 +12,7 @@ import { userTypes } from '../../utils/constants';
 import { sidebarSalesPerson as sidebarSalesPersonBlackList } from '../../config/routesBlackList';
 import moment from 'moment';
 import { amber } from '@material-ui/core/colors';
+import { syncData } from '../../store/actions/systemActions';
 
 const drawerWidth = 256;
 
@@ -111,10 +112,33 @@ const menues = [
 
 const publicPages = ['/signin', '/signup', '/reset-password', '/'];
 
-function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLargeScreen }) {
+function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLargeScreen, syncData }) {
   const classes = useStyles();
   const { pathname } = useLocation();
+  const pingInterval = useRef();
+  useEffect(() => {
+    if(!selectedStoreId && pingInterval.current)
+    {
+      clearInterval(pingInterval.current);
+      pingInterval.current = null;
+    }
+    else if(selectedStoreId && !pingInterval.current)
+    {
+      pingInterval.current = setInterval(syncData, parseInt(process.env.REACT_APP_SERVER_PING_INTERVAL) * 1000);
+    }
+    return () => {
+      if(pingInterval.current)
+      {
+        clearInterval(pingInterval.current);
+        pingInterval.current = null;
+      }
+    }
+  }, [selectedStoreId, syncData]);
+
   if(uid && publicPages.indexOf(pathname) !== -1) return <Redirect to="/dashboard" />
+  
+  if(!selectedStoreId && !pathname.startsWith('/help') && !pathname.startsWith('/stores') && !pathname.startsWith('/account-settings'))
+    return <Redirect to="/stores" />
   let sideMenues = selectedStoreId ? menues : menues.filter(item => (['/stores', '/help'].indexOf(item.to) !== - 1));
   sideMenues = userRole === userTypes.USER_ROLE_SALESPERSON ? sideMenues.filter(item => sidebarSalesPersonBlackList.indexOf(item.to) === -1) : sideMenues;
   let expiryStatus = null;
@@ -174,4 +198,4 @@ const mapStateToProps = (state) => {
   }
 }
 
-export default connect(mapStateToProps)(Sidebar);
+export default connect(mapStateToProps, { syncData })(Sidebar);
