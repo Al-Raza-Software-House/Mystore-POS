@@ -561,9 +561,9 @@ const onSubmit = (values, dispatch, { storeId }) => {
   dispatch(showProgressBar());
   return axios.post('/api/items/create', {storeId, ...values}).then( response => {
     dispatch(hideProgressBar());
-    if(response.data._id)
+    if(response.data.item._id)
     {
-      dispatch( createItem(storeId, response.data) );
+      dispatch( createItem(storeId, response.data.item, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("New item added") );
     }
 

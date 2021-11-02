@@ -83,6 +83,7 @@ router.post('/create', async (req, res) => {
       lastActivity: now,
       lastUpdated: now,
       lastPayment: null,
+      lastEndOfDay: null,
       expiryDate: moment().tz('Asia/Karachi').add(process.env.TRIAL_PERIOD, 'days').toDate(),
 
       monthlyPricing: process.env.STORE_PRICING,
@@ -385,6 +386,7 @@ router.get('/getUpdateTimestamps', async (req, res) => {
     }
     res.json({
       storeId: store._id,
+      lastEndOfDay: store.lastEndOfDay,
       dataUpdated: store.dataUpdated
     });
   }catch(err)

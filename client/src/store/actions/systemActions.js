@@ -1,10 +1,10 @@
 import axios from "axios";
-import { loadSelectedStore, selectStore, updateStore } from "./storeActions";
+import { loadSelectedStore, selectStore, updateStore, lastEndOfDayUpdated } from "./storeActions";
 import { actionTypes as accountActions, loadAccountHeads, loadBanks } from "./accountActions";
 import { actionTypes as adjustmentReasonActions, loadAdjustmentReasons } from "./adjustmentReasonActions";
 import { actionTypes as categoryActions, loadCategories } from "./categoryActions";
 import { actionTypes as customerActions, syncCustomers } from "./customerActions";
-import { actionTypes as helpActions, loadVideos } from "./helpActions";
+import { actionTypes as helpActions, syncVideos } from "./helpActions";
 import { actionTypes as itemActions, syncItems } from "./itemActions";
 import { actionTypes as itemPropertiesActions, loadItemProperties } from "./itemPropertiesActions";
 import { actionTypes as supplierActions, syncSuppliers } from "./supplierActions";
@@ -20,7 +20,7 @@ export const actionTypes = {
 }
 
 const deleteActionsMap = {
-  videos: (storeId, videoId) => ({ type: helpActions.VIDEO_DELETED, videoId }), //re-loads all
+  videos: syncVideos, //re-loads all
   categories: (storeId, categoryId) => ({ type: categoryActions.CATEGORY_DELETED, storeId, categoryId }), //re-loads all
   items: (storeId, itemId) => ({ type: itemActions.ITEM_DELETED, storeId, itemId }), //load only changed/new items
   adjustmentReasons: (storeId, reasonId) => ({ type: adjustmentReasonActions.ADJUST_REASON_DELETED, storeId, reasonId }), //re-loads all
@@ -52,7 +52,7 @@ export const syncDeleteActivity = (lastUpatedStamp) => {
 //in case of new records added or old records update
 const syncActionsMap = {
   stores: loadSelectedStore, //re-loads selected store
-  videos: loadVideos, //re-loads all
+  videos: syncVideos, //re-loads all
   itemProperties: loadItemProperties, //re-loads all
   categories: loadCategories, //re-loads all
   items: syncItems, //load only changed/new items
@@ -76,6 +76,7 @@ export const syncData = () => {
       dispatch(loadMasterData());
       return;
     }
+    const store = state.stores.stores.find(store => store._id === storeId);
     let lastTimestamps = state.system.lastUpdatedStamps[storeId] ? { ...state.system.lastUpdatedStamps[storeId] }: {};
     axios.get('/api/stores/getUpdateTimestamps', {params: { storeId }}).then( ({ data }) => {
       if(!data.storeId) //store deleted or user access removed
@@ -84,6 +85,8 @@ export const syncData = () => {
         return;
       }
       dispatch( lastUpdatedStampsChanged(storeId, data.dataUpdated) );//get old stamps first from redux then put new
+      if(data.lastEndOfDay !== store.lastEndOfDay)
+        dispatch( lastEndOfDayUpdated(storeId, data.lastEndOfDay) );
       for(let key in syncActionsMap)
       {
         if(lastTimestamps[key] !== data.dataUpdated[key] && syncActionsMap[key]) //if system stamp doesn't match with server stamp, sync data
@@ -115,7 +118,7 @@ export const loadMasterData = () => {
       dispatch({ type: accountActions.BANKS_LOADED, storeId, banks: result.data });
 
       dispatch( syncStatusUpdated("Loading account heads...") );
-      result = await axios.get('/api/accounts/accountHeads', { params: { storeId } });
+      result = await axios.get('/api/accounts/heads', { params: { storeId } });
       dispatch({ type: accountActions.ACCOUNT_HEADS_LOADED, storeId, heads: result.data });
 
       dispatch( syncStatusUpdated("Loading categories...") );

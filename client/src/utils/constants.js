@@ -37,3 +37,9 @@ export const categoryTypes = {
   CATEGORY_TYPE_STANDARD : 1,
   CATEGORY_TYPE_VARIANT: 2,
 }
+
+export const accountHeadTypes = {
+  ACCOUNT_HEAD_TYPE_INCOME: 1,
+  ACCOUNT_HEAD_TYPE_EXPENSE: 2,
+  ACCOUNT_HEAD_TYPE_GENERAL: 3
+}

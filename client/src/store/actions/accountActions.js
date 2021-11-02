@@ -42,7 +42,7 @@ export const createHead = (storeId, head, now, lastAction) => {
 export const deleteHead = (storeId, headId) => {
   return (dispatch, getState) => {
     dispatch(showProgressBar());
-    axios.post('/api/accounts/deleteHead', { storeId, headId }).then( ({ data }) => {
+    axios.post('/api/accounts/heads/delete', { storeId, headId }).then( ({ data }) => {
       dispatch(hideProgressBar());
       
       const state = getState();
@@ -99,7 +99,7 @@ export const createBank = (storeId, bank, now, lastAction) => {
 export const deleteBank = (storeId, bankId) => {
   return (dispatch, getState) => {
     dispatch(showProgressBar());
-    axios.post('/api/accounts/deleteBank', { storeId, bankId }).then( ({ data }) => {
+    axios.post('/api/accounts/banks/delete', { storeId, bankId }).then( ({ data }) => {
       dispatch(hideProgressBar());
 
       const state = getState();

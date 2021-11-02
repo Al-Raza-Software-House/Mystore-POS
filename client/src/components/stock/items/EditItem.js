@@ -624,9 +624,9 @@ const onSubmit = (values, dispatch, { storeId }) => {
   dispatch(showProgressBar());
   return axios.post('/api/items/update', {storeId, ...values}).then( response => {
     dispatch(hideProgressBar());
-    if(response.data._id)
+    if(response.data.item._id)
     {
-      dispatch( updateItem(storeId, values._id,  response.data) );
+      dispatch( updateItem(storeId, values._id,  response.data.item, response.data.now, response.data.lastAction, response.data.deletedSubItems) );
       dispatch( showSuccess("Item Updated") );
     }
 

@@ -5,7 +5,7 @@ import { IconButton, makeStyles, InputAdornment, CircularProgress, FormHelperTex
 import { connect } from 'react-redux';
 import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { hideProgressBar, showProgressBar } from "../../../store/actions/progressActions";
-import { updateItem } from '../../../store/actions/itemActions';
+import { adjustStock, updateItem } from '../../../store/actions/itemActions';
 import axios from 'axios';
 import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
 import { compose } from 'redux';
@@ -224,10 +224,14 @@ function AdjustStock(props){
 const onSubmit = (values, dispatch, { storeId, itemId }) => {
   const records = values.variants.map(record => ({ _id: record._id, adjustmentQuantity: record.adjustmentQuantity, adjustmentReason: record.adjustmentReason }));
   return axios.post('/api/items/adjustStock', {storeId, itemId, records, notes: values.notes }).then( response => {
-    if(response.data.length)
+    if(response.data.items.length)
     {
-      for(let i = 0; i < response.data.length; i++)
-        dispatch( updateItem(storeId, response.data[i]._id,  response.data[i]) );
+      for(let i = 0; i < response.data.items.length; i++)
+      {
+        response.data.items[i].packings = response.data.items[i].packings ? response.data.items[i].packings : [];
+        response.data.items[i].variants = response.data.items[i].variants ? response.data.items[i].variants : [];
+      }
+      dispatch( adjustStock(storeId, response.data.items, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("Item stock adjusted") );
     }
 

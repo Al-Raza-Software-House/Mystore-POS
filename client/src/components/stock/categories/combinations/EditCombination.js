@@ -8,6 +8,7 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import TextInput from '../../../library/form/TextInput';
 import FormMessage from '../../../library/FormMessage';
 import { updateCategory } from '../../../../store/actions/categoryActions';
+import { updateItemCombination } from '../../../../store/actions/itemActions';
 
 function EditCombination(props){
   const { dispatch, combination, handleSubmit, pristine, submitting, submitSucceeded, error, invalid } = props;
@@ -97,7 +98,8 @@ const onSubmit = (values, dispatch, { storeId, categoryId, combination }) => {
   return axios.post('/api/categories/editCombination', data).then( response => {
     if(response.data.category._id)
     {
-      dispatch( updateCategory(storeId, categoryId, response.data, response.data.category, response.data.now, response.data.lastAction) );
+      dispatch( updateCategory(storeId, categoryId, response.data.category, response.data.now, response.data.lastAction) );
+      dispatch( updateItemCombination(storeId, combination._id, values.code, values.title) );
       dispatch( showSuccess("Color updated") );
     }
 

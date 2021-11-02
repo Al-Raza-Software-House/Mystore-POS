@@ -8,7 +8,8 @@ export const actionTypes = {
   STORE_SELECTED: 'storeSelected',
   STORE_DELETED: 'storeDeleted',
   STORE_UPDATED: 'storeUpdated',
-
+  STORE_USER_ROLE_CHANGED: 'storeUserRoleChanged', //logged in user role changed for selected store
+  LAST_END_OF_DAY_UPDATED: 'lastEndOfDayUpdated',
   LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged', //cannot put in system actions, it creates chicken egg problem both files importing form each other
 }
 
@@ -30,11 +31,23 @@ export const loadStores = () => {
 //Load single store
 export const loadSelectedStore = () => {
   return (dispatch, getState) => {
-    const storeId = getState().stores.selectedStoreId;
+    const state = getState();
+    const storeId = state.stores.selectedStoreId;
+    const userRole = state.stores.userRole;
+    const uid = state.auth.uid;
     axios.get('/api/stores', {params: { storeId }}).then( ({ data }) => {
       dispatch( updateStore(storeId, data) );
+      for(let i=0; i<data.users.length; i++)
+      {
+        if(data.users[i].userId === uid && data.users[i].userRole !== userRole) //user role changed
+          dispatch(changeUserRole(data.users[i].userRole))
+      }
     }).catch( err => err );
   }
+}
+
+export const changeUserRole = newRole => {
+  return { type: actionTypes.STORE_USER_ROLE_CHANGED, newRole };
 }
 
 export const selectStore = (id, userRole) => {
@@ -80,5 +93,9 @@ export const loadBillingHistory = (storeId) => {
 
 export const storesStampChanged = (storeId, newStamp) => {
   return { type: actionTypes.LAST_UPDATED_SINGLE_STAMP_CHANGED, storeId, collectionName: 'stores', newStamp }
+}
+
+export const lastEndOfDayUpdated = (storeId, newEndOfDay) => {
+  return { type: actionTypes.LAST_END_OF_DAY_UPDATED, storeId, newEndOfDay }
 }
 

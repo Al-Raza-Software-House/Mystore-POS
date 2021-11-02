@@ -7,6 +7,7 @@ const { categoryTypes, itemTypesFilter} = require('../utils/constants');
 const Item = require( '../models/stock/Item' );
 const { publicS3Object, deleteS3Object } = require( '../utils' );
 const StockTransactions = require( '../models/stock/StockTransactions' );
+const DeleteActivity = require('../models/store/DeleteActivity');
 
 router.use(authCheck);
 
@@ -20,7 +21,7 @@ router.post('/create', async (req, res) => {
     });
     const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request"); 
-
+    const lastAction = store.dataUpdated.items;
     const category = await Category.findOne({ _id: req.body.categoryId, storeId: req.body.storeId });
     if(!category) throw new Error("invalid Request"); 
     const now = moment().tz('Asia/Karachi').toDate();
@@ -54,7 +55,7 @@ router.post('/create', async (req, res) => {
       creationDate: now,
       lastUpdated: now,
     }
-    const item = new Item(record);
+    let item = new Item(record);
     await item.save();
     if(req.body.variants)
       for(let index = 0; index < req.body.variants.length; index++)
@@ -102,9 +103,16 @@ router.post('/create', async (req, res) => {
       let key = process.env.AWS_KEY_PREFIX + req.body.storeId + '/items/' + req.body.image;
       await publicS3Object( key );
     }
+    item = item.toObject();
+    item.packings = await Item.find({ storeId: item.storeId, packParentId: item._id });
+    item.variants = await Item.find({ storeId: item.storeId, varientParentId: item._id });
     await store.updateLastActivity();
-    await store.logCollectionLastUpdated('items');
-    res.json( item );
+    await store.logCollectionLastUpdated('items', now);
+    res.json( {
+      item,
+      now,
+      lastAction
+    } );
   }catch(err)
   {
     return res.status(400).json({message: err.message});
@@ -120,7 +128,7 @@ router.post('/update', async (req, res) => {
     });
     const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid request");
-
+    const lastAction = store.dataUpdated.items;
     let item = await Item.findById(req.body._id);
     
     if(!item || item.storeId.toString() !== store._id.toString()) throw new Error("invalid request");
@@ -155,7 +163,7 @@ router.post('/update', async (req, res) => {
     await item.save();
     
     //Update variants or packings, 
-
+    let deletedSubItems = [];
     if(category.type === categoryTypes.CATEGORY_TYPE_VARIANT)
     {
       //Delete Variants
@@ -178,6 +186,7 @@ router.post('/update', async (req, res) => {
               collectionName: 'items',
               time: now
           }).save();
+          deletedSubItems.push(oldVariants[index]._id);
           await store.logCollectionLastUpdated('deleteActivity');
           await Item.findByIdAndDelete( oldVariants[index]._id );
         }
@@ -191,6 +200,7 @@ router.post('/update', async (req, res) => {
             collectionName: 'items',
             time: now
         }).save();
+        deletedSubItems.push(item._id);
         await store.logCollectionLastUpdated('deleteActivity');
         await Item.findByIdAndDelete( item._id );
         item = null;//set it null to create new parent in the loop
@@ -205,10 +215,10 @@ router.post('/update', async (req, res) => {
             combinationId: req.body.variants[index].combinationId,
             combinationCode: req.body.variants[index].combinationCode,
             combinationName: req.body.variants[index].combinationName,
-            costPrice: req.body.variants[index].costPrice ? req.body.variants[index].costPrice : item.costPrice,
-            salePrice: req.body.variants[index].salePrice ? req.body.variants[index].salePrice : item.salePrice,
-            minStock: req.body.variants[index].minStock ? req.body.variants[index].minStock : item.minStock,
-            maxStock: req.body.variants[index].maxStock ? req.body.variants[index].maxStock : item.maxStock,
+            costPrice: req.body.variants[index].costPrice ? req.body.variants[index].costPrice : (item && item.costPrice ? item.costPrice : 0),
+            salePrice: req.body.variants[index].salePrice ? req.body.variants[index].salePrice : (item && item.salePrice ? item.salePrice : 0),
+            minStock: req.body.variants[index].minStock ? req.body.variants[index].minStock : (item && item.minStock ? item.minStock : 0),
+            maxStock: req.body.variants[index].maxStock ? req.body.variants[index].maxStock : (item && item.maxStock ? item.maxStock : 0),
           }
           if(index === 0) //first variant is also Parent of all varients
           {
@@ -298,6 +308,7 @@ router.post('/update', async (req, res) => {
               collectionName: 'items',
               time: now
           }).save();
+          deletedSubItems.push(oldPackings[index]._id);
           await store.logCollectionLastUpdated('deleteActivity');
           await Item.findByIdAndDelete( oldPackings[index]._id );
         }
@@ -337,9 +348,18 @@ router.post('/update', async (req, res) => {
           }
         }
     }
+    item = item.toObject();
+    item.packings = await Item.find({ storeId: item.storeId, packParentId: item._id });
+    item.variants = await Item.find({ storeId: item.storeId, varientParentId: item._id });
+
     await store.updateLastActivity();
-    await store.logCollectionLastUpdated('items');
-    res.json( item );
+    await store.logCollectionLastUpdated('items', now);
+    res.json( {
+      item,
+      now,
+      lastAction,
+      deletedSubItems
+    } );
   }catch(err)
   {
     return res.status(400).json({message: err.message});
@@ -460,8 +480,9 @@ router.post('/delete', async (req, res) => {
     if(!req.body.itemId) throw new Error("Item id is required");
     const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request"); 
-
+    const lastAction = store.dataUpdated.deleteActivity;
     const item = await Item.findOne({ storeId: req.body.storeId, _id: req.body.itemId });
+    if(!item) throw new Error("Item not found");
     //if parent has transactions or if packing has transaction, pack transaction has parent itemId 
     let txns = await StockTransactions.countDocuments({ storeId: req.body.storeId, itemId: req.body.itemId });
     if(txns) throw new Error("This item has stock transcations so it cannot be deleted");
@@ -514,9 +535,9 @@ router.post('/delete', async (req, res) => {
       collectionName: 'items',
       time: now
      }).save();
-    await store.logCollectionLastUpdated('deleteActivity');
+    await store.logCollectionLastUpdated('deleteActivity', now);
 
-    res.json( { success: true } );
+    res.json( { success: true, now, lastAction } );
   }catch(err)
   {
     return res.status(400).json({message: err.message});
@@ -614,7 +635,7 @@ router.post('/adjustStock', async (req, res) => {
     });
     const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid request");
-
+    const lastAction = store.dataUpdated.items;
     let item = await Item.findById(req.body.itemId);
     
     if(!item || item.storeId.toString() !== store._id.toString()) throw new Error("invalid request");
@@ -640,8 +661,12 @@ router.post('/adjustStock', async (req, res) => {
       await items[index].save();
     }
     await store.updateLastActivity();
-    await store.logCollectionLastUpdated('items');
-    res.json( items );
+    await store.logCollectionLastUpdated('items', now);
+    res.json( {
+      items,
+      now,
+      lastAction
+    } );
   }catch(err)
   {
     return res.status(400).json({message: err.message});

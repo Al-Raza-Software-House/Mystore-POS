@@ -27,7 +27,7 @@ router.post('/create', async (req, res) => {
     const supplier = new Supplier(record);
     await supplier.save();
     await store.updateLastActivity();
-    await store.logCollectionLastUpdated('suppliers');
+    await store.logCollectionLastUpdated('suppliers', now);
     res.json({
       supplier,
       now,

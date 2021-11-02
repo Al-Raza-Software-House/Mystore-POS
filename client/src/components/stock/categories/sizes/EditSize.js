@@ -8,6 +8,7 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import TextInput from '../../../library/form/TextInput';
 import FormMessage from '../../../library/FormMessage';
 import { updateCategory } from '../../../../store/actions/categoryActions';
+import { updateItemSize } from '../../../../store/actions/itemActions';
 
 function EditSize(props){
   const { dispatch, size, handleSubmit, pristine, submitting, submitSucceeded, error, invalid } = props;
@@ -98,6 +99,7 @@ const onSubmit = (values, dispatch, { storeId, categoryId, size }) => {
     if(response.data.category._id)
     {
       dispatch( updateCategory(storeId, categoryId, response.data.category, response.data.now, response.data.lastAction) );
+      dispatch( updateItemSize(storeId, size._id, values.code, values.title) );
       dispatch( showSuccess("Size updated") );
     }
 

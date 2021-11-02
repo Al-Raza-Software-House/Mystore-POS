@@ -61,6 +61,10 @@ const accountsReducer = (state = initState, action) => {
       }
     case actionTypes.BANK_CREATED:
       banks = state.banks[action.storeId] ? state.banks[action.storeId] : [];
+      if(action.bank.default)
+      {
+        banks = banks.map(bank => ({...bank, default: false})); //un-default the rest of banks
+      }
       return{
         ...state,
         banks:{
@@ -70,6 +74,10 @@ const accountsReducer = (state = initState, action) => {
       }
     case actionTypes.BANK_UPDATED:
       banks = state.banks[action.storeId] ? state.banks[action.storeId] : [];
+      if(action.bank.default)
+      {
+        banks = banks.map(bank => ({...bank, default: false})); //un-default the rest of banks
+      }
       banks = banks.map(item => item._id === action.bankId ? action.bank : item);
       return{
         ...state,

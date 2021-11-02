@@ -82,7 +82,7 @@ const itemReducer = (state = initState, action) => {
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         allItems: [action.item, ...storeRecord.allItems],
+         allItems: [action.item, ...action.item.packings, ...action.item.variants, ...storeRecord.allItems],
          filteredItems: [action.item, ...storeRecord.filteredItems], //append new items
          filteredItemsCount: storeRecord.filteredItemsCount + 1
        }
@@ -94,20 +94,62 @@ const itemReducer = (state = initState, action) => {
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         allItems: storeRecord.allItems.filter(record => record._id !== action.itemId),
+         allItems: storeRecord.allItems.filter(record => record._id !== action.itemId && record.packParentId !== action.itemId && record.varientParentId !== action.itemId ), //remove item, all it's packings and variants
          filteredItems: storeRecord.filteredItems.filter(record => record._id !== action.itemId), //append new items
          filteredItemsCount: storeRecord.filteredItemsCount - 1
        }
      };
 
     case actionTypes.ITEM_UPDATED:
+      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
+      let newMasterItems = [...storeRecord.allItems];
+      newMasterItems = newMasterItems.filter(item => action.deletedSubItems.indexOf(item._id) === -1 ); //remove deleted variants or packs first
+      for(let i=0; i<action.item.packings.length; i++)
+      {
+        let packIndex = newMasterItems.findIndex(item => item._id === action.item.packings[i]._id);
+        if(packIndex === -1) //new packing added
+          newMasterItems = [action.item.packings[i], ...newMasterItems];
+        else
+          newMasterItems[packIndex] = action.item.packings[i];
+      }
+      for(let i=0; i<action.item.variants.length; i++)
+      {
+        let variantIndex = newMasterItems.findIndex(item => item._id === action.item.variants[i]._id);
+        if(variantIndex === -1) //new packing added
+          newMasterItems = [action.item.variants[i], ...newMasterItems];
+        else
+          newMasterItems[variantIndex] = action.item.variants[i];
+      }
+      let parentItemIndex = newMasterItems.findIndex(item => item._id === action.item._id); //check if parent item/variant changed
+      if(parentItemIndex === -1) //parent item is newly created variant
+        newMasterItems = [action.item, ...newMasterItems];
+      else
+        newMasterItems[parentItemIndex] = action.item; //replace parent item with update record
+      return{
+        ...state,
+        [action.storeId]: {
+          ...storeRecord,
+          allItems: newMasterItems,
+          filteredItems: storeRecord.filteredItems.map(record => record._id === action.itemId ? action.item : record), //append new items
+        }
+      };
+    case actionTypes.ITEM_SIZE_NAME_UPDATED:
      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
      return{
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         allItems: storeRecord.allItems.map(record => record._id === action.itemId ? action.item : record),
-         filteredItems: storeRecord.filteredItems.map(record => record._id === action.itemId ? action.item : record), //append new items
+         allItems: storeRecord.allItems.map(record => record.sizeId === action.sizeId ? { ...record, sizeCode: action.sizeCode, sizeName: action.sizeName } : record)
+       }
+     };
+
+    case actionTypes.ITEM_COMBINATION_NAME_UPDATED:
+     storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
+     return{
+       ...state,
+       [action.storeId]: {
+         ...storeRecord,
+         allItems: storeRecord.allItems.map(record => record.combinationId === action.combinationId ? { ...record, combinationCode: action.combinationCode, combinationName: action.combinationName } : record)
        }
      };
 

@@ -35,11 +35,23 @@ const storeReducer = (state = initState, action) => {
         selectedStoreId: action.id,
         userRole: action.userRole
       }
+    case actionTypes.STORE_USER_ROLE_CHANGED:
+      return{
+        ...state,
+        userRole: action.newRole
+      }
     case actionTypes.STORE_DELETED: 
       return{
         ...state,
         selectedStoreId:  action.id === state.selectedStoreId ? null : state.selectedStoreId,
         stores: state.stores.filter((item) => item._id !== action.id)
+      }
+    case actionTypes.LAST_END_OF_DAY_UPDATED:
+      const stores = state.stores.map(store => store._id === action.storeId ? {...store, lastEndOfDay: action.newEndOfDay } : store); 
+      return{
+        ...state,
+        selectedStoreId:  action.id === state.selectedStoreId ? null : state.selectedStoreId,
+        stores: stores
       }
     default:
       return state;

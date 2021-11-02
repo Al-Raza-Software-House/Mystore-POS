@@ -81,6 +81,7 @@ const storeSchema = new mongoose.Schema({
 
   lastPayment: Date, //when was last transaction
   expiryDate: Date, //when subscription expires
+  lastEndOfDay: Date, //Last day closed at
   
   users: [storeUsersSchema],
   registors: [registorSchema],
