@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText } from '@material-ui/core'
-import { Field, reduxForm, SubmissionError } from 'redux-form';
+import React, { useEffect, useMemo } from 'react';
+import { makeStyles, Button, Box, Typography, FormHelperText, FormLabel } from '@material-ui/core'
+import { change, Field, formValueSelector, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
@@ -10,15 +10,37 @@ import { compose } from 'redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
-import { createHead } from '../../../store/actions/accountActions';
+import { addNewTxns, createHead } from '../../../store/actions/accountActions';
 import RadioInput from '../../library/form/RadioInput';
-import { accountHeadTypes } from '../../../utils/constants';
+import SelectInput from '../../library/form/SelectInput';
+import { transactionTypes, accountHeadTypes } from '../../../utils/constants';
+import { useSelector } from 'react-redux';
+import DateTimeInput from '../../library/form/DateTimeInput';
+import moment from 'moment';
 
-let headTypes = [
-  { id: accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL, title: "General" },
-  { id: accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME, title: "Income" },
-  { id: accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE, title: "Expense" },
+const transactionTypeOptions = [
+  { id: transactionTypes.TRANSACTION_TYPE_CASH, title: "Cash" },
+  { id: transactionTypes.TRANSACTION_TYPE_BANK, title: "Bank" },
 ]
+
+const transactionTypeLabelMap = {
+  [accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL]: "Transfer amount in",
+  [accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME]: "Receive amount in",
+  [accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE]: "Pay amount in",
+}
+
+const generalHeadTxnTypes = [
+  { id: -1, title: "Pay amount"},
+  { id: 1, title: "Receive amount"},
+]
+
+const bankAccountHeadTxnTypes = [
+  { id: -1, title: "Deposit Cash"},
+  { id: 1, title: "Withdraw Cash"},
+]
+
+const formName = 'newTransaction';
+const formSelector = formValueSelector(formName);
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -35,42 +57,163 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-function CreateHead(props) {
+function NewTransaction(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, dispatch } = props;
+  const { storeId, banks, heads, defaultBankId, lastEndOfDay } = props;
+
+  const headId = useSelector(state => formSelector(state, 'headId'));
+  const type = useSelector(state => formSelector(state, 'type'));
+  const generalTxnType = useSelector(state => formSelector(state, 'generalTxnType'));
+
+  const headOptions = useMemo(() => {
+    let options = heads.map(head => ({ id: head._id, title: head.name }) );
+    return [{ id: 0, title: "Select Account" }, ...options]
+  }, [heads]);
+  const selectedHead = useMemo(() => heads.find(head => head._id === headId), [heads, headId]);
+
+  const bankOptions = useMemo(() => {
+    return banks.map(bank => ({ id: bank._id, title: bank.name }) );
+  }, [banks]);
+
+  useEffect(() => {
+    if(selectedHead && selectedHead.name === "Bank Account")
+      dispatch( change(formName, 'type', transactionTypes.TRANSACTION_TYPE_CASH) );
+    if((selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK)
+      dispatch( change(formName, 'bankId', defaultBankId) );
+    else if ( parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH )
+      dispatch( change(formName, 'bankId', null) );
+  }, [selectedHead, type]);
+
+  useEffect(() => {
+    dispatch( change(formName, 'bankId', defaultBankId) );
+  }, [defaultBankId]);
+
   useEffect(() => {
     if(submitSucceeded)
-      history.push('/accounts/heads');
+      history.push('/accounts');
   }, [submitSucceeded, history])
     return(
       <>
       <Box width="100%" justifyContent="flex-end" display="flex">
-        <Button disableElevation color="primary" startIcon={<FontAwesomeIcon icon={faLongArrowAltLeft} />} component={Link} to="/accounts/heads">          Account Heads
+        <Button disableElevation color="primary" startIcon={<FontAwesomeIcon icon={faLongArrowAltLeft} />} component={Link} to="/accounts">          
+          Transactions
         </Button>
       </Box>
       <Box margin="auto" width={{ xs: '100%', md: '50%' }}>
-        <Typography gutterBottom variant="h6" align="center">Add New Account Head</Typography>
+        <Typography gutterBottom variant="h6" align="center">Add New Transaction</Typography>
         <form onSubmit={handleSubmit}>
           <Box textAlign="center" mb={2}>
             <Field
-              component={RadioInput}
-              options={headTypes}
-              label=""
-              id="type"
-              name="type"
+              component={DateTimeInput}
+              label="Transaction Time"
+              name="time"
+              dateFormat="DD MMMM, YYYY hh:mm A"
+              fullWidth={true}
+              inputVariant="outlined"
+              margin="dense"
+              emptyLabel=""
+              minDate={ moment(lastEndOfDay).toDate() }
+              maxDate={ moment().toDate() }
+              showTodayButton
+            />  
+          </Box>
+          <Box textAlign="center">
+            <Field
+              component={SelectInput}
+              options={headOptions}
+              name="headId"
+              fullWidth={true}
+              variant="outlined"
+              margin="dense"
             />
           </Box>
+          
+          <Box textAlign="center">
+            {
+                selectedHead && selectedHead.name === "Bank Account" ? 
+                <FormLabel> Cash Transaction <br/> withdraw/deposit store cash into bank</FormLabel> : 
+                <Field
+                  component={RadioInput}
+                  options={transactionTypeOptions}
+                  label={ selectedHead ? transactionTypeLabelMap[selectedHead.type] : "Transaction Type" }
+                  id="type"
+                  name="type"
+                  disabled={headId === 0}
+                />
+              }
+          </Box>
+          {
+            (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL ) ? 
+            <Box textAlign="center" mb={2} width="100%">
+              <Field
+                component={RadioInput}
+                options={selectedHead && selectedHead.name === "Bank Account" ? bankAccountHeadTxnTypes : generalHeadTxnTypes}
+                name="generalTxnType"
+                variant="outlined"
+                margin="dense"
+                disabled={headId === 0}
+              />
+            </Box>
+            : null
+          }
+          <Box textAlign="center" mb={2}>
+            <FormLabel>
+              { /*Bank Deposit or withdrawl*/ }
+              { (selectedHead && selectedHead.name === "Bank Account") && parseInt(generalTxnType) === -1 ? "This will reduce cash in store and amount will be added to your selected bank" : null }
+              { (selectedHead && selectedHead.name === "Bank Account") && parseInt(generalTxnType) === 1 ? "This will increase cash in store and amount will be deducted from your selected bank" : null }
+              { /*General Head except "Bank Account" Cash transaction*/ }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH && parseInt(generalTxnType) === -1 ? "This will reduce cash in store" : null }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH && parseInt(generalTxnType) === 1 ? "This will increase cash in store" : null }
+              { /*General Head except "Bank Account" Bank transaction*/ }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK && parseInt(generalTxnType) === -1 ? "The amount will be deducted from your selected bank account" : null }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK && parseInt(generalTxnType) === 1 ? "The amount will be added to your selected bank account" : null }
+              { /*Income heads cash transaction*/ }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH ? "This will increase cash in store" : null }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK ? "The income amount will be added to your selected bank account" : null }
+              { /*Income heads cash transaction*/ }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH ? "This will reduce cash in store" : null }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK ? "The expense amount will be deducted from your selected bank account" : null }
+            </FormLabel>
+          </Box>
+          {
+            (selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK ? 
+            <Box>
+              <Field
+                component={SelectInput}
+                options={bankOptions}
+                name="bankId"
+                fullWidth={true}
+                variant="outlined"
+                margin="dense"
+                disabled={headId === 0}
+              />
+            </Box>
+            : null
+          }
+          
           <Box>
             <Field
             component={TextInput}
-            id="name"
-            name="name"
-            label="Name"
-            placeholder="Account head name..."
+            id="amount"
+            name="amount"
+            label="Amount"
+            placeholder="Amount..."
             fullWidth={true}
             variant="outlined"
-            autoFocus={true}
+            margin="dense"
+            type="number"
+            onKeyDown={(e) => {
+                  if(!((e.keyCode > 95 && e.keyCode < 106)
+                    || (e.keyCode > 47 && e.keyCode < 58) 
+                    || e.keyCode === 8 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
+                      e.preventDefault();
+                      return false;
+                  }
+              }}
+            inputProps={{  min: 1 }}
+            disabled={headId === 0}
             />    
           </Box>
 
@@ -80,12 +223,14 @@ function CreateHead(props) {
               id="notes"
               name="notes"
               label="Notes"
-              placeholder="Description or notes..."
+              placeholder="Notes..."
               type="text"
               fullWidth={true}
               variant="outlined"
               multiline
               rows={3}
+              margin="dense"
+              disabled={headId === 0}
             />
           </Box>
 
@@ -93,7 +238,7 @@ function CreateHead(props) {
           
         <Box textAlign="center">
           <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty} >
-            Add Account Head
+            Add Transaction
           </Button>
           {  
             <FormHelperText className={classes.formError} error={true} style={{visibility: !submitting && error ? 'visible' : 'hidden' }}>
@@ -109,12 +254,12 @@ function CreateHead(props) {
 
 const onSubmit = (values, dispatch, { storeId }) => {
   dispatch(showProgressBar());
-  return axios.post('/api/accounts/heads/create', {storeId, ...values}).then( response => {
+  return axios.post('/api/accounts/transactions/new', {storeId, ...values}).then( response => {
     dispatch(hideProgressBar());
-    if(response.data.head._id)
+    if(response.data.length)
     {
-      dispatch( createHead(storeId, response.data.head, response.data.now, response.data.lastAction) );
-      dispatch( showSuccess("New account head added") );
+      dispatch( addNewTxns(storeId, response.data) );
+      dispatch( showSuccess("New transaction added") );
     }
 
   }).catch(err => {
@@ -126,26 +271,44 @@ const onSubmit = (values, dispatch, { storeId }) => {
 }
 
 const validate = (values, props) => {
-  const { dirty } = props;
+  const { dirty, lastEndOfDay } = props;
   if(!dirty) return {};
   const errors = {};
-  if(!values.name)
-   errors.name = "Account head name is required";
+  if(lastEndOfDay && moment(values.time, "DD MMMM, YYYY hh:mm A") <= moment(lastEndOfDay))
+    errors.time = "Date & time should be after last day closing: " + moment(lastEndOfDay).format("DD MMMM, YYYY hh:mm A");
+  else if(moment(values.time, "DD MMMM, YYYY hh:mm A") > moment())
+    errors.time = "Date & time should not be after current time: " + moment().format("DD MMMM, YYYY hh:mm A"); 
+  if(!values.headId)
+    errors.headId = "Please select an account head first";
+  if(!values.amount)
+    errors.amount = "Amount is required";
+  else if(Number(values.amount) < 1)
+    errors.amount = "invalid amount";
   return errors;
 }
 
 const mapStateToProps = state => {
+  const storeId = state.stores.selectedStoreId;
+  const store = state.stores.stores.find(store => store._id === storeId);
+  let heads = state.accounts.heads[storeId] ? state.accounts.heads[storeId] : [];
+  heads = heads.filter(head => head.systemHead === false);//get only non system head for custom transaction
+  const banks = state.accounts.banks[storeId] ? state.accounts.banks[storeId] : [];
+  const defaultBank = banks.find(bank => bank.default === true);
   return{
-    storeId: state.stores.selectedStoreId
+    storeId,
+    heads,
+    banks,
+    defaultBankId: defaultBank ? defaultBank._id : null,
+    lastEndOfDay: store.lastEndOfDay
   }
 }
 
 export default compose(
 connect(mapStateToProps),
 reduxForm({
-  'form': 'createHead',
+  'form': formName,
   validate,
   onSubmit,
-  initialValues: { type: accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL }
+  initialValues: { headId: 0, type: transactionTypes.TRANSACTION_TYPE_CASH, generalTxnType: -1, time: new Date() }
 })
-)(CreateHead);
+)(NewTransaction);

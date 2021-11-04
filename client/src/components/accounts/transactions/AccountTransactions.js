@@ -7,12 +7,12 @@ import { Link } from 'react-router-dom';
 import { deleteHead } from '../../../store/actions/accountActions';
 import { accountHeadTypes } from '../../../utils/constants';
 
-function Heads({ storeId, heads, deleteHead }) {
+function AccountTransactions({ storeId, heads, deleteHead }) {
  
   return(
     <>
       <Box width="100%" justifyContent="flex-end" display="flex" mb={2}>
-        <Button startIcon={ <FontAwesomeIcon icon={faPlus} /> } variant="contained" color="primary" disableElevation component={Link} to="/accounts/heads/create" >New Account Head</Button>
+        <Button startIcon={ <FontAwesomeIcon icon={faPlus} /> } variant="contained" color="primary" disableElevation component={Link} to="/accounts/transactions/new" >New Transaction</Button>
       </Box>
       <TableContainer>
         <Table size="small">
@@ -105,4 +105,4 @@ const mapStateToProps = state => {
 }
 
 
-export default connect(mapStateToProps, { deleteHead })(Heads);
+export default connect(mapStateToProps, { deleteHead })(AccountTransactions);

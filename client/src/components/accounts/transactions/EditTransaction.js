@@ -33,7 +33,7 @@ const headTypesMaps = {
   [accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE]: "Expense",
 }
 
-function EditHead(props) {
+function EditTransaction(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, headId } = useParams();
@@ -145,4 +145,4 @@ reduxForm({
   validate,
   onSubmit
 })
-(EditHead);
+(EditTransaction);

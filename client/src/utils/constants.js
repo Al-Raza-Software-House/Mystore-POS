@@ -43,3 +43,8 @@ export const accountHeadTypes = {
   ACCOUNT_HEAD_TYPE_EXPENSE: 2,
   ACCOUNT_HEAD_TYPE_GENERAL: 3
 }
+
+export const transactionTypes = {
+  TRANSACTION_TYPE_CASH: 1,
+  TRANSACTION_TYPE_BANK: 2,
+}

@@ -6,6 +6,10 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'store'
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+  },
   parentId: mongoose.Schema.Types.ObjectId, //sale ID, GRN ID, supplier Payment ID, customer Receipt ID
   headId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -17,6 +21,7 @@ const schema = new mongoose.Schema({
   },
   amount: Number,
   type: Number, //cash transaction affecting cash in store, or Bank transaction that has no effect on cash in store
+  notes: String,
   description: String,
   time: Date
 })

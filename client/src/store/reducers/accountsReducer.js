@@ -4,10 +4,16 @@ const initState = {
   banks: {},
   transactions: {}
 }
-
+const defaultStoreTransactions = {
+  records: [],
+  totalRecords: 0,
+  recordsLoaded: false
+}
 const accountsReducer = (state = initState, action) => {
   let heads = null;
   let banks = null;
+  let storeTxns = null;
+  let newTxns = null;
   switch(action.type)
   {
     //ACCOUNT HEAD cases
@@ -97,7 +103,36 @@ const accountsReducer = (state = initState, action) => {
         }
       }
 
+    //Transaction cases
+    case actionTypes.TRANSACTIONS_LOADED:
+      storeTxns = state.transactions[action.storeId] ? state.transactions[action.storeId] : defaultStoreTransactions;
+      newTxns = {
+        records: [...storeTxns.records, ...action.txns],
+        totalRecords: action.totalRecords,
+        recordsLoaded: true
+      }
+      return{
+        ...state,
+        transactions:{
+          ...state.transactions,
+          [action.storeId]: newTxns
+        }
+      }
 
+    case actionTypes.TRANSACTION_ADDED:
+      storeTxns = state.transactions[action.storeId] ? state.transactions[action.storeId] : defaultStoreTransactions;
+      newTxns = {
+        records: [...action.txns, ...storeTxns.records],
+        totalRecords: storeTxns.totalRecords + action.txns.length,
+        recordsLoaded: true
+      }
+      return{
+        ...state,
+        transactions:{
+          ...state.transactions,
+          [action.storeId]: newTxns
+        }
+      }
     default:
       return state;
   }

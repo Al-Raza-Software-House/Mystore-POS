@@ -13,6 +13,11 @@ export const actionTypes = {
   BANK_UPDATED: 'bankUpdated',
   BANK_DELETED: 'bankDeleted',
 
+  TRANSACTIONS_LOADED: 'transactionsLoaded',
+  TRANSACTION_ADDED: 'transactionAdded',
+  TRANSACTION_UPDATED: 'transactionUpdated',
+  TRANSACTION_DELETED: 'transactionDeleted',
+
   LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged', //cannot put in system actions, it creates chicken egg problem both files importing form each other
 }
 
@@ -126,6 +131,10 @@ export const updateBank = (storeId, bankId, bank, now, lastAction) => {
       dispatch( { type: actionTypes.BANK_UPDATED, storeId, bankId, bank } );
     dispatch( banksStampChanged(storeId, now) );
   }
+}
+
+export const addNewTxns = (storeId, txns) => {
+  return { type: actionTypes.TRANSACTION_ADDED, storeId, txns }
 }
 
 export const banksStampChanged = (storeId, newStamp) => {

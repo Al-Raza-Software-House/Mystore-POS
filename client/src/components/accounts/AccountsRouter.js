@@ -10,6 +10,8 @@ import Banks from './banks/Banks';
 import CreateHead from './accountHeads/CreateHead';
 import EditHead from './accountHeads/EditHead';
 import Heads from './accountHeads/Heads';
+import NewTransaction from './transactions/NewTransaction';
+import EditTransaction from './transactions/EditTransaction';
 
 
 const useStyles = makeStyles(theme => ({
@@ -48,6 +50,8 @@ function AccountsRouter({ loadVideos }){
             <Route path="/accounts/heads/edit/:storeId/:headId" component={EditHead} />
             <Route path="/accounts/heads" component={Heads} />
 
+            <Route path="/accounts/transactions/new" component={NewTransaction} />
+            <Route path="/accounts/transactions/edit/:storeId/:transactionId" component={EditTransaction} />
             <Route path="/accounts" component={AccountTransactions} />
           </Switch>
         </Box>

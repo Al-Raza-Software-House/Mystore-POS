@@ -36,11 +36,17 @@ const accountHeadTypes = {
   ACCOUNT_HEAD_TYPE_GENERAL: 3
 }
 
+const transactionTypes = {
+  TRANSACTION_TYPE_CASH: 1,
+  TRANSACTION_TYPE_BANK: 2,
+}
+
 module.exports = {
   storeStates,
   userRoles,
   categoryTypes,
   itemTypesFilter,
   stockTxnTypes,
-  accountHeadTypes
+  accountHeadTypes,
+  transactionTypes
 }

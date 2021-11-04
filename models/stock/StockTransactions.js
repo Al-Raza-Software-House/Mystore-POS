@@ -6,6 +6,10 @@ const stockTransactionsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'store'
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+  },
   itemId:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'item'

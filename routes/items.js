@@ -649,6 +649,7 @@ router.post('/adjustStock', async (req, res) => {
       //log Stock TXN
       await new StockTransactions({
         storeId: store._id,
+        userId: req.user._id,
         itemId: items[index]._id,
         reasonId: records[index].adjustmentReason,
         quantity: Number( records[index].adjustmentQuantity ),

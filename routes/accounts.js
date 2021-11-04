@@ -5,6 +5,8 @@ const Bank = require('../models/accounts/Bank');
 const { authCheck } = require('../utils/middlewares');
 const moment = require("moment-timezone");
 const DeleteActivity = require( '../models/store/DeleteActivity' );
+const { accountHeadTypes, transactionTypes } = require( '../utils/constants' );
+const AccountTransaction = require( '../models/accounts/AccountTransaction' );
 
 router.use(authCheck);
 
@@ -104,8 +106,8 @@ router.post('/banks/delete', async (req, res) => {
     const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     const lastAction = store.dataUpdated.deleteActivity;
-    // const txns = await StockTransactions.countDocuments({ storeId: req.body.storeId, bankId: req.body.bankId });
-    // if(txns) throw new Error("This bank is being used to adjust stock so it connot be deleted");
+    const txns = await AccountTransaction.countDocuments({ storeId: req.body.storeId, bankId: req.body.bankId });
+    if(txns) throw new Error("This bank has transaction in the system so it connot be deleted");
 
     await Bank.findOneAndDelete({ _id: req.body.bankId, storeId: req.body.storeId });
     await store.updateLastActivity();
@@ -216,8 +218,8 @@ router.post('/heads/delete', async (req, res) => {
     const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     const lastAction = store.dataUpdated.deleteActivity;
-    // const txns = await StockTransactions.countDocuments({ storeId: req.body.storeId, bankId: req.body.bankId });
-    // if(txns) throw new Error("This bank is being used to adjust stock so it connot be deleted");
+    const txns = await AccountTransaction.countDocuments({ storeId: req.body.storeId, headId: req.body.headId });
+    if(txns) throw new Error("This head has transaction in the system so it connot be deleted");
 
     await AccountHead.findOneAndDelete({ _id: req.body.headId, storeId: req.body.storeId });
     await store.updateLastActivity();
@@ -230,6 +232,75 @@ router.post('/heads/delete', async (req, res) => {
      }).save();
     await store.logCollectionLastUpdated('deleteActivity', now);
     res.json( { success: true, now, lastAction } );
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
+
+router.post('/transactions/new', async (req, res) => {
+  try
+  {
+    if(!req.body.storeId) throw new Error("Store Id is required");
+    if(!req.body.headId) throw new Error("headId is required");
+    const store = await Store.isManager(req.body.storeId, req.user._id);
+    if(!store) throw new Error("invalid Request");
+    await store.updateLastActivity();
+    const now = moment().tz('Asia/Karachi').toDate();
+    const head = await AccountHead.findOne({_id: req.body.headId, storeId: req.body.storeId });
+    if(!head) throw new Error("invalid request");
+    let amount = Number(req.body.amount);
+    
+    if(head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) //expense amount is already negative
+      amount = -1 * amount;
+    else if(head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) //general head
+      amount = parseInt(req.body.generalTxnType)  * amount; //pay or recieve, deposit or withdrawl
+
+    let description = "";
+    if(head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME)
+      description = "Income received: " + head.name;
+    else if(head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE)
+      description = "Expense payment: " + head.name;
+    else if(head.name === "Bank Account" && parseInt(req.body.generalTxnType) === -1)
+      description = "Cash deposited into bank";
+    else if(head.name === "Bank Account" && parseInt(req.body.generalTxnType) === 1)
+      description = "Cash withdrawn from bank";
+    else if(head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL && parseInt(req.body.generalTxnType) === -1)
+      description = "Amount paid: " + head.name;
+    else if(head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL && parseInt(req.body.generalTxnType) === 1)
+      description = "Amount received: " + head.name;
+
+    const record = {
+      storeId: req.body.storeId,
+      userId: req.user._id,
+      headId: req.body.headId,
+      amount: amount, //-ve for expense, +ve of income, both for general
+      type: parseInt(req.body.type), //cash or bank
+      description: description,
+      notes: req.body.notes,
+      time: moment(req.body.time).toDate()
+    }
+    if(head.name === "Bank Account" || parseInt(req.body.type) === transactionTypes.TRANSACTION_TYPE_BANK)
+      record.bankId = req.body.bankId;
+    const txn = new AccountTransaction(record);
+    await txn.save();
+    let bankTxn = null;
+    if(head.name === "Bank Account") //record bank transaction if cash deposited or withdrawn
+    {
+      bankTxn = new AccountTransaction({
+        ...record,
+        amount: -1 * amount, 
+        type: transactionTypes.TRANSACTION_TYPE_BANK,
+        parentId: txn._id // link two transactions to help on edit
+      });
+      await bankTxn.save();
+      txn.parentId = bankTxn._id; // link two transactions to help on edit
+      await txn.save();
+    }
+    const response = [txn];
+    if(bankTxn)
+      response.push(bankTxn);
+    res.json( response );
   }catch(err)
   {
     return res.status(400).json({message: err.message});

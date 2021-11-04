@@ -5,7 +5,7 @@ import { IconButton, makeStyles, InputAdornment, CircularProgress, FormHelperTex
 import { connect } from 'react-redux';
 import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { hideProgressBar, showProgressBar } from "../../../store/actions/progressActions";
-import { adjustStock, updateItem } from '../../../store/actions/itemActions';
+import { adjustStock } from '../../../store/actions/itemActions';
 import axios from 'axios';
 import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
 import { compose } from 'redux';
