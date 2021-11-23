@@ -55,17 +55,17 @@ function Reason({ item, storeId, deleteAdjustmentReason }){
   const id = open ? 'simple-popover' : undefined;
   return(
     <>
-    <TableRow>
+    <TableRow hover>
       <TableCell>{item.name}</TableCell>
       
       <TableCell align="right">
         {
           item.default ? null :
           <>
-            <IconButton component={Link} to={ '/stock/adjustmentReasons/edit/' + storeId + '/' + item._id }  style={{ fontSize: '1.3rem' }} title="Edit Reason">
+            <IconButton component={Link} to={ '/stock/adjustmentReasons/edit/' + storeId + '/' + item._id }  title="Edit Reason">
               <FontAwesomeIcon icon={faPencilAlt} size="xs" />
             </IconButton>
-            <IconButton onClick={(event) => handleClick(event) } style={{ fontSize: '1.3rem' }} title="Delete Reason">
+            <IconButton onClick={(event) => handleClick(event) } title="Delete Reason">
               <FontAwesomeIcon icon={faTrash} size="xs" />
             </IconButton>
           </>

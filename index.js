@@ -48,7 +48,7 @@ mongoose.connect(process.env.MONGODB_URI, mongooseConfig)
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use((req, res, next) => setTimeout(next, 1200));
+app.use((req, res, next) => setTimeout(next, 400));
 app.use(express.static( path.join(__dirname, '/client/build') ));
 app.use('/fonts', express.static( path.join(__dirname, '/assets/fonts') ));
 app.use('/images', express.static( path.join(__dirname, '/images') ));

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { showSuccess } from './alertActions';
+import { showError, showSuccess } from './alertActions';
 import { hideProgressBar, showProgressBar } from "./progressActions"
 
 export const actionTypes = {
@@ -61,7 +61,10 @@ export const deleteSupplier = (storeId, supplierId) => {
         
       dispatch( { type: actionTypes.SUPPLIER_DELETED, storeId, supplierId } );
       dispatch( showSuccess('Supplier deleted') );
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
   }
 }
 

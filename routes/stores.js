@@ -386,6 +386,7 @@ router.get('/getUpdateTimestamps', async (req, res) => {
     }
     res.json({
       storeId: store._id,
+      appVersion: process.env.APP_VERSION,
       lastEndOfDay: store.lastEndOfDay,
       dataUpdated: store.dataUpdated
     });

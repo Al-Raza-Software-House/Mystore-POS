@@ -61,7 +61,7 @@ function Category({ item, storeId, deleteCategory }){
   const id = open ? 'simple-popover' : undefined;
   return(
     <>
-    <TableRow>
+    <TableRow hover>
       <TableCell>{item.name}</TableCell>
       <TableCell align="center">
         { categoryTypesMap[item.type] }
@@ -81,10 +81,10 @@ function Category({ item, storeId, deleteCategory }){
             Properties
           </Button>
         </Box>
-        <IconButton component={Link} to={ '/stock/categories/edit/' + storeId + '/' + item._id }  style={{ fontSize: '1.3rem' }} title="Edit Category">
+        <IconButton component={Link} to={ '/stock/categories/edit/' + storeId + '/' + item._id }  title="Edit Category">
           <FontAwesomeIcon icon={faPencilAlt} size="xs" />
         </IconButton>
-        <IconButton onClick={(event) => handleClick(event) } style={{ fontSize: '1.3rem' }} title="Delete Category">
+        <IconButton onClick={(event) => handleClick(event) } title="Delete Category">
           <FontAwesomeIcon icon={faTrash} size="xs" />
         </IconButton>
       </TableCell>

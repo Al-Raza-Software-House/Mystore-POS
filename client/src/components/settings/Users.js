@@ -58,19 +58,19 @@ function User({ uid, item, myRole, storeId, removeUser }){
   const id = open ? 'simple-popover' : undefined;
   return(
     <>
-    <TableRow>
+    <TableRow hover>
       <TableCell>{item.record.name}</TableCell>
       <TableCell>{item.record.phone}</TableCell>
       <TableCell align="center">{rolesMap[item.userRole]}</TableCell>
       <TableCell align="center">
         { (uid === item.userId || item.isCreator || (myRole === userTypes.USER_ROLE_MANAGER && item.userRole === userTypes.USER_ROLE_OWNER) )  ? null :
-          <IconButton onClick={(event) => handleClick(event, 'edit') } style={{  fontSize: '1.3rem' }} title="Edit Role">
+          <IconButton onClick={(event) => handleClick(event, 'edit') } title="Edit Role">
             <FontAwesomeIcon icon={faPencilAlt} size="xs" />
           </IconButton>
         }
         {
           (uid === item.userId || item.isCreator || (myRole === userTypes.USER_ROLE_MANAGER && item.userRole === userTypes.USER_ROLE_OWNER) ) ? null :
-          <IconButton onClick={(event) => handleClick(event, 'delete') } style={{ fontSize: '1.3rem' }} title="Remove User">
+          <IconButton onClick={(event) => handleClick(event, 'delete') } title="Remove User">
             <FontAwesomeIcon icon={faTrash} size="xs" />
           </IconButton>
         }

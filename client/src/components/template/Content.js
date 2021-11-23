@@ -14,6 +14,8 @@ import HelpRouter from '../help/HelpRouter';
 import BillingRouter from '../billing/BillingRouter';
 import StockRouter from '../stock/StockRouter';
 import AccountsRouter from '../accounts/AccountsRouter';
+import PartiesRouter from '../parties/PartiesRouter';
+import PurchaseRouter from '../purchase/PurchaseRouter';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -45,6 +47,8 @@ function Content({ userRole }) {
         <Route exact path="/dashboard" component={Dashboard} />
 
         <Route path="/stock" component={StockRouter} />
+        <Route path="/purchase" component={PurchaseRouter} />
+        <Route path="/parties" component={PartiesRouter} />
         <Route path="/accounts" component={AccountsRouter} />
         
         <Route path="/store-settings" component={StoreSettingsRouter} />

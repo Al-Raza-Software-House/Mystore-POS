@@ -29,13 +29,7 @@ function CreateItem(props){
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock } = props;
 
-  const [submitPreloader, setSubmitPreloader] = React.useState(false);
-  const submitForm = (e) => {
-    e.preventDefault();
-    setSubmitPreloader(true);
-    dispatch(showProgressBar());
-    handleSubmit();
-  }
+  
 
   const copyCostPrice = () => {
     variants.forEach((variant, index) => {
@@ -72,7 +66,7 @@ function CreateItem(props){
         Items
       </Button>
     </Box>
-    <form onSubmit={submitForm}>
+    <form onSubmit={handleSubmit}>
       <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <Box width={{ xs: '100%', md: '31%' }} >
           <SelectCategory formName="createItem"/>
@@ -324,7 +318,7 @@ function CreateItem(props){
       </Box>
 
       <Box textAlign="center" mt={2}>
-        <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitPreloader || submitting || invalid || !dirty} >
+        <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty} >
           Add Item
         </Button>
         {  
@@ -628,6 +622,20 @@ reduxForm({
   onSubmit,
   asyncValidate,
   initialValues: { costPrice: 0, salePrice: 0, expiryDate: null, packings: [{}], sizes: [], combinations: [] },
-  asyncBlurFields: ['itemCode']
+  asyncBlurFields: ['itemCode'],
+  shouldAsyncValidate: (params) => {
+    const { trigger, syncValidationPasses, initialized  } = params;
+      if(!syncValidationPasses) {
+      return false
+    }
+    switch(trigger) {
+      case 'blur':
+        return true
+      case 'submit':
+        return !initialized
+      default:
+        return false
+    }
+  }
 })
 )(CreateItem)

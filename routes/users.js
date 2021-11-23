@@ -34,8 +34,8 @@ router.post('/signup', async (req, res) => {
         api_token: process.env.SMP_API_TOKEN,
         api_secret: process.env.SMS_API_SECRET,
         to: req.body.phone,
-        from: process.env.SMS_FROM,
-        message: `${pin} is your verification code to create account on mystore.pk`,
+        from: "SMS Alert",
+        message: `use ${pin} to signup on mystore.pk`,
       }
       const response = await axios.post("https://lifetimesms.com/json", smsParams); 
       console.log(response.data);     
@@ -118,8 +118,8 @@ router.post('/resetPassword', async (req, res) => {
         api_token: process.env.SMP_API_TOKEN,
         api_secret: process.env.SMS_API_SECRET,
         to: req.body.phone,
-        from: process.env.SMS_FROM,
-        message: `${pin} is your pin to reset password on mystore.pk`,
+        from: "SMS Alert",
+        message: `use ${pin} to reset password on mystore.pk`,
       }
       await axios.post("https://lifetimesms.com/json", smsParams);
 

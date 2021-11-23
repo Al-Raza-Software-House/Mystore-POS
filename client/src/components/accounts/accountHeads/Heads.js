@@ -53,7 +53,7 @@ function Head({ item, storeId, deleteHead }){
   const id = open ? 'simple-popover' : undefined;
   return(
     <>
-    <TableRow>
+    <TableRow hover>
       <TableCell>{item.name}</TableCell>
       <TableCell>{ headTypesMaps[item.type] }</TableCell>
       
@@ -61,10 +61,10 @@ function Head({ item, storeId, deleteHead }){
         {
           !item.editAble ? null : 
           <>
-            <IconButton component={Link} to={ '/accounts/heads/edit/' + storeId + '/' + item._id }  style={{ fontSize: '1.3rem' }} title="Edit Account Head">
+            <IconButton component={Link} to={ '/accounts/heads/edit/' + storeId + '/' + item._id }  title="Edit Account Head">
               <FontAwesomeIcon icon={faPencilAlt} size="xs" />
             </IconButton>
-            <IconButton onClick={(event) => handleClick(event) } style={{ fontSize: '1.3rem' }} title="Delete Account Head">
+            <IconButton onClick={(event) => handleClick(event) } title="Delete Account Head">
               <FontAwesomeIcon icon={faTrash} size="xs" />
             </IconButton>
           </>

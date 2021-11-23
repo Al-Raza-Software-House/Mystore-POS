@@ -24,6 +24,9 @@ router.post('/create', async (req, res) => {
     const lastAction = store.dataUpdated.items;
     const category = await Category.findOne({ _id: req.body.categoryId, storeId: req.body.storeId });
     if(!category) throw new Error("invalid Request"); 
+    
+    const itemExists = await Item.findOne({ storeId: req.body.storeId, itemCode: req.body.itemCode });
+    if(itemExists) throw new Error("This item code is already taken");
     const now = moment().tz('Asia/Karachi').toDate();
     const defaultProperties = {
       property1: null,

@@ -51,7 +51,7 @@ function AccountsRouter({ loadVideos }){
             <Route path="/accounts/heads" component={Heads} />
 
             <Route path="/accounts/transactions/new" component={NewTransaction} />
-            <Route path="/accounts/transactions/edit/:storeId/:transactionId" component={EditTransaction} />
+            <Route path="/accounts/transactions/edit/:storeId/:txnId" component={EditTransaction} />
             <Route path="/accounts" component={AccountTransactions} />
           </Switch>
         </Box>

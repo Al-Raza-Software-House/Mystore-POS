@@ -36,9 +36,21 @@ const accountHeadTypes = {
   ACCOUNT_HEAD_TYPE_GENERAL: 3
 }
 
-const transactionTypes = {
-  TRANSACTION_TYPE_CASH: 1,
-  TRANSACTION_TYPE_BANK: 2,
+const paymentModes = {
+  PAYMENT_MODE_CASH: 1,
+  PAYMENT_MODE_BANK: 2,
+}
+
+const supplierTxns = {
+  SUPPLIER_TXN_TYPE_PURCHASE: 1,
+  SUPPLIER_TXN_TYPE_RETURN: 2,
+  SUPPLIER_TXN_TYPE_PAYMENT: 3,
+}
+
+const customerTxns = {
+  CUSTOMER_TXN_TYPE_SALE: 1,
+  CUSTOMER_TXN_TYPE_RETURN: 2,
+  CUSTOMER_TXN_TYPE_PAYMENT: 3,
 }
 
 module.exports = {
@@ -48,5 +60,7 @@ module.exports = {
   itemTypesFilter,
   stockTxnTypes,
   accountHeadTypes,
-  transactionTypes
+  paymentModes,
+  supplierTxns,
+  customerTxns
 }

@@ -23,7 +23,8 @@ const schema = new mongoose.Schema({
   type: Number, //cash transaction affecting cash in store, or Bank transaction that has no effect on cash in store
   notes: String,
   description: String,
-  time: Date
+  time: Date,
+  lastUpdated: Date
 })
 
 //store record/settings udpate

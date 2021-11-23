@@ -32,7 +32,7 @@ function BillingHistory({ transactions, selectedStoreId, loadBillingHistory }){
 
 const Transaction = ({ item }) => {
   return (
-    <TableRow>
+    <TableRow hover>
       <TableCell align="center">{ moment(item.time).format('D MMMM, YYYY hh:mm A') }</TableCell>
       <TableCell align="center">Rs.{item.amount}</TableCell>
       <TableCell align="center">{item.mobileAccountNumber}</TableCell>

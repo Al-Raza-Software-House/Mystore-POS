@@ -55,14 +55,14 @@ function Bank({ item, storeId, deleteBank }){
   const id = open ? 'simple-popover' : undefined;
   return(
     <>
-    <TableRow>
+    <TableRow hover>
       <TableCell>{item.name}</TableCell>
       
       <TableCell align="right">
-        <IconButton component={Link} to={ '/accounts/banks/edit/' + storeId + '/' + item._id }  style={{ fontSize: '1.3rem' }} title="Edit Bank">
+        <IconButton component={Link} to={ '/accounts/banks/edit/' + storeId + '/' + item._id }  title="Edit Bank">
           <FontAwesomeIcon icon={faPencilAlt} size="xs" />
         </IconButton>
-        <IconButton onClick={(event) => handleClick(event) } style={{ fontSize: '1.3rem' }} title="Delete Bank">
+        <IconButton onClick={(event) => handleClick(event) } title="Delete Bank">
           <FontAwesomeIcon icon={faTrash} size="xs" />
         </IconButton>
       </TableCell>

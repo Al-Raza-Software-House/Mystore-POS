@@ -7,11 +7,18 @@ const customerSchema = new mongoose.Schema({
     ref: 'store'
   },
   name: String,
-  phone1: String,
-  phone2: String,
+  mobile: String,
+  allowCredit: Boolean,
+  creditLimit: Number,
+
   city: String,
   address: String,
+  notes: String,
+
   openingBalance: Number,
+  totalSales: Number,
+  totalReturns: Number,
+  totalPayment: Number,
   currentBalance: Number,
 
   creationDate: Date,

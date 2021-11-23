@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Typography, Popover, IconButton, makeStyles } from '@material-ui/core';
+import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Typography, Popover, IconButton } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync, faPencilAlt, faTrash,  faArrowAltCircleUp } from '@fortawesome/free-solid-svg-icons';
 import { connect, useSelector } from 'react-redux';
@@ -134,15 +134,8 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
   )
 }
 
-const useStyles = makeStyles(theme => ({
-  actionBtn: {
-    fontSize: '1.3rem',
-    padding: '4px 12px'
-  }
-}))
 
 function Item({ item, categoriesMap, storeId, deleteItem }){
-  const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -169,15 +162,15 @@ function Item({ item, categoriesMap, storeId, deleteItem }){
           <>
             <AdjustStock storeId={storeId} itemId={item._id} />
 
-            <IconButton onClick={(event) => handleClick(event) } className={classes.actionBtn} title="Add Stock">
+            <IconButton onClick={(event) => handleClick(event) } title="Add Stock">
               <FontAwesomeIcon icon={faArrowAltCircleUp} size="xs" />
             </IconButton>
           </>
         }
-        <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id }  className={classes.actionBtn} title="Edit Item">
+        <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id }  title="Edit Item">
           <FontAwesomeIcon icon={faPencilAlt} size="xs" />
         </IconButton>
-        <IconButton onClick={(event) => handleClick(event) } className={classes.actionBtn} title="Delete Item">
+        <IconButton onClick={(event) => handleClick(event) } title="Delete Item">
           <FontAwesomeIcon icon={faTrash} size="xs" />
         </IconButton>
 

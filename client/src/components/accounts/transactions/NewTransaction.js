@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { makeStyles, Button, Box, Typography, FormHelperText, FormLabel } from '@material-ui/core'
-import { change, Field, formValueSelector, reduxForm, SubmissionError } from 'redux-form';
+import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
@@ -10,17 +10,17 @@ import { compose } from 'redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
-import { addNewTxns, createHead } from '../../../store/actions/accountActions';
+import { addNewTxns } from '../../../store/actions/accountActions';
 import RadioInput from '../../library/form/RadioInput';
 import SelectInput from '../../library/form/SelectInput';
-import { transactionTypes, accountHeadTypes } from '../../../utils/constants';
+import { paymentModes, accountHeadTypes } from '../../../utils/constants';
 import { useSelector } from 'react-redux';
 import DateTimeInput from '../../library/form/DateTimeInput';
 import moment from 'moment';
 
-const transactionTypeOptions = [
-  { id: transactionTypes.TRANSACTION_TYPE_CASH, title: "Cash" },
-  { id: transactionTypes.TRANSACTION_TYPE_BANK, title: "Bank" },
+const paymentModeOptions = [
+  { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
+  { id: paymentModes.PAYMENT_MODE_BANK, title: "Bank" },
 ]
 
 const transactionTypeLabelMap = {
@@ -61,7 +61,11 @@ function NewTransaction(props) {
   const history = useHistory();
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, dispatch } = props;
-  const { storeId, banks, heads, defaultBankId, lastEndOfDay } = props;
+  const { banks, heads, defaultBankId, lastEndOfDay } = props;
+
+  useEffect(() => {
+    dispatch( initialize(formName, { headId: 0, type: paymentModes.PAYMENT_MODE_CASH, generalTxnType: -1, time: moment().toDate() } )  );
+  }, [dispatch]);
 
   const headId = useSelector(state => formSelector(state, 'headId'));
   const type = useSelector(state => formSelector(state, 'type'));
@@ -79,16 +83,16 @@ function NewTransaction(props) {
 
   useEffect(() => {
     if(selectedHead && selectedHead.name === "Bank Account")
-      dispatch( change(formName, 'type', transactionTypes.TRANSACTION_TYPE_CASH) );
-    if((selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK)
+      dispatch( change(formName, 'type', paymentModes.PAYMENT_MODE_CASH) );
+    if((selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === paymentModes.PAYMENT_MODE_BANK)
       dispatch( change(formName, 'bankId', defaultBankId) );
-    else if ( parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH )
+    else if ( parseInt(type) === paymentModes.PAYMENT_MODE_CASH )
       dispatch( change(formName, 'bankId', null) );
-  }, [selectedHead, type]);
+  }, [selectedHead, type, defaultBankId, dispatch]);
 
   useEffect(() => {
     dispatch( change(formName, 'bankId', defaultBankId) );
-  }, [defaultBankId]);
+  }, [defaultBankId, dispatch]);
 
   useEffect(() => {
     if(submitSucceeded)
@@ -136,8 +140,8 @@ function NewTransaction(props) {
                 <FormLabel> Cash Transaction <br/> withdraw/deposit store cash into bank</FormLabel> : 
                 <Field
                   component={RadioInput}
-                  options={transactionTypeOptions}
-                  label={ selectedHead ? transactionTypeLabelMap[selectedHead.type] : "Transaction Type" }
+                  options={paymentModeOptions}
+                  label={ selectedHead ? transactionTypeLabelMap[selectedHead.type] : "Mode" }
                   id="type"
                   name="type"
                   disabled={headId === 0}
@@ -164,21 +168,21 @@ function NewTransaction(props) {
               { (selectedHead && selectedHead.name === "Bank Account") && parseInt(generalTxnType) === -1 ? "This will reduce cash in store and amount will be added to your selected bank" : null }
               { (selectedHead && selectedHead.name === "Bank Account") && parseInt(generalTxnType) === 1 ? "This will increase cash in store and amount will be deducted from your selected bank" : null }
               { /*General Head except "Bank Account" Cash transaction*/ }
-              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH && parseInt(generalTxnType) === -1 ? "This will reduce cash in store" : null }
-              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH && parseInt(generalTxnType) === 1 ? "This will increase cash in store" : null }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === paymentModes.PAYMENT_MODE_CASH && parseInt(generalTxnType) === -1 ? "This will reduce cash in store" : null }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === paymentModes.PAYMENT_MODE_CASH && parseInt(generalTxnType) === 1 ? "This will increase cash in store" : null }
               { /*General Head except "Bank Account" Bank transaction*/ }
-              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK && parseInt(generalTxnType) === -1 ? "The amount will be deducted from your selected bank account" : null }
-              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK && parseInt(generalTxnType) === 1 ? "The amount will be added to your selected bank account" : null }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === paymentModes.PAYMENT_MODE_BANK && parseInt(generalTxnType) === -1 ? "The amount will be deducted from your selected bank account" : null }
+              { (selectedHead && selectedHead.name !== "Bank Account" && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL) && parseInt(type) === paymentModes.PAYMENT_MODE_BANK && parseInt(generalTxnType) === 1 ? "The amount will be added to your selected bank account" : null }
               { /*Income heads cash transaction*/ }
-              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH ? "This will increase cash in store" : null }
-              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK ? "The income amount will be added to your selected bank account" : null }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME) && parseInt(type) === paymentModes.PAYMENT_MODE_CASH ? "This will increase cash in store" : null }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_INCOME) && parseInt(type) === paymentModes.PAYMENT_MODE_BANK ? "The income amount will be added to your selected bank account" : null }
               { /*Income heads cash transaction*/ }
-              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_CASH ? "This will reduce cash in store" : null }
-              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) && parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK ? "The expense amount will be deducted from your selected bank account" : null }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) && parseInt(type) === paymentModes.PAYMENT_MODE_CASH ? "This will reduce cash in store" : null }
+              { (selectedHead && selectedHead.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE) && parseInt(type) === paymentModes.PAYMENT_MODE_BANK ? "The expense amount will be deducted from your selected bank account" : null }
             </FormLabel>
           </Box>
           {
-            (selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === transactionTypes.TRANSACTION_TYPE_BANK ? 
+            (selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === paymentModes.PAYMENT_MODE_BANK ? 
             <Box>
               <Field
                 component={SelectInput}
@@ -308,7 +312,6 @@ connect(mapStateToProps),
 reduxForm({
   'form': formName,
   validate,
-  onSubmit,
-  initialValues: { headId: 0, type: transactionTypes.TRANSACTION_TYPE_CASH, generalTxnType: -1, time: new Date() }
+  onSubmit
 })
 )(NewTransaction);

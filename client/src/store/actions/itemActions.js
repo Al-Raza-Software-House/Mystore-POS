@@ -9,7 +9,7 @@ export const actionTypes = {
   ITEM_DELETED: 'itemDeleted',
 
   EMPTY_ITEMS: 'emptyItems',
-  FILTERS_CHANGED: 'filtersChanged',
+  FILTERS_CHANGED: 'itemFiltersChanged',
 
   MASTER_ITEMS_LOADED: 'masterItemsLoaded',
   EMPTY_MASTER_ITEMS: 'emptyMasterItems',

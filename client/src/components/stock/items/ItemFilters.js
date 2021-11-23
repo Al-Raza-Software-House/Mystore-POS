@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Box, Button, makeStyles, Typography, Collapse } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faPlus, faSearch, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faPlus, faSearch, faSync, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { changeFilters } from '../../../store/actions/itemActions';
 import SelectCategory from './itemForm/SelectCategory';
 import SelectSupplier from './itemForm/SelectSupplier';
@@ -147,7 +147,7 @@ function ItemFilters(props){
         <Box width={{ xs: '100%', md: '31%' }} alignSelf="flex-start" pt={1} display="flex" >
           <Box>
             <Button title="Search Items" disabled={pristine || !dirty} onClick={searchItems} startIcon={ <FontAwesomeIcon icon={faSearch} /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
-            <Button title="Reset Filters" disabled={!filtersApplied} onClick={resetFilters} startIcon={ <FontAwesomeIcon icon={faUndo} /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
+            <Button title={ filtersApplied ? "Reset Filters" : "Refresh" }  onClick={resetFilters} startIcon={ <FontAwesomeIcon icon={filtersApplied ? faUndo : faSync}  /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
           </Box>
           <Button color="primary" onClick={() => setMoreFilters(!moreFilters) } endIcon={ moreFilters ? <FontAwesomeIcon icon={faChevronUp} /> : <FontAwesomeIcon icon={faChevronDown} /> }>{ moreFilters ? "Less" : "More" }</Button>
         </Box>

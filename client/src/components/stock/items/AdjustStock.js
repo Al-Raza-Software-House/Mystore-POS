@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsAltV, faTimes, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
-import { IconButton, makeStyles, InputAdornment, CircularProgress, FormHelperText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, TableContainer, Table, TableHead, TableRow, TableCell, TableBody } from '@material-ui/core';
+import { IconButton, InputAdornment, CircularProgress, FormHelperText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, TableContainer, Table, TableHead, TableRow, TableCell, TableBody } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { hideProgressBar, showProgressBar } from "../../../store/actions/progressActions";
@@ -16,15 +16,7 @@ import SelectInput from '../../library/form/SelectInput';
 const formName = "adjustStock";
 const formSelector = formValueSelector( formName );
 
-const useStyles = makeStyles(theme => ({
-  actionBtn: {
-    fontSize: '1.3rem',
-    padding: '4px 12px'
-  }
-}))
-
 function AdjustStock(props){
-  const classes = useStyles();
   const [open, setOpen] = useState(false);
   const [variants, setVariants] = useState(null);
   const { storeId, itemId, showProgressBar, hideProgressBar, showError, dispatch, reasons  } = props;
@@ -85,7 +77,7 @@ function AdjustStock(props){
 
   return (
     <>
-      <IconButton onClick={(event) => handleClickOpen(event) } className={classes.actionBtn} title="Adjust Stock">
+      <IconButton onClick={(event) => handleClickOpen(event) } title="Adjust Stock">
         <FontAwesomeIcon icon={faArrowsAltV} size="xs" />
       </IconButton>
       {
@@ -116,7 +108,7 @@ function AdjustStock(props){
                     <TableBody>
                       {
                         variants.map((item, index) => (
-                          <TableRow key={item._id}>
+                          <TableRow hover key={item._id}>
                             <TableCell>
                               <Box mb={1} display="flex" justifyContent="space-between">
                                 <span>{item.itemName}</span>

@@ -33,7 +33,7 @@ function CurrentBill(props){
     }).catch(err => {
       timer.current = setTimeout(ping, 6000);
     });
-  }, [store._id, store.paymentTxnId, loadSelectedStore]);
+  }, [store._id, store.paymentTxnId, loadSelectedStore, storesStampChanged]);
 
   useEffect(() => {
     if(timer.current)

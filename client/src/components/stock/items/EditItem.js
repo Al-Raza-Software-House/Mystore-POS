@@ -30,7 +30,6 @@ function EditItem(props){
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock } = props;
 
-  const [submitPreloader, setSubmitPreloader] = React.useState(false);
   const [itemLoaded, setItemLoaded] = useState(null);
   const { storeId, itemId } = useParams();
   const history = useHistory();
@@ -49,13 +48,6 @@ function EditItem(props){
       history.push('/stock');
     } );
   }, []);
-
-  const submitForm = (e) => {
-    e.preventDefault();
-    setSubmitPreloader(true);
-    dispatch(showProgressBar());
-    handleSubmit();
-  }
 
   const copyCostPrice = () => {
     variants.forEach((variant, index) => {
@@ -92,7 +84,7 @@ function EditItem(props){
       </Button>
     </Box>
     { itemLoaded &&
-      <form onSubmit={submitForm}>
+      <form onSubmit={handleSubmit}>
         <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
           <Box width={{ xs: '100%', md: '31%' }} >
             <SelectCategory formName={formName} addNewRecord={false} disabled={true} />
@@ -363,7 +355,7 @@ function EditItem(props){
         </Box>
 
         <Box textAlign="center" mt={2}>
-          <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitPreloader || submitting || invalid } >
+          <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid } >
             Update Item
           </Button>
           {  

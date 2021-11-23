@@ -87,6 +87,8 @@ export const syncData = () => {
       dispatch( lastUpdatedStampsChanged(storeId, data.dataUpdated) );//get old stamps first from redux then put new
       if(data.lastEndOfDay !== store.lastEndOfDay)
         dispatch( lastEndOfDayUpdated(storeId, data.lastEndOfDay) );
+      if(data.appVersion !== state.system.appVersion)
+        dispatch( appVersionChanged(data.appVersion) );
       for(let key in syncActionsMap)
       {
         if(lastTimestamps[key] !== data.dataUpdated[key] && syncActionsMap[key]) //if system stamp doesn't match with server stamp, sync data

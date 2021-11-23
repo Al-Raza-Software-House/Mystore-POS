@@ -17,6 +17,8 @@ export const actionTypes = {
   TRANSACTION_ADDED: 'transactionAdded',
   TRANSACTION_UPDATED: 'transactionUpdated',
   TRANSACTION_DELETED: 'transactionDeleted',
+  EMPTY_TRANSACTIONS: 'emptyTransactions',
+  FILTERS_CHANGED: 'transactionsFiltersChanged',
 
   LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged', //cannot put in system actions, it creates chicken egg problem both files importing form each other
 }
@@ -135,6 +137,50 @@ export const updateBank = (storeId, bankId, bank, now, lastAction) => {
 
 export const addNewTxns = (storeId, txns) => {
   return { type: actionTypes.TRANSACTION_ADDED, storeId, txns }
+}
+
+export const loadTxns = (recordsPerPage) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const storeId = state.stores.selectedStoreId;
+    let filters = {};
+    let skip = 0;
+    if(state.accounts.transactions[storeId] && state.accounts.transactions[storeId].filters)
+      filters = state.accounts.transactions[storeId].filters;
+    if(state.accounts.transactions[storeId] && state.accounts.transactions[storeId].records)
+      skip = state.accounts.transactions[storeId].records.length;
+    dispatch(showProgressBar());
+    axios.post('/api/accounts/transactions', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
+      dispatch({ type: actionTypes.TRANSACTIONS_LOADED, storeId, txns: data.txns, totalRecords: data.totalRecords });
+      dispatch(hideProgressBar());
+    }).catch( err => err );
+  }
+}
+
+export const updateTxns = (storeId, txnId, txns) => {
+  return { type: actionTypes.TRANSACTION_UPDATED, storeId, txnId, txns };
+}
+
+export const deleteTxn = (storeId, txnId) => {
+  return (dispatch, getState) => {
+    dispatch(showProgressBar());
+    axios.post('/api/accounts/transactions/delete', { storeId, txnId }).then( ({ data }) => {
+      dispatch(hideProgressBar());
+      dispatch( { type: actionTypes.TRANSACTION_DELETED, storeId, txnId } );
+      dispatch( showSuccess('Transaction deleted') );
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
+  }
+}
+
+export const changeFilters = (storeId, filters) => {
+  return { type: actionTypes.FILTERS_CHANGED, storeId, filters }
+}
+
+export const emptyTxns = (storeId) => {
+  return { type: actionTypes.EMPTY_TRANSACTIONS, storeId }
 }
 
 export const banksStampChanged = (storeId, newStamp) => {

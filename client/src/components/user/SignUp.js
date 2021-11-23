@@ -222,8 +222,8 @@ const mapStateToProps = state => {
 export default compose(
   connect(mapStateToProps, { showProgressBar, hideProgressBar }),
   reduxForm({
-  form: 'signup',
-  onSubmit,
-  validate
-})
+    form: 'signup',
+    onSubmit,
+    validate
+  })
 )(SignUp);
