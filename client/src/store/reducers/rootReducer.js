@@ -15,6 +15,9 @@ import adjustmentReasonsReducer from './adjustmentReasonsReducer';
 import accountsReducer from './accountsReducer';
 import customerReducer from './customerReducer';
 import systemReducer from './systemReducer';
+import purchaseOrdersReducer from './purchaseOrdersReducer';
+import rtvsReducer from './rtvsReducer';
+import grnsReducer from './grnsReducer';
 
 function storeageReducer(state = { loaded: false }, action) {
     switch (action.type) {
@@ -43,6 +46,10 @@ export const staticReducers = {
   categories: categoryReducer,
   itemProperties: itemPropertiesReducer,
   adjustmentReasons: adjustmentReasonsReducer,
+
+  purchaseOrders: purchaseOrdersReducer,
+  grns: grnsReducer,
+  rtvs: rtvsReducer,
 
   suppliers: supplierReducer,
   customers: customerReducer,

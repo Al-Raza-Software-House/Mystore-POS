@@ -94,10 +94,10 @@ router.post('/create', async (req, res) => {
         if(!req.body.packings[index].itemName) continue;
         await new Item({
           ...record,
-          itemCode: item.itemCode + '-P' + (index+1),
+          itemCode: req.body.packings[index].itemCode,
           itemName: req.body.packings[index].itemName,
-          packQuantity: req.body.packings[index].packQuantity,
-          packSalePrice: req.body.packings[index].packSalePrice,
+          packQuantity: req.body.packings[index].packQuantity ? req.body.packings[index].packQuantity : 0,
+          packSalePrice: req.body.packings[index].packSalePrice ? req.body.packings[index].packSalePrice : 0,
           packParentId: item._id
         }).save();
       }
@@ -250,6 +250,7 @@ router.post('/update', async (req, res) => {
                   itemCode: item.itemCode,
                   currentStock: 0,
                   creationDate: item.creationDate,
+                  expiryDate: null,
                   ...record,
                   ...variantData,
                   varientParentId: item._id //first variant is also Parent of all varients
@@ -262,6 +263,7 @@ router.post('/update', async (req, res) => {
                   itemCode: req.body.itemCode,
                   currentStock: 0,
                   creationDate: (new moment(req.body.creationDate) ).toDate(),
+                  expiryDate: null,
                   ...record,
                   ...variantData,
                   packParentId: null,
@@ -284,9 +286,11 @@ router.post('/update', async (req, res) => {
               itemCode: req.body.itemCode,
               currentStock: 0,
               creationDate: (new moment(req.body.creationDate) ).toDate(),
+              expiryDate: null,
               ...record,
               ...variantData,
-              varientParentId: item._id //first variant is also Parent of all varients
+              varientParentId: item._id, //first variant is also Parent of all varients
+              packParentId: null
             }).save();
           }
         }
@@ -317,8 +321,6 @@ router.post('/update', async (req, res) => {
         }
       }
       //Update or add new packings
-      let lastSavedPackCode = 1;
-      let oldPackCount = 0;
       if(req.body.packings)
         for(let index = 0; index < req.body.packings.length; index++)
         {
@@ -328,25 +330,24 @@ router.post('/update', async (req, res) => {
             await Item.findByIdAndUpdate(req.body.packings[index]._id, {
               ...record, 
               itemName: req.body.packings[index].itemName,
-              packQuantity: req.body.packings[index].packQuantity,
-              packSalePrice: req.body.packings[index].packSalePrice,
+              packQuantity: req.body.packings[index].packQuantity ? req.body.packings[index].packQuantity : 0,
+              packSalePrice: req.body.packings[index].packSalePrice ? req.body.packings[index].packSalePrice : 0,
             });
-            if(req.body.packings[index].itemCode && parseInt(req.body.packings[index].itemCode.slice(-1)) > lastSavedPackCode)
-            {
-              lastSavedPackCode = parseInt(req.body.packings[index].itemCode.slice(-1));
-              oldPackCount++;
-            }
           }else // new Packing added
           {
             await new Item({
               ...record,
               storeId: item.storeId,
               categoryId: item.categoryId,
-              itemCode: item.itemCode + '-P' + ( (lastSavedPackCode + index) - (oldPackCount - 1)  ),
+              itemCode: req.body.packings[index].itemCode,
               itemName: req.body.packings[index].itemName,
+              currentStock: 0,
               packQuantity: req.body.packings[index].packQuantity,
               packSalePrice: req.body.packings[index].packSalePrice,
-              packParentId: item._id
+              varientParentId: null,
+              packParentId: item._id,
+              expiryDate: null,
+              creationDate: now
             }).save();
           }
         }
@@ -373,13 +374,17 @@ router.get('/isItemCodeTaken', async (req, res) => {
   try
   {
     if(!req.query.storeId) throw new Error("store id is required");
-    if(!req.query.itemCode) throw new Error("item Code is required");
+    if(!req.query.codes) throw new Error("item codes are required");
     const store = await Store.isManager(req.query.storeId, req.user._id);
     if(!store) throw new Error("invalid Request"); 
-
-    const itemExists = await Item.findOne({ storeId: req.query.storeId, itemCode: req.query.itemCode });
+    let response = {  };
+    for(let index = 0; index < req.query.codes.length; index++)
+    {
+      const itemExists = await Item.findOne({ storeId: req.query.storeId, itemCode: req.query.codes[index] });
+      response[ req.query.codes[index] ] = itemExists ? true: false;
+    }
     
-    res.json( { taken: itemExists ? true: false } );
+    res.json( { codes: response } );
   }catch(err)
   {
     return res.status(400).json({message: err.message});

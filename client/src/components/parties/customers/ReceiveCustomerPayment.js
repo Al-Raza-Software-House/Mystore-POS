@@ -18,6 +18,7 @@ import DateTimeInput from '../../library/form/DateTimeInput';
 import moment from 'moment';
 import { updateCustomer } from '../../../store/actions/customerActions';
 import { addNewTxns } from '../../../store/actions/accountActions';
+import CheckboxInput from '../../library/form/CheckboxInput';
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -55,7 +56,7 @@ function ReceiveCustomerPayment(props) {
   const { banks, defaultBankId, lastEndOfDay } = props;
 
   useEffect(() => {
-    dispatch( initialize(formName, { type: paymentModes.PAYMENT_MODE_CASH, payOrRecieve: 1, time: moment().toDate() })  );
+    dispatch( initialize(formName, { type: paymentModes.PAYMENT_MODE_CASH, payOrRecieve: 1, time: moment().format("DD MMMM, YYYY hh:mm A") })  );
   }, [dispatch]);
 
   const { storeId, customerId } = useParams();
@@ -173,7 +174,7 @@ function ReceiveCustomerPayment(props) {
                 onKeyDown={(e) => {
                       if(!((e.keyCode > 95 && e.keyCode < 106)
                         || (e.keyCode > 47 && e.keyCode < 58) 
-                        || e.keyCode === 8 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
+                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
                           e.preventDefault();
                           return false;
                       }
@@ -198,6 +199,16 @@ function ReceiveCustomerPayment(props) {
                 />
               </Box>
 
+              <Box textAlign="center">
+                <Field
+                  component={CheckboxInput}
+                  name="printTxn"
+                  label="Print Transaction Receipt"
+                  fullWidth={true}
+                  disabled={pristine || submitting || invalid || !dirty}
+                />
+              </Box>
+
               
               
             <Box textAlign="center">
@@ -218,9 +229,9 @@ function ReceiveCustomerPayment(props) {
     )
 }
 
-const onSubmit = (values, dispatch, { match }) => {
+const onSubmit = (values, dispatch, { match, printTxn }) => {
   dispatch(showProgressBar());
-  return axios.post('/api/customers/receivePayment', {...match.params, ...values}).then( response => {
+  return axios.post('/api/customers/receivePayment', {...match.params, ...values, time: moment(values.time, "DD MMMM, YYYY hh:mm A").toDate()}).then( response => {
     dispatch(hideProgressBar());
     if(response.data.customer._id)
     {
@@ -228,6 +239,8 @@ const onSubmit = (values, dispatch, { match }) => {
       if(response.data.accountTxn._id)
         dispatch( addNewTxns( match.params.storeId, [response.data.accountTxn] ) );
       dispatch( showSuccess("Payment added") );
+      if(response.data.txn._id && values.printTxn)
+        printTxn({ ...response.data.txn, customer: response.data.customer });
     }
   }).catch(err => {
     dispatch(hideProgressBar());

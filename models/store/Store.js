@@ -93,6 +93,12 @@ const storeSchema = new mongoose.Schema({
     Purchase: mongoose.Schema.Types.ObjectId,
     CustomerReceipt: mongoose.Schema.Types.ObjectId,
     SupplierPayment: mongoose.Schema.Types.ObjectId,
+  },
+  idsCursors:{
+    poCursor: Number,
+    grnCursor: Number,
+    rtvCursor: Number,
+    saleCursor: Number
   }
 });
 

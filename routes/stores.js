@@ -113,6 +113,12 @@ router.post('/create', async (req, res) => {
         banks: now,
         accountHeads: now,
         deleteActivity: now
+      },
+      idsCursors:{
+        poCursor: 1,
+        grnCursor: 1,
+        rtvCursor: 1,
+        saleCursor: 1
       }
     }
     

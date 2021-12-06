@@ -10,7 +10,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const TextInput = ({
-  label, input, addNewRecord=false,
+  label, input, addNewRecord=false, showError=true,
   meta: { touched, invalid, error },
   ...custom
 }) => {
@@ -30,12 +30,16 @@ const TextInput = ({
         {...input}
         {...custom}
       />
-      <FormHelperText error={ touched && invalid }>
-        {
-          touched && error ? <span>{ touched && error }</span> : <span>&nbsp;</span>
-        }
-        
-      </FormHelperText>
+      {
+        showError ? 
+        <FormHelperText error={ touched && invalid }>
+          {
+            touched && error ? <span>{ touched && error }</span> : <span>&nbsp;</span>
+          }
+          
+        </FormHelperText>
+        : null
+      }
     </Box>
   );
 }

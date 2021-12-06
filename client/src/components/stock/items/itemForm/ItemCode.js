@@ -75,6 +75,7 @@ function ItemCode(props) {
         margin="dense"
         style={{ flexGrow: 1 }}
         addNewRecord={addNewRecord}
+        onKeyPress={event => {if(event.key === "Enter") event.preventDefault()}}
       />
       { 
         

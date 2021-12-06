@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencilAlt, faTrash, faPlus, faClipboard, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faTrash, faPlus, faClipboard, faSync, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, TablePagination, Typography, Chip } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -15,7 +15,7 @@ import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { actionTypes as accountActions } from '../../../store/actions/accountActions';
 import { updateCustomer } from '../../../store/actions/customerActions';
 
-function CustomerLedger({ lastEndOfDay, banks, loadingRecords, dispatch }) {
+function CustomerLedger({ lastEndOfDay, banks, printTxn, loadingRecords, dispatch }) {
   const { storeId, customerId } = useParams();
   const customer = useSelector( state =>  state.customers[storeId].find(item => item._id === customerId) );
   const [dateRange, setDateRange] = useState(() => {
@@ -157,7 +157,7 @@ function CustomerLedger({ lastEndOfDay, banks, loadingRecords, dispatch }) {
                   rows.map(txn => {
                     balance += txn.amount;
                     return (
-                      <Transaction {...{txn, banks, lastEndOfDay, storeId, customerId, deleteTxn, balance}}  key={txn._id}  />
+                      <Transaction {...{txn, banks, lastEndOfDay, storeId, customerId, deleteTxn, balance, customer, printTxn}}  key={txn._id}  />
                     )
                   } )
                 }
@@ -185,7 +185,7 @@ function CustomerLedger({ lastEndOfDay, banks, loadingRecords, dispatch }) {
 }
 
 
-function Transaction({ txn, balance, banks, storeId, customerId, lastEndOfDay, deleteTxn }){
+function Transaction({ txn, balance, banks, storeId, customerId, customer, printTxn, lastEndOfDay, deleteTxn }){
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -213,7 +213,14 @@ function Transaction({ txn, balance, banks, storeId, customerId, lastEndOfDay, d
       <TableCell align="right">
         { txn.notes ? <Notes notes={txn.notes} /> : null }
         {
-          txn.grnId || (lastEndOfDay && moment(txn.time) <= moment(lastEndOfDay)) ? null : 
+          !txn.saleId && txn.type === customerTxns.CUSTOMER_TXN_TYPE_PAYMENT ? 
+          <IconButton onClick={() => printTxn( { ...txn, customer } ) } title="Print Receipt">
+            <FontAwesomeIcon icon={faPrint} size="xs" />
+          </IconButton>
+          : null
+        }
+        {
+          txn.saleId || (lastEndOfDay && moment(txn.time) <= moment(lastEndOfDay)) ? null : 
           <>
             <IconButton component={Link} to={ '/parties/customers/editpayment/' + customerId + '/' + txn._id } title="Edit Transaction">
               <FontAwesomeIcon icon={faPencilAlt} size="xs" />

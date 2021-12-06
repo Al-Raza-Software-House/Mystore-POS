@@ -4,12 +4,12 @@ import { faPencilAlt, faTrash, faSync, faPrint } from '@fortawesome/free-solid-s
 import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, TablePagination, Typography, Chip } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder } from '../../../store/actions/purchaseOrderActions';
+import { loadRtvs, emptyRtvs, deleteRtv } from '../../../store/actions/rtvActions';
 import { poStates } from '../../../utils/constants';
 import moment from 'moment';
-import PurchaseOrdersFilters from './PurchaseOrdersFilters';
+import RtvFilters from './RtvFilters';
 
-function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder, printPo }) {
+function Rtvs({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadRtvs, emptyRtvs, deleteRtv, printRTV }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
@@ -19,14 +19,14 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
       setPage(0);
     filterRef.current = filters;
     if(records.length === 0 && !loadingRecords && !recordsLoaded)// on Page load or filters changed or reset button
-      loadPurchaseOrders(rowsPerPage); 
-  }, [filters, records.length, loadingRecords, recordsLoaded, loadPurchaseOrders, page, rowsPerPage]);
+      loadRtvs(rowsPerPage); 
+  }, [filters, records.length, loadingRecords, recordsLoaded, loadRtvs, page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => { 
     setPage(newPage);
     let pageRecords = records.slice(newPage * rowsPerPage, newPage * rowsPerPage + rowsPerPage);
     if( pageRecords.length < rowsPerPage && records.length < totalRecords )//next page records are 0 or less than rows per page but server has more rows, 
-      loadPurchaseOrders(rowsPerPage);
+      loadRtvs(rowsPerPage);
    };
 
   const handleChangeRowsPerPage = (event) => {
@@ -35,7 +35,7 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
     setPage(0);
     if( records.length < newValue && records.length < totalRecords ) //there are more rows on server and current rows are less then recordsPerPage
     {
-      loadPurchaseOrders(newValue);
+      loadRtvs(newValue);
     }
   };
 
@@ -46,12 +46,12 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
   
   return(
     <>
-      <PurchaseOrdersFilters />
+      <RtvFilters />
       {
         records.length === 0 && recordsLoaded && !loadingRecords ?
         <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
           <Typography gutterBottom>No purchase orders found</Typography>
-          <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => emptyPurchaseOrders(storeId)} color="primary" disableElevation  >Refresh</Button>
+          <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => emptyRtvs(storeId)} color="primary" disableElevation  >Refresh</Button>
         </Box>
         :
         <Box>
@@ -71,7 +71,7 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
               </TableHead>
               <TableBody>
                 {
-                  rows.map(order => <Transaction {...{order, suppliers, storeId, deletePurchaseOrder, printPo}} key={order._id}  /> )
+                  rows.map(order => <Transaction {...{order, suppliers, storeId, deleteRtv, printRTV}} key={order._id}  /> )
                 }
               </TableBody>
             </Table>
@@ -92,7 +92,7 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
 }
 
 
-function Transaction({ order, suppliers, storeId, deletePurchaseOrder, printPo }){
+function Transaction({ order, suppliers, storeId, deleteRtv, printRTV }){
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -119,7 +119,7 @@ function Transaction({ order, suppliers, storeId, deletePurchaseOrder, printPo }
       </TableCell>
       
       <TableCell align="right">
-        <IconButton onClick={() => printPo( { ...order, supplier: suppliers[order.supplierId] } ) } title="Print Receipt">
+        <IconButton onClick={() => printRTV( { ...order, supplier: suppliers[order.supplierId] } ) } title="Print Receipt">
           <FontAwesomeIcon icon={faPrint} size="xs" />
         </IconButton>
         {
@@ -152,7 +152,7 @@ function Transaction({ order, suppliers, storeId, deletePurchaseOrder, printPo }
         >
         <Box py={2} px={4} textAlign="center">
           <Typography gutterBottom>Do you want to delete this order from store?</Typography>
-          <Button disableElevation variant="contained" color="primary"  onClick={() => deletePurchaseOrder(storeId, order._id)}>
+          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteRtv(storeId, order._id)}>
             Delete Purchase Order
           </Button>
         </Box>
@@ -186,4 +186,4 @@ const mapStateToProps = state => {
 }
 
 
-export default connect(mapStateToProps, { loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder })(PurchaseOrders);
+export default connect(mapStateToProps, { loadRtvs, emptyRtvs, deleteRtv })(Rtvs);

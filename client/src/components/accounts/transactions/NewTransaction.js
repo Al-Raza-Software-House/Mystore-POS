@@ -64,7 +64,7 @@ function NewTransaction(props) {
   const { banks, heads, defaultBankId, lastEndOfDay } = props;
 
   useEffect(() => {
-    dispatch( initialize(formName, { headId: 0, type: paymentModes.PAYMENT_MODE_CASH, generalTxnType: -1, time: moment().toDate() } )  );
+    dispatch( initialize(formName, { headId: 0, type: paymentModes.PAYMENT_MODE_CASH, generalTxnType: -1, time: moment().format("DD MMMM, YYYY hh:mm A") } )  );
   }, [dispatch]);
 
   const headId = useSelector(state => formSelector(state, 'headId'));
@@ -211,7 +211,7 @@ function NewTransaction(props) {
             onKeyDown={(e) => {
                   if(!((e.keyCode > 95 && e.keyCode < 106)
                     || (e.keyCode > 47 && e.keyCode < 58) 
-                    || e.keyCode === 8 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
+                    || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
                       e.preventDefault();
                       return false;
                   }
@@ -258,7 +258,7 @@ function NewTransaction(props) {
 
 const onSubmit = (values, dispatch, { storeId }) => {
   dispatch(showProgressBar());
-  return axios.post('/api/accounts/transactions/new', {storeId, ...values}).then( response => {
+  return axios.post('/api/accounts/transactions/new', {storeId, ...values, time: moment(values.time, "DD MMMM, YYYY hh:mm A").toDate()}).then( response => {
     dispatch(hideProgressBar());
     if(response.data.length)
     {

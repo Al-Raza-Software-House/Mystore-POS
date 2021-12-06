@@ -484,7 +484,6 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
 
 function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest } }){
   const dispatch = useDispatch();
-  const itemCode = useSelector(state => formSelector(state, 'itemCode'));
   return(
     <>
     <Box width="100%">
@@ -495,12 +494,19 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
     {
       fields.map( (pack, index) => (
         <Box width="100%" borderBottom={{ xs: 1 , md: 0 }} paddingBottom={{ xs: 2, md: 0 }} display="inline-flex" flexWrap="wrap" justifyContent="space-between" key={index}>
-          <Box width={{ xs: '100%', md: '10%' }} >
-            <FormHelperText style={{ textAlign: 'right', marginTop: 20 }}>
-              { itemCode ?  itemCode + '-P' + (index+1)  :  <span>&nbsp;</span>}
-            </FormHelperText>
+          <Box width={{ xs: '100%', md: '20%' }} >
+            <Field
+              component={TextInput}
+              label="Pack Code"
+              name={`${pack}.itemCode`}
+              placeholder="Pack code/barcode..."
+              fullWidth={true}
+              variant="outlined"
+              margin="dense"
+              onKeyPress={event => {if(event.key === "Enter") event.preventDefault()}}
+            />
           </Box>
-          <Box width={{ xs: '100%', md: '24%' }} >
+          <Box width={{ xs: '100%', md: '20%' }} >
             <Field
               component={TextInput}
               label="Pack Name"
@@ -511,7 +517,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               margin="dense"
             />
           </Box>
-          <Box width={{ xs: '100%', md: '24%' }} >
+          <Box width={{ xs: '100%', md: '20%' }} >
             <Field
               component={TextInput}
               label="Pack Quantity"
@@ -528,7 +534,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               inputProps={{  min: 2 }}
             />
           </Box>
-          <Box width={{ xs: '100%', md: '24%' }} >
+          <Box width={{ xs: '100%', md: '20%' }} >
             <Field
                 component={TextInput}
                 label="Pack Sale Price"
@@ -570,11 +576,28 @@ const onSubmit = (values, dispatch, { storeId }) => {
 }
 
 const asyncValidate = (values, dispatch, { storeId }) => {
-  if( !values.itemCode) return ;
-  return axios.get('/api/items/isItemCodeTaken', { params: {storeId, itemCode: values.itemCode} }).then( response => {
-    if(response.data.taken)
+  let itemCodes = [];
+  if(values.itemCode) itemCodes.push(values.itemCode);
+  for(let index = 0; index < values.packings.length; index++)
+  {
+    let pack = values.packings[index];
+    if(pack.itemCode) itemCodes.push(pack.itemCode);
+  }
+  if(itemCodes.length === 0) return;
+  return axios.get('/api/items/isItemCodeTaken', { params: {storeId, codes: itemCodes} }).then( response => {
+    if(response.data.codes)
     {
-      return Promise.reject({ itemCode: 'This item code is already being used by an item' });
+      let errors = { packings: [] };
+      if(values.itemCode && response.data.codes[ values.itemCode ] )
+        errors.itemCode = "This item code is already being used by an item";
+      for(let index = 0; index < values.packings.length; index++)
+      {
+        errors.packings[index] = {};
+        let pack = values.packings[index];
+        if(pack.itemCode && response.data.codes[ pack.itemCode ] )
+          errors.packings[index].itemCode = "This code is already taken";
+      }
+      return Promise.reject(errors);
     }
 
   })
@@ -583,13 +606,35 @@ const asyncValidate = (values, dispatch, { storeId }) => {
 const validate = (values, props) => {
   const { dirty, category } = props;
   if(!dirty) return {};
+  let itemCodes = [];
   const errors = {};
   if(!values.categoryId)
     errors.categoryId = "Category is required";
   if(!values.itemCode)
    errors.itemCode = "Item code is required";
+  else if(values.itemCode)
+    itemCodes.push(values.itemCode.toLowerCase());
   if(!values.itemName)
    errors.itemName = "Item name is required";
+  
+  if(category && category.type === categoryTypes.CATEGORY_TYPE_STANDARD)
+  {
+    errors.packings = [];
+    for(let index = 0; index < values.packings.length; index++)
+    {
+      errors.packings[index] = {};
+      let pack = values.packings[index];
+      if(!pack.itemName) continue;
+      if(!pack.itemCode) errors.packings[index].itemCode = "Packing code is required";
+      else if(pack.itemCode && itemCodes.indexOf( pack.itemCode.toLowerCase() ) !== -1)
+        errors.packings[index].itemCode = "This code is already taken";
+      else if(pack.itemCode)
+        itemCodes.push( pack.itemCode.toLowerCase() );
+
+      if(!pack.packQuantity || Number(pack.packQuantity) === 0)
+        errors.packings[index].packQuantity = "Pack quantity is required";
+    }
+  } 
   if(category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT && values.sizes.length === 0)
     errors.sizes = "Please select at least one size";
   if(category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT && values.combinations.length === 0)
@@ -622,7 +667,7 @@ reduxForm({
   onSubmit,
   asyncValidate,
   initialValues: { costPrice: 0, salePrice: 0, expiryDate: null, packings: [{}], sizes: [], combinations: [] },
-  asyncBlurFields: ['itemCode'],
+  asyncBlurFields: ['itemCode', 'packings[].itemCode'],
   shouldAsyncValidate: (params) => {
     const { trigger, syncValidationPasses, initialized  } = params;
       if(!syncValidationPasses) {

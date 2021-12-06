@@ -49,6 +49,11 @@ export const paymentModes = {
   PAYMENT_MODE_BANK: 2,
 }
 
+export const payOrCreditOptions = {
+  PAY_NOW: 1,
+  ON_CREDIT: 2
+}
+
 export const supplierTxns = {
   SUPPLIER_TXN_TYPE_PURCHASE: 1,
   SUPPLIER_TXN_TYPE_RETURN: 2,
@@ -59,4 +64,9 @@ export const customerTxns = {
   CUSTOMER_TXN_TYPE_SALE: 1,
   CUSTOMER_TXN_TYPE_RETURN: 2,
   CUSTOMER_TXN_TYPE_PAYMENT: 3,
+}
+
+export const poStates = {
+  PO_STATUS_OPEN: 1,
+  PO_STATUS_CLOSED: 2
 }

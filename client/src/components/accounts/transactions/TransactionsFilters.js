@@ -84,7 +84,7 @@ function TransactionsFilters(props){
 
   const resetFilters = () => {
     dispatch( initialize(formName, defaultFilters) );
-    dispatch( changeFilters(storeId, defaultFilters) );
+    dispatch( changeFilters(storeId, {...defaultFilters}) );
   }
 
   const searchRecords = () => {
@@ -133,7 +133,7 @@ function TransactionsFilters(props){
         </Box>
         <Box width={{ xs: '100%', md: '31%' }} alignSelf="flex-start" display="flex" >
           <Box>
-            <Button title="Search Items" disabled={pristine || !dirty} onClick={searchRecords} startIcon={ <FontAwesomeIcon icon={faSearch} /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
+            <Button title="Search" disabled={pristine || !dirty} onClick={searchRecords} startIcon={ <FontAwesomeIcon icon={faSearch} /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
             <Button title={ filtersApplied ? "Reset Filters" : "Refresh" }  onClick={resetFilters} startIcon={ <FontAwesomeIcon icon={filtersApplied ? faUndo : faSync}  /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
           </Box>
           <Button color="primary" onClick={() => setMoreFilters(!moreFilters) } endIcon={ moreFilters ? <FontAwesomeIcon icon={faChevronUp} /> : <FontAwesomeIcon icon={faChevronDown} /> }>{ moreFilters ? "Less" : "More" }</Button>

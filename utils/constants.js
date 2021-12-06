@@ -53,6 +53,11 @@ const customerTxns = {
   CUSTOMER_TXN_TYPE_PAYMENT: 3,
 }
 
+const poStates = {
+  PO_STATUS_OPEN: 1,
+  PO_STATUS_CLOSED: 2
+}
+
 module.exports = {
   storeStates,
   userRoles,
@@ -62,5 +67,6 @@ module.exports = {
   accountHeadTypes,
   paymentModes,
   supplierTxns,
-  customerTxns
+  customerTxns,
+  poStates
 }

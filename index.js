@@ -58,7 +58,10 @@ app.use('/images', express.static( path.join(__dirname, '/images') ));
 
 // app.use('/api/posts', require('./routes/posts'));
 // app.use('/api/topics', require('./routes/topics'));
+app.use('/api/purchaseOrders', require('./routes/purchaseOrders'));
+
 app.use('/api/accounts', require('./routes/accounts'));
+
 app.use('/api/suppliers', require('./routes/suppliers'));
 app.use('/api/customers', require('./routes/customers'));
 app.use('/api/items', require('./routes/items'));

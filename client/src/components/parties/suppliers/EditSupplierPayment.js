@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText } from '@material-ui/core'
+import React, { useEffect, useMemo, useState } from 'react';
+import { makeStyles, Button, Box, Typography, FormHelperText, IconButton } from '@material-ui/core'
 import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import { showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
+import { faLongArrowAltLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import RadioInput from '../../library/form/RadioInput';
 import SelectInput from '../../library/form/SelectInput';
@@ -18,6 +18,7 @@ import DateTimeInput from '../../library/form/DateTimeInput';
 import moment from 'moment';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { updateTxns } from '../../../store/actions/accountActions';
+import CheckboxInput from '../../library/form/CheckboxInput';
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -51,9 +52,9 @@ const useStyles = makeStyles(theme => ({
 function EditSupplierPayment(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { handleSubmit, pristine, storeId, submitSucceeded, submitting, error, invalid, dirty, dispatch } = props;
+  const { handleSubmit, pristine, storeId, submitSucceeded, submitting, error, invalid, dirty, dispatch, printTxn } = props;
   const { banks, defaultBankId, lastEndOfDay } = props;
-
+  const [txn, setTxn] = useState({});
   const { supplierId, txnId } = useParams();
 
   useEffect(() => {
@@ -61,21 +62,24 @@ function EditSupplierPayment(props) {
     axios.get('/api/suppliers/transaction', { params: { storeId, supplierId, txnId }}).then(({ data }) => {
       dispatch(hideProgressBar());
       if(data && data._id)
-      dispatch( initialize(formName, {
-        time: moment(data.time).toDate(),
-        type: data.bankId ? paymentModes.PAYMENT_MODE_BANK : paymentModes.PAYMENT_MODE_CASH, 
-        payOrRecieve: data.amount > 0 ? 1 : -1,
-        bankId: data.bankId ? data.bankId : defaultBankId,
-        amount: Math.abs(data.amount),
-        notes: data.notes 
-      })  );
+      {
+        dispatch( initialize(formName, {
+          time: moment(data.time).format("DD MMMM, YYYY hh:mm A"),
+          type: data.bankId ? paymentModes.PAYMENT_MODE_BANK : paymentModes.PAYMENT_MODE_CASH, 
+          payOrRecieve: data.amount > 0 ? 1 : -1,
+          bankId: data.bankId ? data.bankId : defaultBankId,
+          amount: Math.abs(data.amount),
+          notes: data.notes 
+        })  );
+        setTxn(data);
+      }
     }).catch(err => {
       dispatch(hideProgressBar());
       throw new SubmissionError({
         _error: err.response && err.response.data.message ? err.response.data.message: err.message
       });
     })
-  }, [supplierId, txnId, dispatch, storeId]);
+  }, [supplierId, txnId, dispatch, storeId, defaultBankId]);
 
   const supplier = useSelector( state =>  state.suppliers[storeId].find(item => item._id === supplierId) );
 
@@ -190,7 +194,7 @@ function EditSupplierPayment(props) {
                 onKeyDown={(e) => {
                       if(!((e.keyCode > 95 && e.keyCode < 106)
                         || (e.keyCode > 47 && e.keyCode < 58) 
-                        || e.keyCode === 8 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
+                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
                           e.preventDefault();
                           return false;
                       }
@@ -215,12 +219,28 @@ function EditSupplierPayment(props) {
                 />
               </Box>
 
+              <Box textAlign="center">
+                <Field
+                  component={CheckboxInput}
+                  name="printTxn"
+                  label="Print Transaction Receipt"
+                  fullWidth={true}
+                  disabled={!dirty}
+                />
+              </Box>
+
               
               
             <Box textAlign="center">
               <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty} >
                 Update Transaction
               </Button>
+              {
+                dirty ? null :
+                <IconButton style={{ marginLeft: 8}} title="Print Receipt" onClick={ () => printTxn({ ...txn, supplier}) } >
+                  <FontAwesomeIcon icon={faPrint} size="xs" />
+                </IconButton>
+              }
               {  
                 <FormHelperText className={classes.formError} error={true} style={{visibility: !submitting && error ? 'visible' : 'hidden' }}>
                   <Typography component="span">{ error ? error : 'invalid request' }</Typography>
@@ -235,9 +255,9 @@ function EditSupplierPayment(props) {
     )
 }
 
-const onSubmit = (values, dispatch, { storeId, match }) => {
+const onSubmit = (values, dispatch, { storeId, match, printTxn }) => {
   dispatch(showProgressBar());
-  return axios.post('/api/suppliers/updatePayment', {storeId, ...match.params, ...values}).then( response => {
+  return axios.post('/api/suppliers/updatePayment', {storeId, ...match.params, ...values, time: moment(values.time, "DD MMMM, YYYY hh:mm A").toDate()}).then( response => {
     dispatch(hideProgressBar());
     if(response.data.supplier._id)
     {
@@ -245,6 +265,8 @@ const onSubmit = (values, dispatch, { storeId, match }) => {
       if(response.data.accountTxn._id)
         dispatch( updateTxns( storeId, response.data.accountTxn._id,  [response.data.accountTxn] ) );
       dispatch( showSuccess("Payment updated") );
+      if(response.data.txn._id && values.printTxn)
+        printTxn({ ...response.data.txn, supplier: response.data.supplier });
     }
   }).catch(err => {
     dispatch(hideProgressBar());

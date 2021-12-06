@@ -68,7 +68,7 @@ function EditTransaction(props) {
 
   useEffect(() => {
     dispatch( initialize(formName, {
-      time: txn.time,
+      time: moment(txn.time).format("DD MMMM, YYYY hh:mm A"),
       headId: txn.headId,
       bankId: txn.bankId,
       type: txn.type,
@@ -219,7 +219,7 @@ function EditTransaction(props) {
             onKeyDown={(e) => {
                   if(!((e.keyCode > 95 && e.keyCode < 106)
                     || (e.keyCode > 47 && e.keyCode < 58) 
-                    || e.keyCode === 8 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
+                    || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
                       e.preventDefault();
                       return false;
                   }
@@ -267,7 +267,7 @@ function EditTransaction(props) {
 const onSubmit = (values, dispatch, props) => {
   const { match } = props;
   dispatch(showProgressBar());
-  return axios.post('/api/accounts/transactions/update', {...match.params, ...values}).then( response => {
+  return axios.post('/api/accounts/transactions/update', {...match.params, ...values, time: moment(values.time, "DD MMMM, YYYY hh:mm A").toDate()}).then( response => {
     dispatch(hideProgressBar());
     if(response.data.length)
     {

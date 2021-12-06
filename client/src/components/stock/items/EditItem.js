@@ -40,7 +40,6 @@ function EditItem(props){
     axios.get('/api/items/load', { params: { storeId, itemId } } ).then( ({ data }) => {
       hideProgressBar();
       dispatch( initialize(formName, data.item) );
-      console.log(data.item);
       setItemLoaded(true);
     }).catch( err => {
       hideProgressBar();
@@ -100,6 +99,7 @@ function EditItem(props){
               variant="outlined"
               margin="dense"
               style={{ flexGrow: 1 }}
+              onKeyPress={event => {if(event.key === "Enter") event.preventDefault()}}
             />
           </Box>
           <Box width={{ xs: '100%', md: '31%' }} >
@@ -525,18 +525,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
 //packing Start
 function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest } }){
   const dispatch = useDispatch();
-  const itemCode = useSelector(state => formSelector(state, 'itemCode'));
   const packings = useSelector(state => formSelector(state, 'packings'));
-  let lastSavedPackCode = 1;
-  let oldPackCount = 0;
-  for(let i=0; i<packings.length; i++)
-  { 
-    if(packings[i].itemCode && parseInt(packings[i].itemCode.slice(-1)) > lastSavedPackCode)
-    {
-      lastSavedPackCode = parseInt(packings[i].itemCode.slice(-1));
-      oldPackCount++;
-    }
-  }
   
   return(
     <>
@@ -548,14 +537,20 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
     {
       fields.map( (pack, index) => (
         <Box width="100%" borderBottom={{ xs: 1 , md: 0 }} paddingBottom={{ xs: 2, md: 0 }} display="inline-flex" flexWrap="wrap" justifyContent="space-between" key={index}>
-          <Box width={{ xs: '100%', md: '10%' }} >
-            <FormHelperText style={{ textAlign: 'right', marginTop: 20 }}>
-              { packings[index].itemCode ?  packings[index].itemCode  :  (
-                itemCode ?  itemCode + '-P' + ( (lastSavedPackCode + index) - (oldPackCount - 1)  )  :  <span>&nbsp;</span>
-              )}
-            </FormHelperText>
+          <Box width={{ xs: '100%', md: '20%' }} >
+            <Field
+              component={TextInput}
+              label="Pack Code"
+              name={`${pack}.itemCode`}
+              placeholder="Pack code/barcode..."
+              fullWidth={true}
+              variant="outlined"
+              margin="dense"
+              disabled={ packings[index]._id ? true : false }
+              onKeyPress={event => {if(event.key === "Enter") event.preventDefault()}}
+            />
           </Box>
-          <Box width={{ xs: '100%', md: '24%' }} >
+          <Box width={{ xs: '100%', md: '20%' }} >
             <Field
               component={TextInput}
               label="Pack Name"
@@ -566,7 +561,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               margin="dense"
             />
           </Box>
-          <Box width={{ xs: '100%', md: '24%' }} >
+          <Box width={{ xs: '100%', md: '20%' }} >
             <Field
               component={TextInput}
               label="Pack Quantity"
@@ -583,7 +578,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               inputProps={{  min: 2 }}
             />
           </Box>
-          <Box width={{ xs: '100%', md: '24%' }} >
+          <Box width={{ xs: '100%', md: '20%' }} >
             <Field
                 component={TextInput}
                 label="Pack Sale Price"
@@ -630,13 +625,67 @@ const onSubmit = (values, dispatch, { storeId }) => {
   });
 }
 
+const asyncValidate = (values, dispatch, { storeId }) => {
+  let itemCodes = [];
+  for(let index = 0; index < values.packings.length; index++)
+  {
+    let pack = values.packings[index];
+    if(pack._id) continue;
+    if(pack.itemCode) itemCodes.push(pack.itemCode);
+  }
+  if(itemCodes.length === 0) return;
+  return axios.get('/api/items/isItemCodeTaken', { params: {storeId, codes: itemCodes} }).then( response => {
+    if(response.data.codes)
+    {
+      let errors = { packings: [] };
+      for(let index = 0; index < values.packings.length; index++)
+      {
+        errors.packings[index] = {};
+        let pack = values.packings[index];
+        if(pack._id) continue;
+        if(pack.itemCode && response.data.codes[ pack.itemCode ] )
+          errors.packings[index].itemCode = "This code is already taken";
+      }
+      return Promise.reject(errors);
+    }
+
+  })
+}
+
 
 const validate = (values, props) => {
   const { dirty, category } = props;
   if(!dirty) return {};
+  let itemCodes = [];
   const errors = {};
+
+  if(!values.itemCode)
+   errors.itemCode = "Item code is required";
+  else if(values.itemCode)
+    itemCodes.push(values.itemCode.toLowerCase());
+
   if(!values.itemName)
    errors.itemName = "Item name is required";
+  
+  if(category && category.type === categoryTypes.CATEGORY_TYPE_STANDARD)
+  {
+    errors.packings = [];
+    for(let index = 0; index < values.packings.length; index++)
+    {
+      errors.packings[index] = {};
+      let pack = values.packings[index];
+      if(!pack.itemName) continue;
+      if(!pack.itemCode) errors.packings[index].itemCode = "Packing code is required";
+      else if(pack.itemCode && itemCodes.indexOf( pack.itemCode.toLowerCase() ) !== -1)
+        errors.packings[index].itemCode = "This code is already taken";
+      else if(pack.itemCode)
+        itemCodes.push( pack.itemCode.toLowerCase() );
+
+      if(!pack.packQuantity || Number(pack.packQuantity) === 0)
+        errors.packings[index].packQuantity = "Pack quantity is required";
+    }
+  } 
+
   if(category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT && values.sizes.length === 0)
     errors.sizes = "Please select at least one size";
   if(category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT && values.combinations.length === 0)
@@ -667,6 +716,22 @@ connect(mapStateToProps, { showProgressBar, hideProgressBar, showError }),
 reduxForm({
   'form': formName,
   validate,
-  onSubmit
+  onSubmit,
+  asyncValidate,
+  asyncBlurFields: ['itemCode', 'packings[].itemCode'],
+  shouldAsyncValidate: (params) => {
+    const { trigger, syncValidationPasses, initialized  } = params;
+      if(!syncValidationPasses) {
+      return false
+    }
+    switch(trigger) {
+      case 'blur':
+        return true
+      case 'submit':
+        return !initialized
+      default:
+        return false
+    }
+  }
 })
 )(EditItem);

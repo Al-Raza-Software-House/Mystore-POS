@@ -201,7 +201,7 @@ router.post('/makePayment', async (req, res) => {
       amount: parseInt(req.body.payOrRecieve) * Number(req.body.amount),
       type: supplierTxns.SUPPLIER_TXN_TYPE_PAYMENT,
       description: parseInt(req.body.payOrRecieve) < 0 ? "Amount paid" : "Amount received",
-      notes: req.body.notes,
+      notes: req.body.notes ? req.body.notes : "",
       time: moment(req.body.time).toDate(),
       lastUpdated: now
     }
@@ -216,7 +216,7 @@ router.post('/makePayment', async (req, res) => {
       bankId: parseInt(req.body.type) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
       amount: parseInt(req.body.payOrRecieve) * Number(req.body.amount),
       type: parseInt(req.body.type), //cash or bank
-      notes: req.body.notes,
+      notes: req.body.notes ? req.body.notes : "",
       description: (parseInt(req.body.payOrRecieve) < 0 ? "Amount paid to supplier: " : "Amount received from supplier: ") + supplier.name,
       time: moment(req.body.time).toDate(),
       lastUpdated: now
@@ -248,6 +248,7 @@ router.post('/makePayment', async (req, res) => {
     await store.logCollectionLastUpdated('suppliers', now);
     res.json({
       supplier,
+      txn: ledgerTxn,
       accountTxn,
       now,
       lastAction
@@ -289,7 +290,7 @@ router.post('/updatePayment', async (req, res) => {
       amount: parseInt(req.body.payOrRecieve) * Number(req.body.amount),
       type: supplierTxns.SUPPLIER_TXN_TYPE_PAYMENT,
       description: parseInt(req.body.payOrRecieve) < 0 ? "Amount paid" : "Amount received",
-      notes: req.body.notes,
+      notes: req.body.notes ? req.body.notes : "",
       time: moment(req.body.time).toDate(),
       lastUpdated: now
     }
@@ -301,7 +302,7 @@ router.post('/updatePayment', async (req, res) => {
       bankId: parseInt(req.body.type) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
       amount: parseInt(req.body.payOrRecieve) * Number(req.body.amount),
       type: parseInt(req.body.type), //cash or bank
-      notes: req.body.notes,
+      notes: req.body.notes ? req.body.notes : "",
       description: (parseInt(req.body.payOrRecieve) < 0 ? "Amount paid to supplier: " : "Amount received from supplier: ") + supplier.name,
       time: moment(req.body.time).toDate(),
       lastUpdated: now
@@ -332,6 +333,7 @@ router.post('/updatePayment', async (req, res) => {
     await store.logCollectionLastUpdated('suppliers', now);
     res.json({
       supplier,
+      txn: ledgerTxn,
       accountTxn,
       now,
       lastAction

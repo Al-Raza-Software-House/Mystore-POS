@@ -284,6 +284,7 @@ router.post('/receivePayment', async (req, res) => {
     res.json({
       customer,
       accountTxn,
+      txn: ledgerTxn,
       now,
       lastAction
     });
@@ -368,6 +369,7 @@ router.post('/updatePayment', async (req, res) => {
     res.json({
       customer,
       accountTxn,
+      txn: ledgerTxn,
       now,
       lastAction
     });

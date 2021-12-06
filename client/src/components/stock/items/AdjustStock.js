@@ -120,11 +120,11 @@ function AdjustStock(props){
                               </Box>
                               <Box display="flex" justifyContent="space-between" style={{ color: '#7c7c7c' }}>
                                 <span>{item.itemCode}{item.sizeId ? '-'+item.sizeCode+'-'+item.combinationCode : '' }</span>
-                                <span>Price: {item.salePrice} </span>
+                                <span>Price: {item.salePrice.toLocaleString()} </span>
                               </Box>
                             </TableCell>
-                            <TableCell align="center">{item.costPrice}</TableCell>
-                            <TableCell align="center">{item.currentStock}</TableCell>
+                            <TableCell align="center">{item.costPrice.toLocaleString()}</TableCell>
+                            <TableCell align="center">{item.currentStock.toLocaleString()}</TableCell>
                             <TableCell align="center">
                               <Field
                                 component={TextInput}

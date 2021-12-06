@@ -37,8 +37,9 @@ router.post('/signup', async (req, res) => {
         from: "SMS Alert",
         message: `use ${pin} to signup on mystore.pk`,
       }
-      const response = await axios.post("https://lifetimesms.com/json", smsParams); 
-      console.log(response.data);     
+      // const response = await axios.post("https://lifetimesms.com/json", smsParams); 
+      // console.log(response.data);    
+      console.log("reg pis is " + pin); 
       user.set("verificationPin", await bcrypt.hash(''+pin, 10));
       await user.save();
     }else if(!(await bcrypt.compare(req.body.pin, user.verificationPin)) ) //step#2 verify pin

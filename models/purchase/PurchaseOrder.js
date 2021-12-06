@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 const moment = require("moment-timezone");
 
 const schema = new mongoose.Schema({
-  poNumber: Number,
-  referenceNumber: String,
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'store'
@@ -16,6 +14,8 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'supplier'
   },
+  poNumber: Number,
+  referenceNumber: String,
   totalItems: Number,
   totalQuantity: Number,
   totalAmount: Number,
@@ -24,7 +24,7 @@ const schema = new mongoose.Schema({
   notes: String,
   items: [
     {
-      itemId: mongoose.Schema.Types.ObjectId,
+      _id: mongoose.Schema.Types.ObjectId,
       costPrice: Number,
       quantity: Number,
     }
