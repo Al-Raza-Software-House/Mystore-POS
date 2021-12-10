@@ -200,5 +200,52 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/open', async (req, res) => {
+  try
+  {
+    if(!req.query.storeId) throw new Error("Store id is required");
+    if(!req.query.supplierId) throw new Error("supplierId id is required");
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
+    if(!store) throw new Error("invalid Request");
+    await store.updateLastVisited();
+
+    const conditions = {
+      storeId: req.query.storeId,
+      supplierId: req.query.supplierId,
+      status: poStates.PO_STATUS_OPEN
+    }
+    const orders = await PurchaseOrder.find(conditions, null, { sort : { creationDate: -1 }  });
+
+    res.json({ orders })
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
+
+router.get('/', async (req, res) => {
+  try
+  {
+    if(!req.query.storeId) throw new Error("Store id is required");
+    if(!req.query.supplierId) throw new Error("supplierId id is required");
+    if(!req.query.poId) throw new Error("poId id is required");
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
+    if(!store) throw new Error("invalid Request");
+    await store.updateLastVisited();
+
+    const conditions = {
+      storeId: req.query.storeId,
+      supplierId: req.query.supplierId,
+      _id: req.query.poId
+    }
+    const order = await PurchaseOrder.findOne(conditions);
+
+    res.json({ order })
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
+
 
 module.exports = router;

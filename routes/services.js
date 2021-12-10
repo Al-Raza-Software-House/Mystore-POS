@@ -2,7 +2,6 @@ const router = require('express').Router();
 const Store = require('../models/store/Store');
 const { authCheck } = require('../utils/middlewares');
 const AWS = require('aws-sdk');
-const { publicS3Object } = require( '../utils' );
 
 router.use(authCheck);
 
@@ -21,7 +20,6 @@ router.post('/createPhotoUploadUrl', async (req, res) => {
       key += req.body.storeId + '/';
     key += req.body.filePath;
     key += req.body.file;
-    
     let params = {
       Bucket: process.env.AWS_IMAGES_BUCKET, 
       Key: key,

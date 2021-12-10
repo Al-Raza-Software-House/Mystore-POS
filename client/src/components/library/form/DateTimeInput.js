@@ -1,6 +1,7 @@
 import React from 'react';
 import { DateTimePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 import Utils from '@date-io/moment';
+import moment from 'moment';
 
 const DateTimeInput = ({
   label, dateFormat, disabled=false,
@@ -15,7 +16,7 @@ const DateTimeInput = ({
         error={ touched && invalid }
         helperText={ touched && error }
         format={dateFormat}
-        value={ value ? value : null }
+        value={ value ? moment(value, dateFormat).toDate() : null }
         disabled={disabled}
         {...rest}
         {...custom}

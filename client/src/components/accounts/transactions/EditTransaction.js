@@ -16,6 +16,7 @@ import moment from 'moment';
 import RadioInput from '../../library/form/RadioInput';
 import SelectInput from '../../library/form/SelectInput';
 import { compose } from 'redux';
+import { allowOnlyPostiveNumber } from '../../../utils';
 
 
 const paymentModeOptions = [
@@ -216,14 +217,7 @@ function EditTransaction(props) {
             variant="outlined"
             margin="dense"
             type="number"
-            onKeyDown={(e) => {
-                  if(!((e.keyCode > 95 && e.keyCode < 106)
-                    || (e.keyCode > 47 && e.keyCode < 58) 
-                    || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                      e.preventDefault();
-                      return false;
-                  }
-              }}
+            onKeyDown={allowOnlyPostiveNumber}
             inputProps={{  min: 1 }}
             disabled={headId === 0}
             />    

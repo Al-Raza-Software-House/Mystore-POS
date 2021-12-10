@@ -15,6 +15,7 @@ import ItemPicker from '../../library/ItemPicker';
 import { updatePO } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
+import { allowOnlyPostiveNumber } from '../../../utils';
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -332,14 +333,7 @@ function EditRtv(props) {
                                   disabled={!supplierId}
                                   inputProps={{  min: 0 }}
                                   showError={false}
-                                  onKeyDown={(e) => {
-                                      if(!((e.keyCode > 95 && e.keyCode < 106)
-                                        || (e.keyCode > 47 && e.keyCode < 58) 
-                                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                                          e.preventDefault();
-                                          return false;
-                                      }
-                                  }}
+                                  onKeyDown={allowOnlyPostiveNumber}
                                 />
                               </Box>
                             </TableCell>
@@ -360,14 +354,7 @@ function EditRtv(props) {
                                 disabled={!supplierId}
                                 inputProps={{  min: 1 }}
                                 showError={false}
-                                onKeyDown={(e) => {
-                                      if(!((e.keyCode > 95 && e.keyCode < 106)
-                                        || (e.keyCode > 47 && e.keyCode < 58) 
-                                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                                          e.preventDefault();
-                                          return false;
-                                      }
-                                  }}
+                                onKeyDown={allowOnlyPostiveNumber}
                               />
                             </TableCell>
                             <TableCell align="center">

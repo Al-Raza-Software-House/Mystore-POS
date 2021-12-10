@@ -29,7 +29,10 @@ export const loadGrns = (recordsPerPage) => {
     axios.post('/api/grns', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
       dispatch({ type: actionTypes.GRNS_LOADED, storeId, grns: data.grns, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 

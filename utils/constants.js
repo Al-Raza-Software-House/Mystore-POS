@@ -58,6 +58,11 @@ const poStates = {
   PO_STATUS_CLOSED: 2
 }
 
+const payOrCreditOptions = {
+  PAY_NOW: 1,
+  ON_CREDIT: 2
+}
+
 module.exports = {
   storeStates,
   userRoles,
@@ -68,5 +73,6 @@ module.exports = {
   paymentModes,
   supplierTxns,
   customerTxns,
-  poStates
+  poStates,
+  payOrCreditOptions
 }

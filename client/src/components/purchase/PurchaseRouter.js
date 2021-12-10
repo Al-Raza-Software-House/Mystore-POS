@@ -54,9 +54,9 @@ function PurchaseRouter(){
             <Route path="/purchase/rtvs/new" render={props => <CreateRtv {...props} printRTV={setPrintRTV} />} />
             <Route path="/purchase/rtvs" render={props => <Rtvs {...props} printRTV={setPrintRTV} />} />
 
-            <Route path="/purchase/grns/edit/:storeId/:grnId" render={props => <EditGrn {...props} printGRN={setPrintGRN} />} />
-            <Route path="/purchase/grns/new" render={props => <CreateGrn {...props} printGRN={setPrintGRN} />} />
-            <Route path="/purchase/grns" render={props => <Grns {...props} printGRN={setPrintGRN} />} />
+            <Route path="/purchase/grns/edit/:storeId/:grnId" render={props => <EditGrn {...props} printGrn={setPrintGRN} />} />
+            <Route path="/purchase/grns/new" render={props => <CreateGrn {...props} printGrn={setPrintGRN} />} />
+            <Route path="/purchase/grns" render={props => <Grns {...props} printGrn={setPrintGRN} />} />
 
             <Route path="/purchase/orders/edit/:storeId/:poId" render={props => <EditPurchaseOrder {...props} printPo={setPrintPo} />} />
             <Route path="/purchase/orders/new" render={props => <CreatePurchaseOrder {...props} printPo={setPrintPo} />} />

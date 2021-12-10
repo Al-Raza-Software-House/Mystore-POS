@@ -22,11 +22,12 @@ import { categoryTypes } from '../../../utils/constants';
 import Panel from '../../library/Panel';
 import SelectCategorySize from './itemForm/SelectCategorySize';
 import SelectCategoryCombination from './itemForm/SelectCategoryCombination';
+import { allowOnlyPostiveNumber } from '../../../utils';
 
 const formSelector = formValueSelector('createItem');
 
 function CreateItem(props){
-  const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, storeId } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock } = props;
 
   
@@ -103,6 +104,7 @@ function CreateItem(props){
               margin="dense"
               type="number"
               inputProps={{  min: 0 }}
+              onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
                   category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -132,6 +134,7 @@ function CreateItem(props){
               margin="dense"
               type="number"
               inputProps={{  min: 0 }}
+              onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
                   category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -164,6 +167,7 @@ function CreateItem(props){
               margin="dense"
               type="number"
               inputProps={{  min: 0 }}
+              onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
                   category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -193,6 +197,7 @@ function CreateItem(props){
               margin="dense"
               type="number"
               inputProps={{  min: 0 }}
+              onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
                   category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -241,6 +246,7 @@ function CreateItem(props){
           <Field
             component={UploadFile}
             label="Upload Image"
+            storeId={storeId}
             name="image"
             disabled={!categoryId}
             filePath="items/"
@@ -426,6 +432,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -440,6 +447,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -454,6 +462,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -468,6 +477,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -532,6 +542,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               margin="dense"
               type="number"
               inputProps={{  min: 2 }}
+              onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
           <Box width={{ xs: '100%', md: '20%' }} >
@@ -545,6 +556,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
                 margin="dense"
                 type="number"
                 inputProps={{  min: 0 }}
+                onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
           <Box width={{ xs: '100%', md: '14%' }} textAlign="center" >

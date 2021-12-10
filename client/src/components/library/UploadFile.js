@@ -2,17 +2,16 @@ import React, { useRef, useState } from 'react';
 import { Box, Button, CircularProgress, FormHelperText } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { useSelector } from 'react-redux';
 import axios from 'axios';
 import Compress from 'compress.js';
 
-function resizeImageFile(file) {
+function resizeImageFile(file, imageWidth) {
   return new Promise(async resolve => { 
     const compress = new Compress();
     const resizedImage = await compress.compress([file], {
       size: 0.5, // the max size in MB, defaults to 2MB
       quality: 0.8, // the quality of the image, max is 1,
-      maxWidth: process.env.REACT_APP_RESIZE_IMAGE_WIDTH, // the max width of the output image, defaults to 1920px
+      maxWidth: imageWidth ? imageWidth : process.env.REACT_APP_RESIZE_IMAGE_WIDTH, // the max width of the output image, defaults to 1920px
       resize: true // defaults to true, set false if you do not want to resize the image width and height
     });
     const imgData = resizedImage[0];
@@ -27,12 +26,11 @@ function resizeImageFile(file) {
 
 function UploadFile(props) {
   const {
-    label, filePath, disabled=false,
+    label, filePath, disabled=false, imageWidth=false, storeId=null,
     input: { value, onChange }
   } = props;
   
   const fileInput = useRef();
-  const storeId = useSelector(state => state.stores.selectedStoreId);
   const [msg, setMsg] = useState();
   const [base64, setBase64] = useState(null);
   const [inProgress, setInProgress] = useState(false);
@@ -48,7 +46,7 @@ function UploadFile(props) {
 
     
     setMsg('Uploading...');
-    let { file, base64 } = await resizeImageFile(files[0]);
+    let { file, base64 } = await resizeImageFile(files[0], imageWidth);
     setBase64(base64);
     let fileName = Math.random().toString(36).substring(2) + '.png'; 
     setInProgress(true);

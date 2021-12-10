@@ -19,16 +19,18 @@ const schema = new mongoose.Schema({
     ref: 'purchaseOrder'
   },
   grnNumber: Number,
-  payment: Number, //cash or credit
+  payOrCredit: Number, //cash or credit
   bankId: mongoose.Schema.Types.ObjectId,
+  chequeTxnId: String,
   
   items: [
     {
       _id: mongoose.Schema.Types.ObjectId,
       costPrice: Number,
       salePrice: Number,
+      packSalePrice: Number,
       adjustment: Number,
-      Tax: Number,
+      tax: Number,
       batchNumber: String,
       batchExpiryDate: Date,
       quantity: Number,

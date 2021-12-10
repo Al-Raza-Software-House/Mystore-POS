@@ -21,6 +21,7 @@ import SelectCategoryProperty from './itemForm/SelectCategoryProperty';
 import SelectItemProperty from './itemForm/SelectItemProperty';
 import UploadFile from '../../library/UploadFile';
 import Panel from '../../library/Panel';
+import { allowOnlyPostiveNumber } from '../../../utils';
 
 const formName = "editItem";
 const formSelector = formValueSelector( formName );
@@ -131,6 +132,7 @@ function EditItem(props){
                 margin="dense"
                 type="number"
                 inputProps={{  min: 0 }}
+                onKeyDown={allowOnlyPostiveNumber}
                 InputProps={{
                   endAdornment:
                     category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -160,6 +162,7 @@ function EditItem(props){
                 margin="dense"
                 type="number"
                 inputProps={{  min: 0 }}
+                onKeyDown={allowOnlyPostiveNumber}
                 InputProps={{
                   endAdornment:
                     category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -192,6 +195,7 @@ function EditItem(props){
                 margin="dense"
                 type="number"
                 inputProps={{  min: 0 }}
+                onKeyDown={allowOnlyPostiveNumber}
                 InputProps={{
                   endAdornment:
                     category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -221,6 +225,7 @@ function EditItem(props){
                 margin="dense"
                 type="number"
                 inputProps={{  min: 0 }}
+                onKeyDown={allowOnlyPostiveNumber}
                 InputProps={{
                   endAdornment:
                     category && category.type === categoryTypes.CATEGORY_TYPE_VARIANT ?
@@ -277,6 +282,7 @@ function EditItem(props){
           <Box width={{ xs: '100%', md: '31%' }} alignSelf="flex-start" >
             <Field
               component={UploadFile}
+              storeId={storeId}
               label="Upload Image"
               name="image"
               disabled={!categoryId}
@@ -465,6 +471,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -479,6 +486,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -493,6 +501,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -507,6 +516,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     margin="dense"
                     type="number"
                     inputProps={{  min: 0 }}
+                    onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
 
@@ -576,6 +586,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               margin="dense"
               type="number"
               inputProps={{  min: 2 }}
+              onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
           <Box width={{ xs: '100%', md: '20%' }} >
@@ -589,6 +600,7 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
                 margin="dense"
                 type="number"
                 inputProps={{  min: 0 }}
+                onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
           <Box width={{ xs: '100%', md: '14%' }} textAlign="center" display="flex" justifyContent="center" alignItems="flex-start" pt={1} >

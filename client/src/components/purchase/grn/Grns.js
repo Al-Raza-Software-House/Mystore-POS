@@ -1,15 +1,14 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencilAlt, faTrash, faSync, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, TablePagination, Typography, Chip } from '@material-ui/core';
+import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, TablePagination, Typography } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { loadGrns, emptyGrns, deleteGrn } from '../../../store/actions/grnActions';
-import { poStates } from '../../../utils/constants';
 import moment from 'moment';
 import GRNFilters from './GrnFilters';
 
-function Grns({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadGrns, emptyGrns, deleteGrn, printGRN }) {
+function Grns({ storeId, lastEndOfDay, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadGrns, emptyGrns, deleteGrn, printGrn }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
@@ -50,7 +49,7 @@ function Grns({ storeId, suppliers, records, filters, totalRecords, recordsLoade
       {
         records.length === 0 && recordsLoaded && !loadingRecords ?
         <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
-          <Typography gutterBottom>No purchase orders found</Typography>
+          <Typography gutterBottom>No GRNs found</Typography>
           <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => emptyGrns(storeId)} color="primary" disableElevation  >Refresh</Button>
         </Box>
         :
@@ -59,19 +58,18 @@ function Grns({ storeId, suppliers, records, filters, totalRecords, recordsLoade
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell align="center">Po No.</TableCell>
-                  <TableCell align="center">Issue Date</TableCell>
+                  <TableCell align="center">GRN No.</TableCell>
+                  <TableCell align="center">Date</TableCell>
                   <TableCell align="center">Supplier</TableCell>
                   <TableCell align="center">Items</TableCell>
                   <TableCell align="center">Quantity</TableCell>
                   <TableCell align="center">Amount</TableCell>
-                  <TableCell align="center">Status</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {
-                  rows.map(order => <Transaction {...{order, suppliers, storeId, deleteGrn, printGRN}} key={order._id}  /> )
+                  rows.map(grn => <Grn {...{grn, suppliers, storeId, deleteGrn, lastEndOfDay, printGrn}} key={grn._id}  /> )
                 }
               </TableBody>
             </Table>
@@ -92,7 +90,7 @@ function Grns({ storeId, suppliers, records, filters, totalRecords, recordsLoade
 }
 
 
-function Transaction({ order, suppliers, storeId, deleteGrn, printGRN }){
+function Grn({ grn, suppliers, storeId, deleteGrn, lastEndOfDay, printGrn }){
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -106,33 +104,25 @@ function Transaction({ order, suppliers, storeId, deleteGrn, printGRN }){
   return(
     <>
     <TableRow hover>
-      <TableCell align="center">{ order.poNumber  }</TableCell>
-      <TableCell align="center">{ moment(order.issueDate).format("DD MMM, YYYY")  }</TableCell>
-      <TableCell align="center">{ suppliers[order.supplierId] ? suppliers[order.supplierId].name : "" }</TableCell>
-      <TableCell align="center">{ order.totalItems.toLocaleString() }</TableCell>
-      <TableCell align="center">{ order.totalQuantity.toLocaleString() }</TableCell>
-      <TableCell align="center">{ order.totalAmount.toLocaleString() }</TableCell>
-
-      <TableCell align="center">
-        { order.status === poStates.PO_STATUS_OPEN ? <Chip label="Open" color="primary" /> : null }
-        { order.status === poStates.PO_STATUS_CLOSED ? <Chip label="Closed"  /> : null }
-      </TableCell>
+      <TableCell align="center">{ grn.grnNumber  }</TableCell>
+      <TableCell align="center">{ moment(grn.grnDate).format("DD MMM, YYYY")  }</TableCell>
+      <TableCell align="center">{ suppliers[grn.supplierId] ? suppliers[grn.supplierId].name : "" }</TableCell>
+      <TableCell align="center">{ grn.totalItems.toLocaleString() }</TableCell>
+      <TableCell align="center">{ grn.totalQuantity.toLocaleString() }</TableCell>
+      <TableCell align="center">{ grn.totalAmount.toLocaleString() }</TableCell>
       
       <TableCell align="right">
-        <IconButton onClick={() => printGRN( { ...order, supplier: suppliers[order.supplierId] } ) } title="Print Receipt">
+        <IconButton onClick={() => printGrn( { ...grn, supplier: suppliers[grn.supplierId] } ) } title="Print GRN">
           <FontAwesomeIcon icon={faPrint} size="xs" />
         </IconButton>
+        <IconButton component={Link} to={ '/purchase/grns/edit/' + storeId + '/' + grn._id } title="Edit GRN">
+          <FontAwesomeIcon icon={faPencilAlt} size="xs" />
+        </IconButton>
         {
-          order.status === poStates.PO_STATUS_OPEN ? 
-          <>
-            <IconButton component={Link} to={ '/purchase/orders/edit/' + storeId + '/' + order._id } title="Edit Purchase Order">
-              <FontAwesomeIcon icon={faPencilAlt} size="xs" />
-            </IconButton>
-            <IconButton onClick={(event) => handleClick(event) } title="Delete Purchase Order">
+          (lastEndOfDay && moment(grn.grnDate) <= moment(lastEndOfDay)) ? null :
+          <IconButton onClick={(event) => handleClick(event) } title="Delete GRN">
               <FontAwesomeIcon icon={faTrash} size="xs" />
             </IconButton>
-          </>
-          : null
          }
       </TableCell>
     </TableRow>
@@ -151,9 +141,9 @@ function Transaction({ order, suppliers, storeId, deleteGrn, printGRN }){
         }}
         >
         <Box py={2} px={4} textAlign="center">
-          <Typography gutterBottom>Do you want to delete this order from store?</Typography>
-          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteGrn(storeId, order._id)}>
-            Delete Purchase Order
+          <Typography gutterBottom>Do you want to delete this GRN from store?</Typography>
+          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteGrn(storeId, grn._id)}>
+            Delete GRN
           </Button>
         </Box>
       </Popover>
@@ -163,6 +153,7 @@ function Transaction({ order, suppliers, storeId, deleteGrn, printGRN }){
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
+  const store = state.stores.stores.find(store => store._id === storeId);
   const suppliers = state.suppliers[storeId] ? state.suppliers[storeId] : [];
   const suppliersMap = {};
   for(let i=0; i<suppliers.length; i++)
@@ -170,7 +161,7 @@ const mapStateToProps = state => {
     suppliersMap[ suppliers[i]._id ] = suppliers[i];
   }
 
-  const purchaseOrders = state.purchaseOrders[storeId] ? state.purchaseOrders[storeId] : {
+  const grns = state.grns[storeId] ? state.grns[storeId] : {
     records: [],
     totalRecords: 0,
     recordsLoaded: false,
@@ -180,8 +171,9 @@ const mapStateToProps = state => {
   return {
     storeId,
     suppliers: suppliersMap,
-    ...purchaseOrders,
-    loadingRecords: state.progressBar.loading
+    ...grns,
+    loadingRecords: state.progressBar.loading,
+    lastEndOfDay: store.lastEndOfDay,
   }
 }
 

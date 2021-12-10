@@ -2,7 +2,7 @@ const router = require('express').Router();
 const User = require('../models/system/User');
 const Store = require('../models/store/Store');
 const bcrypt = require('bcryptjs');
-const { createAuthUser, createJwtToken } = require('../utils');
+const { createAuthUser, createJwtToken, publicS3Object, deleteS3Object } = require('../utils');
 const moment = require('moment-timezone');
 const { authCheck } = require('../utils/middlewares');
 const { storeStates } = require('../utils/constants');
@@ -185,7 +185,7 @@ router.post('/settings', async (req, res) => {
     const result = await User.findOne({_id: req.user._id});
     if(result === null)
       throw new Error("Invalid Request");
-    if(req.user.newPassword)
+    if(req.body.newPassword)
     {
       if(!req.body.currentPassword)
         throw new Error('Current password is required');
@@ -199,8 +199,17 @@ router.post('/settings', async (req, res) => {
     };
     if(req.body.newPassword)
       data.password = await bcrypt.hash(req.body.newPassword, 10);
-    await User.updateOne({_id: req.user._id }, data, {runValidators: true});
     const user = await User.findOne({_id: req.user._id });
+    if(req.body.profilePicture && user.profilePicture !== req.body.profilePicture) // uploaded new image, 
+    {
+      if(user.profilePicture) // if item has old image , delete old image
+        await deleteS3Object( process.env.AWS_KEY_PREFIX + 'users/' + user.profilePicture );
+      let key = process.env.AWS_KEY_PREFIX + 'users/' + req.body.profilePicture;
+      await publicS3Object( key );
+      data.profilePicture = req.body.profilePicture;
+    }
+    user.set(data);
+    await user.save();
     res.json( createAuthUser(user.toObject()) );
   }catch(err)
   {

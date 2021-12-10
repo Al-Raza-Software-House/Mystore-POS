@@ -71,7 +71,7 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
               </TableHead>
               <TableBody>
                 {
-                  rows.map(order => <Transaction {...{order, suppliers, storeId, deletePurchaseOrder, printPo}} key={order._id}  /> )
+                  rows.map(order => <Order {...{order, suppliers, storeId, deletePurchaseOrder, printPo}} key={order._id}  /> )
                 }
               </TableBody>
             </Table>
@@ -92,7 +92,7 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
 }
 
 
-function Transaction({ order, suppliers, storeId, deletePurchaseOrder, printPo }){
+function Order({ order, suppliers, storeId, deletePurchaseOrder, printPo }){
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);

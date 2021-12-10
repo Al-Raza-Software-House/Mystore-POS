@@ -1,20 +1,39 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, IconButton } from '@material-ui/core'
-import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
+import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
-import { showSuccess } from '../../../store/actions/alertActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faExclamationTriangle, faPrint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { connect } from 'react-redux';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
+import { compose } from 'redux';
 import { useHistory, useParams } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import DateInput from '../../library/form/DateInput';
 import { useSelector } from 'react-redux';
 import ItemPicker from '../../library/ItemPicker';
-import { updatePO } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
+import DateTimeInput from '../../library/form/DateTimeInput';
+import SelectInput from '../../library/form/SelectInput';
+import { payOrCreditOptions, paymentModes } from '../../../utils/constants';
+import RadioInput from '../../library/form/RadioInput';
+import { allowOnlyPostiveNumber } from '../../../utils';
+import GrnItemRow from './GrnItemRow';
+import UploadFile from '../../library/UploadFile';
+import { addNewGrn, updateGrn } from '../../../store/actions/grnActions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPrint } from '@fortawesome/free-solid-svg-icons';
+
+const payNowOrCreditOptions = [
+  { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
+  { id: payOrCreditOptions.ON_CREDIT, title: "Credit" },
+];
+
+const paymentModeOptions = [
+  { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
+  { id: paymentModes.PAYMENT_MODE_BANK, title: "Bank" },
+]
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -30,48 +49,53 @@ const useStyles = makeStyles(theme => ({
     textAlign: "center"
   }
 }));
-const formName = "editPurchaseOrder";
-const formSelector = formValueSelector(formName);
 
-const calculateMargin = (item, values, showInPercent=false) => {
-  if(item.salePrice === 0) return 0;
-  let costPrice = isNaN(values[item._id].costPrice) ? 0 : Number(values[item._id].costPrice);
-  let salePrice = item.packParentId ? item.packSalePrice : item.salePrice;
-  let margin = salePrice - costPrice;
-  if(!showInPercent) return (+margin.toFixed(2)).toLocaleString();
-  return +((margin/salePrice)*100).toFixed(2);
-}
+const formName = "editGrn";
 
 function EditGrn(props) {
   const history = useHistory();
-  const { storeId, poId } = useParams();
-  const order  = useSelector(state => {
-    let orders = state.purchaseOrders[storeId] ? state.purchaseOrders[storeId].records : [];
-    return orders.find(record => record._id === poId);
+  const { storeId, grnId } = useParams();
+  const { dispatch, banks, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printGrn} = props;
+  const grn  = useSelector(state => {
+    let grns = state.grns[storeId] ? state.grns[storeId].records : [];
+    return grns.find(record => record._id === grnId);
   })
+  const beforeLastEndOfDay = useMemo(() => {
+    return lastEndOfDay && moment(grn.grnDate) <= moment(lastEndOfDay);
+  }, [grn, lastEndOfDay]);
 
   const classes = useStyles();
-  const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printPo } = props;
-  const supplierId = useSelector(state => formSelector(state, 'supplierId'));
+  const formValues = useSelector(state => {
+    let formData = getFormValues(formName)(state);
+    if(formData)
+      return !formData.items ? { ...formData, items: []} : formData;
+    else
+      return { items: [] }
+  });
+  const { supplierId } = formValues;
+  const values = formValues.items;
   const supplier = useSelector(state => state.suppliers[storeId] ? state.suppliers[storeId].find(record => record._id === supplierId) : null);
   const allItems = useSelector(state => state.items[storeId].allItems );
-  const values = useSelector(state => {
-    let records = formSelector(state, 'items');
-    return records ? records : []
-  } );
+
   
+  const [items, setItems] = useState([]);//selected items
+  const [po, setPo] = useState(null);
+
   useEffect(() => {
     let formItems = {};
-    order.items.forEach(item => {
+    grn.items.forEach(item => {
       formItems[item._id] = item;
+      if(item.batchExpiryDate)
+        formItems[item._id].batchExpiryDate = moment(item.batchExpiryDate).format("DD MMMM, YYYY");
     })
-    dispatch(initialize(formName, { ...order, items: formItems, issueDate: moment(order.issueDate).format("DD MMMM, YYYY"), deliveryDate: moment(order.deliveryDate).format("DD MMMM, YYYY") }));
+    let paymentMode = grn.bankId ? paymentModes.PAYMENT_MODE_BANK : paymentModes.PAYMENT_MODE_CASH;
+    dispatch(initialize(formName, { ...grn, paymentMode,  items: formItems, grnDate: moment(grn.grnDate).format("DD MMMM, YYYY hh:mm A"), billDate: moment(grn.billDate).format("DD MMMM, YYYY"), billDueDate: moment(grn.billDueDate).format("DD MMMM, YYYY")  }));
     let selectedItems = [];
-    order.items.forEach(item => {
+    grn.items.forEach(item => {
       let storeItem = allItems.find(record => record._id === item._id);
       if(storeItem)
       {
-        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, salePrice, currentStock, packParentId, packQuantity, packSalePrice } = storeItem;
+        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, currentStock, packParentId, packQuantity } = storeItem;
         let lowStock = storeItem.currentStock < storeItem.minStock;
         let overStock = storeItem.currentStock > storeItem.maxStock
         if(storeItem.packParentId)
@@ -84,15 +108,20 @@ function EditGrn(props) {
             overStock = parentItem.currentStock > parentItem.maxStock
           }
         }
-        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: item.quantity };
+        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice: item.salePrice, currentStock, packParentId, packQuantity, packSalePrice: item.packSalePrice, lowStock, overStock, quantity: item.quantity };
         selectedItems.push(newItem);
       }
     });
     setItems(selectedItems);
-  }, [order, allItems, dispatch]);
+    if(!grn.poId) return;
+    axios.get('/api/purchaseOrders/', { params: { storeId, supplierId: grn.supplierId, poId: grn.poId } }).then(({ data }) => {
+      if(data.order._id)
+        setPo(data.order);
+    }).catch(err => err);
 
-  const [items, setItems] = useState([]);
+  }, [grn, allItems, dispatch]);
 
+  //pass to item Picker
   const selectItem = useCallback((item) => {
     let isExist = items.find(record => record._id === item._id);
     if(isExist)
@@ -118,9 +147,7 @@ function EditGrn(props) {
         costPrice = item.packQuantity * costPrice;
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
-      dispatch( change(formName, `items[${_id}]._id`, _id));
-      dispatch( change(formName, `items[${_id}].costPrice`, costPrice));
-      dispatch( change(formName, `items[${_id}].quantity`, 1));
+      dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, batchNumber: "", batchExpiryDate: null, notes: "" }));
       setItems([
         newItem,
         ...items
@@ -128,8 +155,9 @@ function EditGrn(props) {
     }
   }, [items, values, allItems, dispatch]);
 
+  //Pass to item Picker, or delete item from list
   const removeItem = useCallback((item) => {
-    dispatch( change(formName, `items[${item._id}]`, undefined));
+    dispatch( change(formName, `items[${item._id}]`, ""));
     setItems(prevItems => prevItems.filter(record => record._id !== item._id));
   }, [dispatch]);
 
@@ -155,9 +183,13 @@ function EditGrn(props) {
       if(!item) continue;
       let costPrice = isNaN(item.costPrice) ? 0 :  Number(item.costPrice);
       let quantity = isNaN(item.quantity) ? 0 :  Number(item.quantity);
+      let adjustment = isNaN(values[item._id].adjustment) ? 0 :  quantity * Number(values[item._id].adjustment);
+      let tax = isNaN(values[item._id].tax) ? 0 :  quantity * Number(values[item._id].tax);
       total += costPrice * quantity;
+      total += tax;
+      total -= adjustment;
     }
-    return (+total.toFixed(2)).toLocaleString()
+    return +total.toFixed(2);
   }, [values]);
 
   const anyZeroQuantity = useMemo(() => {
@@ -171,30 +203,43 @@ function EditGrn(props) {
     return false;
   }, [values]);
 
+  const grnTotal = useMemo(() => {
+    let total = Number(totalAmount);
+    total += isNaN(formValues.loadingExpense) ? 0 : Number(formValues.loadingExpense);
+    total += isNaN(formValues.freightExpense) ? 0 : Number(formValues.freightExpense);
+    total += isNaN(formValues.otherExpense) ? 0 : Number(formValues.otherExpense);
+    total += isNaN(formValues.adjustmentAmount) ? 0 : Number(formValues.adjustmentAmount);
+    total += isNaN(formValues.purchaseTax) ? 0 : Number(formValues.purchaseTax);
+    return +total.toFixed(2);
+  }, [totalAmount, formValues.loadingExpense, formValues.freightExpense, formValues.otherExpense, formValues.adjustmentAmount, formValues.purchaseTax])
+
   useEffect(() => {
     if(submitSucceeded)
-      history.push('/purchase');
+      history.push('/purchase/grns');
   }, [submitSucceeded, history])
 
-  const onSubmit = useCallback((formValues, dispatch, { match }) => {
-    const payload = {...match.params, ...formValues};
-    payload.issueDate = moment(formValues.issueDate, "DD MMMM, YYYY").toDate();
-    payload.deliveryDate = moment(formValues.deliveryDate, "DD MMMM, YYYY").toDate();
+  const onSubmit = useCallback((formData, dispatch, { match }) => {
+    const payload = {...match.params, ...formData};
+    payload.grnDate = moment(formData.grnDate, "DD MMMM, YYYY hh:mm A").toDate();
+    payload.billDate = moment(formData.billDate, "DD MMMM, YYYY").toDate();
+    payload.billDueDate = moment(formData.billDueDate, "DD MMMM, YYYY").toDate();
     payload.items = [];
     items.forEach(item => {
-      payload.items.push(
-        formValues.items[item._id]
-      )
+      let record = formData.items[item._id];
+      payload.items.push({
+        ...record,
+        batchExpiryDate: record.batchExpiryDate ? moment(record.batchExpiryDate, "DD MMMM, YYYY").toDate() : null
+      })
     });
     dispatch(showProgressBar());
-    return axios.post('/api/purchaseOrders/update', payload).then( response => {
+    return axios.post('/api/grns/update', payload).then( response => {
       dispatch(hideProgressBar());
-      if(response.data.order._id)
+      if(response.data.grn._id)
       {
-        dispatch( updatePO(match.params.storeId, match.params.poId, response.data.order) );
-        dispatch( showSuccess("purchase order updated") );
-        if(formValues.printPo)
-          printPo({ ...response.data.order, supplier });
+        dispatch( updateGrn(match.params.storeId, match.params.grnId, response.data.grn) );
+        dispatch( showSuccess("GRN updated") );
+        if(formData.printGrn)
+          printGrn({ ...response.data.grn, supplier });
       }
 
     }).catch(err => {
@@ -203,89 +248,129 @@ function EditGrn(props) {
         _error: err.response && err.response.data.message ? err.response.data.message: err.message
       });
     });
-  }, [items, supplier, printPo]);
+  }, [items, supplier, printGrn]);
     return(
       <>
       <Box width="100%" justifyContent="space-between" display="flex">
         <Typography gutterBottom variant="h6" align="center" style={{ flexGrow: 1 }}>
-          Update Purchase Order
+          Update GRN
         </Typography>
       </Box>
       <Box margin="auto" width="100%">
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap">
-            <Box width={{ xs: '100%', md: '24%' }}>
-              <SelectSupplier formName={formName} />   
+            <Box width={{ xs: '100%', md: '32%' }}>
+              <SelectSupplier formName={formName} addNewRecord={false} disabled={true} />   
             </Box>
-            <Box width={{ xs: '100%', md: '24%' }}>
-              <Field
-              component={TextInput}
-              name="referenceNumber"
-              label="Reference No."
-              placeholder="Reference number..."
-              fullWidth={true}
-              variant="outlined"
-              margin="dense"
-              disabled={!supplierId}
-              />    
+            <Box width={{ xs: '100%', md: '32%' }} pt={2}>
+              {
+                !po ? null :
+                <Typography style={{ color: '#7c7c7c' }} align="center"> { `PO# ${po.poNumber} - ${ moment(po.issueDate).format("DD MMMM, YYYY") }` } </Typography>
+              }
             </Box>
-            <Box width={{ xs: '100%', md: '24%' }}>
+            <Box width={{ xs: '100%', md: '32%' }}>
               <Field
-              component={DateInput}
-              name="issueDate"
-              label="Issue Date"
-              placeholder="Issue date..."
-              dateFormat="DD MMMM, YYYY"
+              component={DateTimeInput}
+              name="grnDate"
+              label="Date"
+              dateFormat="DD MMMM, YYYY hh:mm A"
+              placeholder="Date..."
               fullWidth={true}
               inputVariant="outlined"
-              disablePast
               margin="dense"
               emptyLabel=""
-              disabled={!supplierId}
-              />    
-            </Box>
-            <Box width={{ xs: '100%', md: '24%' }}>
-              <Field
-              component={DateInput}
-              name="deliveryDate"
-              label="Delivery Date"
-              placeholder="Delivery date..."
-              dateFormat="DD MMMM, YYYY"
-              fullWidth={true}
-              inputVariant="outlined"
-              disablePast
-              margin="dense"
-              emptyLabel=""
-              disabled={!supplierId}
+              minDate={ moment(lastEndOfDay).toDate() }
+              maxDate={ moment().toDate() }
+              showTodayButton
+              disabled={beforeLastEndOfDay}
               />    
             </Box>
           </Box>
+          <Box display="flex" justifyContent="space-between" flexWrap="wrap">
+            <Box width={{ xs: '100%', md: '24%' }} mb={2}>
+              <Field
+                component={RadioInput}
+                options={payNowOrCreditOptions}
+                label="Payment"
+                id="payOrCredit"
+                name="payOrCredit"
+                disabled={beforeLastEndOfDay}
+              />   
+            </Box>
+              <Box width={{ xs: '100%', md: '24%' }} mb={2}>
+                {
+                  parseInt(formValues.payOrCredit) === payOrCreditOptions.PAY_NOW ?
+                  <Field
+                    component={RadioInput}
+                    options={paymentModeOptions}
+                    label="Mode"
+                    id="paymentMode"
+                    name="paymentMode"
+                    disabled={beforeLastEndOfDay}
+                  />
+                  : null
+                }
+              </Box>
+              <Box width={{ xs: '100%', md: '24%' }} pt={1}>
+                {
+                  parseInt(formValues.payOrCredit) === payOrCreditOptions.PAY_NOW && parseInt(formValues.paymentMode) === paymentModes.PAYMENT_MODE_BANK ?
+                  <Field
+                    component={SelectInput}
+                    options={banks}
+                    name="bankId"
+                    fullWidth={true}
+                    variant="outlined"
+                    margin="dense"
+                    disabled={beforeLastEndOfDay}
+                  />
+                  : null
+                }
+              </Box>
+              <Box width={{ xs: '100%', md: '24%' }} >
+                {
+                  parseInt(formValues.payOrCredit) === payOrCreditOptions.PAY_NOW && parseInt(formValues.paymentMode) === paymentModes.PAYMENT_MODE_BANK ?
+                  <Field
+                    component={TextInput}
+                    name="chequeTxnId"
+                    label="Cheque No./Transaction ID"
+                    placeholder="Cheque No./Transaction ID..."
+                    type="text"
+                    fullWidth={true}
+                    variant="outlined"
+                    margin="dense"
+                    showError={false}
+                    disabled={beforeLastEndOfDay}
+                  />
+                  : null
+                }
+              </Box>
+          </Box>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center">
             <Box width={{ xs: '100%', md: '31%' }}>
-              <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
+              <ItemPicker disabled={beforeLastEndOfDay} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
             </Box>
-            <Box width={{ xs: '100%', md: '31%' }}>
+            <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
               <Typography align="center">Total Quantity: <b>{ totalQuantity }</b></Typography>
             </Box>
-            <Box width={{ xs: '100%', md: '31%' }}>
-              <Typography align="center">Total Amount: <b>{ totalAmount }</b></Typography>
+            <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
+              <Typography align="center">Items Total Amount: <b>{ totalAmount.toLocaleString() }</b></Typography>
             </Box>
           </Box>
           <Box style={{ backgroundColor: '#ececec' }} p={1} borderRadius={6} my={1}>
             <Box style={{ backgroundColor: '#fff' }} p={ items.length === 0 ? 5 : 0 }>
               {
                 items.length === 0 ?
-                <Typography style={{ color: '#7c7c7c' }} align="center"> add some items to create purchase order </Typography>
+                <Typography style={{ color: '#7c7c7c' }} align="center"> Add items manually or select purchase order to create GRN </Typography>
                 :
                 <TableContainer>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
+                        <TableCell style={{ minWidth: 20 }}></TableCell>
                         <TableCell style={{ minWidth: 280 }}>Item</TableCell>
                         <TableCell style={{ minWidth: 50 }} align="center">Stock</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Cost Price</TableCell>
-                        <TableCell style={{ minWidth: 50 }} align="center">Margin</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Quantity</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Amount</TableCell>
                         <TableCell style={{ minWidth: 40 }} align="center">Action</TableCell>
@@ -293,93 +378,7 @@ function EditGrn(props) {
                     </TableHead>
                     <TableBody>
                       {
-                        items.map((item, index) => (
-                          <TableRow hover key={item._id}>
-                            <TableCell>
-                              <Box my={1} display="flex" justifyContent="space-between">
-                                <span>
-                                  {item.itemName}
-                                </span>
-                                { item.packParentId ? <span style={{ color: '#7c7c7c' }}>Packing <FontAwesomeIcon title="Packing" style={{ marginLeft: 4 }} icon={faBoxOpen} /> </span> : null }
-                                {
-                                  item.sizeName ?
-                                  <span style={{ color: '#7c7c7c' }}> {item.sizeName} | {item.combinationName} </span>
-                                  : null
-                                }
-                              </Box>
-                              <Box mb={1} display="flex" justifyContent="space-between" style={{ color: '#7c7c7c' }}>
-                                <span>{item.itemCode}{item.sizeCode ? '-'+item.sizeCode+'-'+item.combinationCode : '' }</span>
-                                <span>Price: { item.packParentId ? item.packSalePrice.toLocaleString() : item.salePrice.toLocaleString() } </span>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              {item.currentStock.toLocaleString()}
-                              { item.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box height="100%" display="flex" justifyContent="center" alignItems="center">
-                                <Field
-                                  component={TextInput}
-                                  label="Cost Price"
-                                  name={`items[${item._id}].costPrice`}
-                                  placeholder="Cost Price..."
-                                  fullWidth={true}
-                                  variant="outlined"
-                                  margin="dense"
-                                  type="number"
-                                  disabled={!supplierId}
-                                  inputProps={{  min: 0 }}
-                                  showError={false}
-                                  onKeyDown={(e) => {
-                                      if(!((e.keyCode > 95 && e.keyCode < 106)
-                                        || (e.keyCode > 47 && e.keyCode < 58) 
-                                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                                          e.preventDefault();
-                                          return false;
-                                      }
-                                  }}
-                                />
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box mb={1}>{ calculateMargin(item, values) }</Box>
-                              <Box style={{ color: '#7c7c7c' }}>{ calculateMargin(item, values, true) }%</Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Field
-                                component={TextInput}
-                                label="Quantity"
-                                name={`items[${item._id}].quantity`}
-                                placeholder="Quantity..."
-                                fullWidth={true}
-                                variant="outlined"
-                                margin="dense"
-                                type="number"
-                                disabled={!supplierId}
-                                inputProps={{  min: 1 }}
-                                showError={false}
-                                onKeyDown={(e) => {
-                                      if(!((e.keyCode > 95 && e.keyCode < 106)
-                                        || (e.keyCode > 47 && e.keyCode < 58) 
-                                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                                          e.preventDefault();
-                                          return false;
-                                      }
-                                  }}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              { Number( ( isNaN(values[item._id].costPrice) ? 0 :  values[item._id].costPrice ) * ( isNaN(values[item._id].quantity) ? 0 :  values[item._id].quantity ) ).toLocaleString() }
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton disabled={!supplierId} onClick={() => removeItem(item)}>
-                                <FontAwesomeIcon icon={faTimes} size="xs" />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        items.map((item, index) => <GrnItemRow key={item._id} {...{ item, values, supplierId, removeItem, beforeLastEndOfDay }} /> )
                       }
                     </TableBody>
                   </Table>
@@ -388,41 +387,204 @@ function EditGrn(props) {
             </Box>
           </Box>
 
-          <Box>
-            <Field
-              component={TextInput}
-              name="notes"
-              label="Notes"
-              placeholder="Notes..."
-              type="text"
-              fullWidth={true}
-              variant="outlined"
-              multiline
-              rows={3}
-              margin="dense"
-              disabled={!supplierId}
-            />
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" flexWrap="wrap">
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="supplierInvoiceNumber"
+                  label="Supplier Invoice No."
+                  placeholder="Supplier invoice number..."
+                  type="text"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  showError={false}
+                  disabled={beforeLastEndOfDay}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="billNumber"
+                  label="Bill No."
+                  placeholder="Supplier bill number..."
+                  type="text"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  showError={false}
+                  disabled={beforeLastEndOfDay}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={DateInput}
+                  name="billDate"
+                  label="Bill Date"
+                  placeholder="Bill date..."
+                  dateFormat="DD MMMM, YYYY"
+                  fullWidth={true}
+                  inputVariant="outlined"
+                  disablePast
+                  margin="dense"
+                  emptyLabel=""
+                  disabled={beforeLastEndOfDay}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={DateInput}
+                  name="billDueDate"
+                  label="Due Date"
+                  placeholder="Due date..."
+                  dateFormat="DD MMMM, YYYY"
+                  fullWidth={true}
+                  inputVariant="outlined"
+                  disablePast
+                  margin="dense"
+                  emptyLabel=""
+                  disabled={beforeLastEndOfDay}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '100%' }}>
+                <Field
+                  component={UploadFile}
+                  storeId={storeId}
+                  label="Attachment"
+                  name="attachment"
+                  imageWidth={1920}
+                  disabled={beforeLastEndOfDay}
+                  fullWidth={true}
+                  filePath="grns/"
+                />
+              </Box>
+            </Box>
+            <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" flexWrap="wrap">
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="loadingExpense"
+                  label="Loading Expense"
+                  placeholder="Loading expense..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={beforeLastEndOfDay}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="freightExpense"
+                  label="Freight Expense"
+                  placeholder="Freight expense..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={beforeLastEndOfDay}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="otherExpense"
+                  label="Other Expense"
+                  placeholder="Other expense..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={beforeLastEndOfDay}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="adjustmentAmount"
+                  label="Adjustment Amount"
+                  placeholder="Adjustment amount..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={beforeLastEndOfDay}
+                  showError={false}
+                  inputProps={{  min: 0 }}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="purchaseTax"
+                  label="Purchase Tax"
+                  placeholder="Purchase Tax..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={beforeLastEndOfDay}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }} textAlign="center" pt={3}>
+                Total: <b>{ grnTotal.toLocaleString()  }</b>
+              </Box>
+              <Box width={{ xs: '100%', md: '100%' }}>
+                <Field
+                  component={TextInput}
+                  name="notes"
+                  label="Notes"
+                  placeholder="Notes..."
+                  type="text"
+                  fullWidth={true}
+                  variant="outlined"
+                  multiline
+                  rows={2}
+                  margin="dense"
+                  disabled={beforeLastEndOfDay}
+                />
+              </Box>
+            </Box>
           </Box>
-
+          
           <Box textAlign="center">
             <Field
               component={CheckboxInput}
-              name="printPo"
-              label="Print Purchase Order"
+              name="printGrn"
+              label="Print GRN"
               fullWidth={true}
               disabled={!dirty}
             />
           </Box>
-          
+
         <Box textAlign="center">
-          <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} >
-            Update Purchase Order
+          <Button disableElevation type="submit" variant="contained" color="primary" disabled={beforeLastEndOfDay || pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} >
+            Update GRN
           </Button>
           {
             dirty ? null :
-            <IconButton style={{ marginLeft: 8}} title="Print Purchase Order" onClick={ () => printPo({ ...order, supplier}) } >
+            <IconButton style={{ marginLeft: 8}} title="Print GRN" onClick={ () => printGrn({ ...grn, supplier}) } >
               <FontAwesomeIcon icon={faPrint} size="xs" />
             </IconButton>
+          }
+          {
+            beforeLastEndOfDay ?
+            <Typography component="div" style={{ color: '#7c7c7c', marginTop: 10, marginBottom: 10 }}>Cannot update this GRN because it is dated before Last end of Day: { moment(lastEndOfDay).format("DD MMM, YYY, hh:MM A") }</Typography>
+            : null
           }
           {
             items.length && Number(totalQuantity) === 0 ?
@@ -450,19 +612,33 @@ function EditGrn(props) {
 }
 
 const validate = (values, props) => {
-  const { dirty } = props;
+  const { dirty, lastEndOfDay } = props;
   if(!dirty) return {};
   const errors = {};
   if(!values.supplierId)
    errors.supplierId = "Please select supplier first";
-  if(!values.issueDate)
-   errors.issueDate = "Issue date is required";
-  if(!values.deliveryDate)
-   errors.deliveryDate = "Delivery date is required";
+  if(lastEndOfDay && moment(values.grnDate, "DD MMMM, YYYY hh:mm A") <= moment(lastEndOfDay))
+    errors.grnDate = "Date & time should be after last day closing: " + moment(lastEndOfDay).format("DD MMMM, YYYY hh:mm A");
+  else if(moment(values.grnDate, "DD MMMM, YYYY hh:mm A") > moment())
+    errors.grnDate = "Date & time should not be after current time: " + moment().format("DD MMMM, YYYY hh:mm A"); 
   return errors;
 }
 
-export default reduxForm({
+const mapStateToProps = state => {
+  const storeId = state.stores.selectedStoreId;
+  const store = state.stores.stores.find(store => store._id === storeId);
+  const banks = state.accounts.banks[storeId] ? state.accounts.banks[storeId] : [];
+  return{
+    storeId,
+    banks: banks.map(bank => ({ id: bank._id, title: bank.name }) ),
+    lastEndOfDay: store.lastEndOfDay
+  }
+}
+
+export default compose(
+connect(mapStateToProps),
+reduxForm({
   'form': formName,
   validate
-})(EditGrn);
+})
+)(EditGrn);

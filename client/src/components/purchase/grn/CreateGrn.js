@@ -1,26 +1,27 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, IconButton } from '@material-ui/core'
+import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
 import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useHistory } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import DateInput from '../../library/form/DateInput';
 import { useSelector } from 'react-redux';
 import ItemPicker from '../../library/ItemPicker';
-import { addNewPO } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import DateTimeInput from '../../library/form/DateTimeInput';
 import SelectInput from '../../library/form/SelectInput';
 import { payOrCreditOptions, paymentModes } from '../../../utils/constants';
 import RadioInput from '../../library/form/RadioInput';
+import { allowOnlyPostiveNumber } from '../../../utils';
+import GrnItemRow from './GrnItemRow';
+import UploadFile from '../../library/UploadFile';
+import { addNewGrn } from '../../../store/actions/grnActions';
 
 const payNowOrCreditOptions = [
   { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
@@ -31,6 +32,15 @@ const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
   { id: paymentModes.PAYMENT_MODE_BANK, title: "Bank" },
 ]
+
+const initValues = { 
+  grnDate: moment().format("DD MMMM, YYYY hh:mm A"),
+  payOrCredit: payOrCreditOptions.PAY_NOW,
+  paymentMode: paymentModes.PAYMENT_MODE_CASH,
+  poId: 0, 
+  billDate: moment().format("DD MMMM, YYYY"), 
+  billDueDate: moment().format("DD MMMM, YYYY") 
+};
 
 
 const useStyles = makeStyles(theme => ({
@@ -50,15 +60,6 @@ const useStyles = makeStyles(theme => ({
 
 const formName = "createGrn";
 
-const calculateMargin = (item, values, showInPercent=false) => {
-  if(item.salePrice === 0) return 0;
-  let costPrice = isNaN(values[item._id].costPrice) ? 0 : Number(values[item._id].costPrice);
-  let salePrice = item.packParentId ? item.packSalePrice : item.salePrice;
-  let margin = salePrice - costPrice;
-  if(!showInPercent) return (+margin.toFixed(2)).toLocaleString();
-  return +((margin/salePrice)*100).toFixed(2);
-}
-
 function CreateGrn(props) {
   const history = useHistory();
   const classes = useStyles();
@@ -70,11 +71,74 @@ function CreateGrn(props) {
     else
       return { items: [] }
   });
-  const { supplierId, values } = formValues;
+  const { supplierId, poId } = formValues;
+  const values = formValues.items;
   const supplier = useSelector(state => state.suppliers[storeId] ? state.suppliers[storeId].find(record => record._id === supplierId) : null);
   const allItems = useSelector(state => state.items[storeId].allItems );
   
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState([]);//selected items
+  const [purchaseOrders, setPurchaseOrders] = useState([]); //
+
+  useEffect(() => {
+    if(!supplierId)
+    {
+      dispatch( change(formName, 'poId', 0) )
+      setPurchaseOrders(prevOrders => prevOrders.length ? [] : prevOrders);
+      return;
+    }
+    dispatch( showProgressBar() );
+    axios.get('/api/purchaseOrders/open', { params: { storeId, supplierId } }).then(({ data }) => {
+    dispatch( hideProgressBar() );
+
+      setPurchaseOrders(data.orders);
+      dispatch( change(formName, 'poId', 0) )
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
+  }, [supplierId, storeId, dispatch]);
+
+  const poOptions = useMemo(() => {
+    let orders = [{ id: 0, title: supplierId && purchaseOrders.length === 0 ? "No purchase orders found, add item manually" : "Select a purchase order or add item manually" }];
+    if(!supplierId || purchaseOrders.length === 0) return orders;
+    orders = [...orders, ...purchaseOrders.map(order => ({ id: order._id, title: `PO# ${order.poNumber} - ${ moment(order.issueDate).format("DD MMMM") }` }))];
+    return orders;
+  }, [purchaseOrders, supplierId])
+
+  useEffect(() => {
+    setItems([]);
+    dispatch(change(formName, 'items', undefined));
+    if(!poId) return;
+    let order = purchaseOrders.find(record => record._id === poId);
+    if(!order) return;
+    let newItems = [];
+    for(let index = 0; index< order.items.length; index++)
+    {
+      let record = order.items[index];
+      let item = allItems.find(elem => elem._id === record._id);
+      if(!item) continue;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice } = item;
+      let lowStock = item.currentStock < item.minStock;
+      let overStock = item.currentStock > item.maxStock
+      if(item.packParentId)
+      {
+        let parentItem = allItems.find(record => record._id === item.packParentId);
+        if(parentItem)
+        {
+          currentStock = parentItem.currentStock; 
+          lowStock = parentItem.currentStock < parentItem.minStock;
+          overStock = parentItem.currentStock > parentItem.maxStock
+        }
+        costPrice = item.packQuantity * costPrice;
+      }
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
+      dispatch( change(formName, `items[${_id}]`, {_id, costPrice: record.costPrice, salePrice, packSalePrice, quantity: record.quantity, adjustment: 0, tax: 0, batchNumber: "", batchExpiryDate: null, notes: "" }));
+      newItems.push(newItem);
+    }
+    setItems(newItems);
+  }, [poId, dispatch, purchaseOrders, allItems])
+
+  //pass to item Picker
   const selectItem = useCallback((item) => {
     let isExist = items.find(record => record._id === item._id);
     if(isExist)
@@ -100,9 +164,7 @@ function CreateGrn(props) {
         costPrice = item.packQuantity * costPrice;
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
-      dispatch( change(formName, `items[${_id}]._id`, _id));
-      dispatch( change(formName, `items[${_id}].costPrice`, costPrice));
-      dispatch( change(formName, `items[${_id}].quantity`, 1));
+      dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, batchNumber: "", batchExpiryDate: null, notes: "" }));
       setItems([
         newItem,
         ...items
@@ -110,14 +172,15 @@ function CreateGrn(props) {
     }
   }, [items, values, allItems, dispatch]);
 
+  //Pass to item Picker, or delete item from list
   const removeItem = useCallback((item) => {
     dispatch( change(formName, `items[${item._id}]`, ""));
     setItems(prevItems => prevItems.filter(record => record._id !== item._id));
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(initialize(formName, { grnDate: moment().format("DD MMMM, YYYY hh:mm A"), bankId: defaultBankId, payOrCredit: payOrCreditOptions.PAY_NOW, paymentMode: paymentModes.PAYMENT_MODE_CASH }));
-  }, [dispatch]);
+    dispatch(initialize(formName, {...initValues, bankId: defaultBankId}));
+  }, [dispatch, defaultBankId]);
 
   const totalQuantity = useMemo(() => {
     let total = 0;
@@ -141,9 +204,13 @@ function CreateGrn(props) {
       if(!item) continue;
       let costPrice = isNaN(item.costPrice) ? 0 :  Number(item.costPrice);
       let quantity = isNaN(item.quantity) ? 0 :  Number(item.quantity);
+      let adjustment = isNaN(values[item._id].adjustment) ? 0 :  quantity * Number(values[item._id].adjustment);
+      let tax = isNaN(values[item._id].tax) ? 0 :  quantity * Number(values[item._id].tax);
       total += costPrice * quantity;
+      total += tax;
+      total -= adjustment;
     }
-    return (+total.toFixed(2)).toLocaleString()
+    return +total.toFixed(2);
   }, [values]);
 
   const anyZeroQuantity = useMemo(() => {
@@ -157,30 +224,43 @@ function CreateGrn(props) {
     return false;
   }, [values]);
 
+  const grnTotal = useMemo(() => {
+    let total = Number(totalAmount);
+    total += isNaN(formValues.loadingExpense) ? 0 : Number(formValues.loadingExpense);
+    total += isNaN(formValues.freightExpense) ? 0 : Number(formValues.freightExpense);
+    total += isNaN(formValues.otherExpense) ? 0 : Number(formValues.otherExpense);
+    total += isNaN(formValues.adjustmentAmount) ? 0 : Number(formValues.adjustmentAmount);
+    total += isNaN(formValues.purchaseTax) ? 0 : Number(formValues.purchaseTax);
+    return +total.toFixed(2);
+  }, [totalAmount, formValues.loadingExpense, formValues.freightExpense, formValues.otherExpense, formValues.adjustmentAmount, formValues.purchaseTax])
+
   useEffect(() => {
     if(submitSucceeded)
       history.push('/purchase/grns');
   }, [submitSucceeded, history])
 
-  const onSubmit = useCallback((formValues, dispatch, { storeId }) => {
-    const payload = {storeId, ...formValues};
-    payload.issueDate = moment(formValues.issueDate, "DD MMMM, YYYY").toDate();
-    payload.deliveryDate = moment(formValues.deliveryDate, "DD MMMM, YYYY").toDate();
+  const onSubmit = useCallback((formData, dispatch, { storeId }) => {
+    const payload = {storeId, ...formData};
+    payload.grnDate = moment(formData.grnDate, "DD MMMM, YYYY hh:mm A").toDate();
+    payload.billDate = moment(formData.billDate, "DD MMMM, YYYY").toDate();
+    payload.billDueDate = moment(formData.billDueDate, "DD MMMM, YYYY").toDate();
     payload.items = [];
     items.forEach(item => {
-      payload.items.push(
-        formValues.items[item._id]
-      )
+      let record = formData.items[item._id];
+      payload.items.push({
+        ...record,
+        batchExpiryDate: record.batchExpiryDate ? moment(record.batchExpiryDate, "DD MMMM, YYYY").toDate() : null
+      })
     });
     dispatch(showProgressBar());
-    return axios.post('/api/purchaseOrders/create', payload).then( response => {
+    return axios.post('/api/grns/create', payload).then( response => {
       dispatch(hideProgressBar());
-      if(response.data.order._id)
+      if(response.data.grn._id)
       {
-        dispatch( addNewPO(storeId, response.data.order) );
-        dispatch( showSuccess("New purchase order added") );
-        if(formValues.printGrn)
-          printGrn({ ...response.data.order, supplier });
+        dispatch( addNewGrn(storeId, response.data.grn) );
+        dispatch( showSuccess("New GRN added") );
+        if(formData.printGrn)
+          printGrn({ ...response.data.grn, supplier });
       }
 
     }).catch(err => {
@@ -201,10 +281,21 @@ function CreateGrn(props) {
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap">
-            <Box width={{ xs: '100%', md: '34%' }}>
+            <Box width={{ xs: '100%', md: '32%' }}>
               <SelectSupplier formName={formName} />   
             </Box>
-            <Box width={{ xs: '100%', md: '26%' }}>
+            <Box width={{ xs: '100%', md: '32%' }} pt={1}>
+              <Field
+                component={SelectInput}
+                options={poOptions}
+                name="poId"
+                fullWidth={true}
+                variant="outlined"
+                margin="dense"
+                disabled={!supplierId}
+              />
+            </Box>
+            <Box width={{ xs: '100%', md: '32%' }}>
               <Field
               component={DateTimeInput}
               name="grnDate"
@@ -216,12 +307,10 @@ function CreateGrn(props) {
               margin="dense"
               emptyLabel=""
               minDate={ moment(lastEndOfDay).toDate() }
+              maxDate={ moment().toDate() }
               showTodayButton
               disabled={!supplierId}
               />    
-            </Box>
-            <Box width={{ xs: '100%', md: '35%' }}>
-
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap">
@@ -264,34 +353,53 @@ function CreateGrn(props) {
                   : null
                 }
               </Box>
-              <Box width={{ xs: '100%', md: '24%' }} pt={1}>
+              <Box width={{ xs: '100%', md: '24%' }} >
+                {
+                  parseInt(formValues.payOrCredit) === payOrCreditOptions.PAY_NOW && parseInt(formValues.paymentMode) === paymentModes.PAYMENT_MODE_BANK ?
+                  <Field
+                    component={TextInput}
+                    name="chequeTxnId"
+                    label="Cheque No./Transaction ID"
+                    placeholder="Cheque No./Transaction ID..."
+                    type="text"
+                    fullWidth={true}
+                    variant="outlined"
+                    margin="dense"
+                    showError={false}
+                    disabled={!supplierId}
+                  />
+                  : null
+                }
               </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center">
             <Box width={{ xs: '100%', md: '31%' }}>
-              <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
+              {
+                parseInt(formValues.poId) !== 0 ? null : 
+                <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
+              }
             </Box>
-            <Box width={{ xs: '100%', md: '31%' }}>
+            <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
               <Typography align="center">Total Quantity: <b>{ totalQuantity }</b></Typography>
             </Box>
-            <Box width={{ xs: '100%', md: '31%' }}>
-              <Typography align="center">Total Amount: <b>{ totalAmount }</b></Typography>
+            <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
+              <Typography align="center">Items Total Amount: <b>{ totalAmount.toLocaleString() }</b></Typography>
             </Box>
           </Box>
           <Box style={{ backgroundColor: '#ececec' }} p={1} borderRadius={6} my={1}>
             <Box style={{ backgroundColor: '#fff' }} p={ items.length === 0 ? 5 : 0 }>
               {
                 items.length === 0 ?
-                <Typography style={{ color: '#7c7c7c' }} align="center"> add some items to create purchase order </Typography>
+                <Typography style={{ color: '#7c7c7c' }} align="center"> Add items manually or select purchase order to create GRN </Typography>
                 :
                 <TableContainer>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
+                        <TableCell style={{ minWidth: 20 }}></TableCell>
                         <TableCell style={{ minWidth: 280 }}>Item</TableCell>
                         <TableCell style={{ minWidth: 50 }} align="center">Stock</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Cost Price</TableCell>
-                        <TableCell style={{ minWidth: 50 }} align="center">Margin</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Quantity</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Amount</TableCell>
                         <TableCell style={{ minWidth: 40 }} align="center">Action</TableCell>
@@ -299,93 +407,7 @@ function CreateGrn(props) {
                     </TableHead>
                     <TableBody>
                       {
-                        items.map((item, index) => (
-                          <TableRow hover key={item._id}>
-                            <TableCell>
-                              <Box my={1} display="flex" justifyContent="space-between">
-                                <span>
-                                  {item.itemName}
-                                </span>
-                                { item.packParentId ? <span style={{ color: '#7c7c7c' }}>Packing <FontAwesomeIcon title="Packing" style={{ marginLeft: 4 }} icon={faBoxOpen} /> </span> : null }
-                                {
-                                  item.sizeName ?
-                                  <span style={{ color: '#7c7c7c' }}> {item.sizeName} | {item.combinationName} </span>
-                                  : null
-                                }
-                              </Box>
-                              <Box mb={1} display="flex" justifyContent="space-between" style={{ color: '#7c7c7c' }}>
-                                <span>{item.itemCode}{item.sizeCode ? '-'+item.sizeCode+'-'+item.combinationCode : '' }</span>
-                                <span>Price: { item.packParentId ? item.packSalePrice.toLocaleString() : item.salePrice.toLocaleString() } </span>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              {item.currentStock.toLocaleString()}
-                              { item.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box height="100%" display="flex" justifyContent="center" alignItems="center">
-                                <Field
-                                  component={TextInput}
-                                  label="Cost Price"
-                                  name={`items[${item._id}].costPrice`}
-                                  placeholder="Cost Price..."
-                                  fullWidth={true}
-                                  variant="outlined"
-                                  margin="dense"
-                                  type="number"
-                                  disabled={!supplierId}
-                                  inputProps={{  min: 0 }}
-                                  showError={false}
-                                  onKeyDown={(e) => {
-                                      if(!((e.keyCode > 95 && e.keyCode < 106)
-                                        || (e.keyCode > 47 && e.keyCode < 58) 
-                                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                                          e.preventDefault();
-                                          return false;
-                                      }
-                                  }}
-                                />
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box mb={1}>{ calculateMargin(item, values) }</Box>
-                              <Box style={{ color: '#7c7c7c' }}>{ calculateMargin(item, values, true) }%</Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Field
-                                component={TextInput}
-                                label="Quantity"
-                                name={`items[${item._id}].quantity`}
-                                placeholder="Quantity..."
-                                fullWidth={true}
-                                variant="outlined"
-                                margin="dense"
-                                disabled={!supplierId}
-                                type="number"
-                                inputProps={{  min: 1 }}
-                                showError={false}
-                                onKeyDown={(e) => {
-                                      if(!((e.keyCode > 95 && e.keyCode < 106)
-                                        || (e.keyCode > 47 && e.keyCode < 58) 
-                                        || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
-                                          e.preventDefault();
-                                          return false;
-                                      }
-                                  }}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              { Number( ( isNaN(values[item._id].costPrice) ? 0 :  values[item._id].costPrice ) * ( isNaN(values[item._id].quantity) ? 0 :  values[item._id].quantity ) ).toLocaleString() }
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton disabled={!supplierId} onClick={() => removeItem(item)}>
-                                <FontAwesomeIcon icon={faTimes} size="xs" />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        items.map((item, index) => <GrnItemRow key={item._id} {...{ item, values, supplierId, removeItem }} /> )
                       }
                     </TableBody>
                   </Table>
@@ -394,27 +416,185 @@ function CreateGrn(props) {
             </Box>
           </Box>
 
-          <Box>
-            <Field
-              component={TextInput}
-              name="notes"
-              label="Notes"
-              placeholder="Notes..."
-              type="text"
-              fullWidth={true}
-              variant="outlined"
-              multiline
-              rows={3}
-              margin="dense"
-              disabled={!supplierId}
-            />
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" flexWrap="wrap">
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="supplierInvoiceNumber"
+                  label="Supplier Invoice No."
+                  placeholder="Supplier invoice number..."
+                  type="text"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  showError={false}
+                  disabled={!supplierId}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="billNumber"
+                  label="Bill No."
+                  placeholder="Supplier bill number..."
+                  type="text"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  showError={false}
+                  disabled={!supplierId}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={DateInput}
+                  name="billDate"
+                  label="Bill Date"
+                  placeholder="Bill date..."
+                  dateFormat="DD MMMM, YYYY"
+                  fullWidth={true}
+                  inputVariant="outlined"
+                  disablePast
+                  margin="dense"
+                  emptyLabel=""
+                  disabled={!supplierId}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={DateInput}
+                  name="billDueDate"
+                  label="Due Date"
+                  placeholder="Due date..."
+                  dateFormat="DD MMMM, YYYY"
+                  fullWidth={true}
+                  inputVariant="outlined"
+                  disablePast
+                  margin="dense"
+                  emptyLabel=""
+                  disabled={!supplierId}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '100%' }}>
+                <Field
+                  component={UploadFile}
+                  storeId={storeId}
+                  label="Attachment"
+                  name="attachment"
+                  imageWidth={1920}
+                  disabled={!supplierId}
+                  fullWidth={true}
+                  filePath="grns/"
+                />
+              </Box>
+            </Box>
+            <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" flexWrap="wrap">
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="loadingExpense"
+                  label="Loading Expense"
+                  placeholder="Loading expense..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={!supplierId}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="freightExpense"
+                  label="Freight Expense"
+                  placeholder="Freight expense..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={!supplierId}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="otherExpense"
+                  label="Other Expense"
+                  placeholder="Other expense..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={!supplierId}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="adjustmentAmount"
+                  label="Adjustment Amount"
+                  placeholder="Adjustment amount..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={!supplierId}
+                  showError={false}
+                  inputProps={{  min: 0 }}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }}>
+                <Field
+                  component={TextInput}
+                  name="purchaseTax"
+                  label="Purchase Tax"
+                  placeholder="Purchase Tax..."
+                  type="number"
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  disabled={!supplierId}
+                  inputProps={{  min: 0 }}
+                  showError={false}
+                  onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+              <Box width={{ xs: '100%', md: '48%' }} textAlign="center" pt={3}>
+                Total: <b>{ grnTotal.toLocaleString()  }</b>
+              </Box>
+              <Box width={{ xs: '100%', md: '100%' }}>
+                <Field
+                  component={TextInput}
+                  name="notes"
+                  label="Notes"
+                  placeholder="Notes..."
+                  type="text"
+                  fullWidth={true}
+                  variant="outlined"
+                  multiline
+                  rows={2}
+                  margin="dense"
+                  disabled={!supplierId}
+                />
+              </Box>
+            </Box>
           </Box>
           
           <Box textAlign="center">
             <Field
               component={CheckboxInput}
               name="printGrn"
-              label="Print Purchase Order"
+              label="Print GRN"
               fullWidth={true}
               disabled={pristine || submitting || invalid || !dirty}
             />
@@ -422,7 +602,7 @@ function CreateGrn(props) {
 
         <Box textAlign="center">
           <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} >
-            Create Purchase Order
+            Create GRN
           </Button>
           {
             items.length && Number(totalQuantity) === 0 ?
@@ -450,15 +630,15 @@ function CreateGrn(props) {
 }
 
 const validate = (values, props) => {
-  const { dirty } = props;
+  const { dirty, lastEndOfDay } = props;
   if(!dirty) return {};
   const errors = {};
   if(!values.supplierId)
    errors.supplierId = "Please select supplier first";
-  if(!values.issueDate)
-   errors.issueDate = "Issue date is required";
-  if(!values.deliveryDate)
-   errors.deliveryDate = "Delivery date is required";
+  if(lastEndOfDay && moment(values.grnDate, "DD MMMM, YYYY hh:mm A") <= moment(lastEndOfDay))
+    errors.grnDate = "Date & time should be after last day closing: " + moment(lastEndOfDay).format("DD MMMM, YYYY hh:mm A");
+  else if(moment(values.grnDate, "DD MMMM, YYYY hh:mm A") > moment())
+    errors.grnDate = "Date & time should not be after current time: " + moment().format("DD MMMM, YYYY hh:mm A"); 
   return errors;
 }
 

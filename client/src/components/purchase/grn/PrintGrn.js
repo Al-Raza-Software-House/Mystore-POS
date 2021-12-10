@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
+import { payOrCreditOptions } from '../../../utils/constants';
 
 const cellStyle = { border: '1px solid black', textAlign: "center", borderSpacing: "0px", padding: "3px 10px", boxSizing: "border-box" };
 
@@ -18,7 +19,15 @@ function PrintGrn(props){
     let storeId = state.stores.selectedStoreId;
     return state.stores.stores.find(record => record._id === storeId);
   });
-
+  
+  const banks = useSelector(state => {
+    let storeId = state.stores.selectedStoreId;
+    let bankMaps = {};
+    let banks = state.accounts.banks[storeId] ? state.accounts.banks[storeId] : [];
+    banks.forEach(bank => bankMaps[bank._id] = bank)
+    return bankMaps;
+  });
+  
   const items = useSelector(state => {
     let storeId = state.stores.selectedStoreId;
     return state.items[storeId].allItems? state.items[storeId].allItems : [];
@@ -34,9 +43,10 @@ function PrintGrn(props){
     });
     return newMap;
   }, [items, grn]);
+
   const printReceipt = useCallback(() => {
     var mywindow = window.open('', 'PRINT', 'height=600,width=800');
-      mywindow.document.write('<html><head><title>Goods Receipt</title>');
+      mywindow.document.write('<html><head><title>Goods Receipt Note</title>');
       mywindow.document.write('</head><body >');
       mywindow.document.write('<style type="text/css"> @media print { #table-container{ margin-bottom: 40mm; } }  </style>')
       mywindow.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />');
@@ -54,27 +64,20 @@ function PrintGrn(props){
       return true;
   }, []);
 
-  const totalQuantity = useMemo(() => {
+  const totalItemAmount = useMemo(() => {
     if(!grn) return 0;
     let total = 0;
     grn.items.forEach(item => {
-      if(isNaN(item.quantity))
-        total += 0
-      else
-        total += Number(item.quantity);
-    });
-    return (+total.toFixed(2)).toLocaleString()
-  }, [grn]);
-
-  const totalAmount = useMemo(() => {
-    if(!grn) return 0;
-    let total = 0;
-    grn.items.forEach(item => {
-      let costPrice = isNaN(item.costPrice) ? 0 :  Number(item.costPrice);
-      let quantity = isNaN(item.quantity) ? 0 :  Number(item.quantity);
+      let costPrice = item.costPrice;
+      let quantity = item.quantity;
+      let adjustment = item.adjustment * quantity;
+      let tax = item.tax * quantity;
       total += costPrice * quantity;
+      total += tax;
+      total -= adjustment;
     });
     return (+total.toFixed(2)).toLocaleString()
+
   }, [grn]);
 
   useEffect(() => {
@@ -89,44 +92,55 @@ function PrintGrn(props){
       {
         !grn ?  null :
         <DialogContent>
-          <Box id="receipt-container" style={{ backgroundColor: '#ececec' }} maxWidth="80mm" margin="auto">
+          <Box id="receipt-container" style={{ backgroundColor: '#ececec', padding: '0px 10px' }} maxWidth="80mm" margin="auto">
             <Box style={{ fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', padding: "16px 0px", maxWidth: "80mm" }}>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>Goods Receipt Note</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 18, textAlign: "center" }}>{ store.name }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 12, textAlign: "center" }}>{ store.address }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "8px", fontSize: 12, textAlign: "center" }}>{ store.phone1 }</Typography>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px", textAlign: "center" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>GRN #:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.poNumber }</Typography>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "center" }}>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}><span style={{ fontWeight: "bold" }}>Invoice #:</span> { grn.supplierInvoiceNumber }</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px", marginLeft: "8px" }}><span style={{ fontWeight: "bold" }}>Date:</span> { moment(grn.grnDate).format("DD MMM, YYYY") }</Typography>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Issue Date:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(grn.issueDate).format("DD MMM, YYYY") }</Typography>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "center" }}>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}><span style={{ fontWeight: "bold" }}>GRN #:</span> { grn.grnNumber }</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px", marginLeft: "8px" }}><span style={{ fontWeight: "bold" }}>Bill:</span> { grn.billNumber }</Typography>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Supplier:</Typography>
                 <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.supplier.name }</Typography>
               </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Bill Date:</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(grn.billDate).format("DD MMM, YYYY") }</Typography>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Bill Due Date:</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(grn.billDueDate).format("DD MMM, YYYY") }</Typography>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Payment Mode</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.payOrCredit === payOrCreditOptions.ON_CREDIT ? "Credit" : (grn.bankId ? banks[grn.bankId].name : "Cash") }</Typography>
+              </div>
               {
-                grn.referenceNumber ? 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
-                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Ref #:</Typography>
-                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.referenceNumber }</Typography>
+                grn.payOrCredit === payOrCreditOptions.ON_CREDIT || !grn.bankId ? null : 
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Cheque No./Txn ID</Typography>
+                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.chequeTxnId }</Typography>
                 </div>
-                : null
               }
+              
               { 
                 grn.notes ?
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Notes:</Typography>
                   <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.notes }</Typography>
                 </div>
                 : null
               }
-              <div style={{ margin: "0px 15px" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px", marginBottom: "10px" }}>Your grn is as follows</Typography>
-              </div>
+              
               <Box id="table-container" style={{ padding: "0px 4px" }}>
                 <table style={{ width: "100%", marginTop: "8px", fontSize: '12px', "borderCollapse": "collapse" }}>
                   <thead>
@@ -153,26 +167,33 @@ function PrintGrn(props){
                           </td>
                           <td style={cellStyle} > { item.costPrice.toLocaleString() } </td>
                           <td style={cellStyle} > { item.quantity.toLocaleString() } </td>
-                          <td style={cellStyle} > { ( +(item.costPrice * item.quantity).toFixed(2) ).toLocaleString() } </td>
+                          <td style={cellStyle} > { ( +( ( (item.costPrice * item.quantity) + (item.tax * item.quantity)) - (item.adjustment * item.quantity)).toFixed(2) ).toLocaleString() } </td>
                         </tr>
                       ))
                     }
                     <tr>
                       <td style={cellStyle} colSpan="2"> <b>Total</b> </td>
-                      <td style={cellStyle}>{ totalQuantity }</td>
-                      <td style={cellStyle}>{ totalAmount }</td>
+                      <td style={cellStyle}>{ grn.totalQuantity }</td>
+                      <td style={cellStyle}>{ totalItemAmount }</td>
                     </tr>
                   </tbody>
                 </table>
+                <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0px", flexWrap: "wrap" }}>
+                  { grn.loadingExpense == 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px"}}>Loading Expense: <b>{ grn.loadingExpense.toLocaleString() } </b></Typography> }
+                  { grn.freightExpense == 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Freight Expense: <b>{ grn.freightExpense.toLocaleString() } </b></Typography> }
+                  { grn.otherExpense == 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Other Expense: <b>{ grn.otherExpense.toLocaleString() } </b></Typography> }
+                  { grn.adjustmentAmount == 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Adjustment: <b>{ grn.adjustmentAmount.toLocaleString() } </b></Typography> }
+                  { grn.purchaseTax == 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Purchase Tax: <b>{ grn.purchaseTax.toLocaleString() } </b></Typography> }
+                </div>
                 <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 15px", }}>
-                  <Typography style={{ fontSize: "12px", margin: "0px", textAlign: "left" }}>Total Items: <b>{ grn.items.length } </b></Typography>
-                  <Typography style={{ fontSize: "12px", margin: "0px", textAlign: "center" }}>Total Amount: <b>{ totalAmount } </b></Typography>
+                  <Typography style={{ fontSize: "12px", margin: "0px", textAlign: "left", margin: "0px" }}>Total Items: <b>{ grn.items.length } </b></Typography>
+                  <Typography style={{ fontSize: "12px", margin: "0px", textAlign: "center", margin: "0px" }}>Net Total: <b>{ grn.totalAmount.toLocaleString() } </b></Typography>
                 </div>
               </Box>
               <div style={{ visibility: "hidden" }}>.</div>
               <Box style={{ display: "flex", justifyContent: "space-between", padding: "0px 8px", marginBottom: "16px", marginTop: "10px" }} >
-                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }} > Prepared By </Box>
-                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }}> Manager </Box>
+                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }} > Received By </Box>
+                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }}> Approved By </Box>
               </Box>
               <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center" }} id="app-name" >
                 { process.env.REACT_APP_PRINT_FOOTER }

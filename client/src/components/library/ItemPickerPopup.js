@@ -47,7 +47,7 @@ function ItemPickerPopup(props){
 
   const storeId = useSelector(state => state.stores.selectedStoreId);
   let items = useSelector(state => state.items[storeId].allItems );
-  items = useMemo(() => showServiceItems ? items : items.filter(item => item.isServiceItem === false), [items, showServiceItems]);
+  items = useMemo(() => showServiceItems ? items.filter(item => item.isActive === true) : items.filter(item => item.isServiceItem === false && item.isActive === true), [items, showServiceItems]);
 
   const [filteredItems, setFilteredItems] = useState([]);
 

@@ -11,6 +11,7 @@ import axios from 'axios';
 import { Redirect } from 'react-router-dom';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import { showSuccess } from '../../store/actions/alertActions';
+import UploadFile from '../library/UploadFile';
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -86,6 +87,15 @@ const AccountSettings = (props) => {
                 fullWidth={true}
                 />
             </Box>
+            <Box width={{ xs: '100%', md: '100%' }}>
+              <Field
+                component={UploadFile}
+                label="Profile Picture"
+                name="profilePicture"
+                fullWidth={true}
+                filePath="users/"
+              />
+            </Box>
 
             <Box display="flex" justifyContent="center">
               <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid} className={classes.button}>
@@ -114,7 +124,7 @@ const onSubmit = (values, dispatch, {  showProgressBar, hideProgressBar }) => {
         type: actionTypes.ACCOUNT_SETTINGS_UPDATED,
         data: response.data
       });
-      dispatch(initialize('accountSetting', {name: values.name, phone: values.phone}));
+      dispatch(initialize('accountSetting', response.data));
       dispatch( showSuccess("Acccount settings updated") );
     }
 
