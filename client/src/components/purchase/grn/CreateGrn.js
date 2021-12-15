@@ -22,6 +22,9 @@ import { allowOnlyPostiveNumber } from '../../../utils';
 import GrnItemRow from './GrnItemRow';
 import UploadFile from '../../library/UploadFile';
 import { addNewGrn } from '../../../store/actions/grnActions';
+import { updateSupplier } from '../../../store/actions/supplierActions';
+import { addNewTxns } from '../../../store/actions/accountActions';
+import { closePurchaseOrder } from '../../../store/actions/purchaseOrderActions';
 
 const payNowOrCreditOptions = [
   { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
@@ -32,15 +35,6 @@ const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
   { id: paymentModes.PAYMENT_MODE_BANK, title: "Bank" },
 ]
-
-const initValues = { 
-  grnDate: moment().format("DD MMMM, YYYY hh:mm A"),
-  payOrCredit: payOrCreditOptions.PAY_NOW,
-  paymentMode: paymentModes.PAYMENT_MODE_CASH,
-  poId: 0, 
-  billDate: moment().format("DD MMMM, YYYY"), 
-  billDueDate: moment().format("DD MMMM, YYYY") 
-};
 
 
 const useStyles = makeStyles(theme => ({
@@ -179,7 +173,16 @@ function CreateGrn(props) {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(initialize(formName, {...initValues, bankId: defaultBankId}));
+    dispatch(initialize(formName, { 
+      grnDate: moment().format("DD MMMM, YYYY hh:mm A"),
+      payOrCredit: payOrCreditOptions.PAY_NOW,
+      paymentMode: paymentModes.PAYMENT_MODE_CASH,
+      poId: 0, 
+      billDate: moment().format("DD MMMM, YYYY"), 
+      billDueDate: moment().format("DD MMMM, YYYY"),
+      bankId: defaultBankId 
+    }
+    ));
   }, [dispatch, defaultBankId]);
 
   const totalQuantity = useMemo(() => {
@@ -259,6 +262,12 @@ function CreateGrn(props) {
       {
         dispatch( addNewGrn(storeId, response.data.grn) );
         dispatch( showSuccess("New GRN added") );
+        if(response.data.supplier)
+          dispatch( updateSupplier(storeId, response.data.supplier._id, response.data.supplier, response.data.now, response.data.lastAction) );
+        if(response.data.accountTxn)
+          dispatch( addNewTxns( storeId, [response.data.accountTxn] ) );
+        if(payload.poId)
+          dispatch( closePurchaseOrder(payload.poId) );
         if(formData.printGrn)
           printGrn({ ...response.data.grn, supplier });
       }

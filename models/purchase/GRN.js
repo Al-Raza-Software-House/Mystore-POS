@@ -26,6 +26,10 @@ const schema = new mongoose.Schema({
   items: [
     {
       _id: mongoose.Schema.Types.ObjectId,
+      parentId: mongoose.Schema.Types.ObjectId, //parent item ID if item is packing
+      prevCostPrice: Number,
+      prevSalePrice: Number,
+      prevPackSalePrice: Number,
       costPrice: Number,
       salePrice: Number,
       packSalePrice: Number,

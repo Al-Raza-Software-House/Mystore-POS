@@ -39,7 +39,8 @@ const receiptSettingsSchema = new mongoose.Schema({
 });
 
 const storeConfiguration = new mongoose.Schema({
-  allowNegativeInventory: Boolean
+  allowNegativeInventory: Boolean,
+  weightedCostPrice:Boolean
 });
 
 const dataUpdatedSchema = new mongoose.Schema({

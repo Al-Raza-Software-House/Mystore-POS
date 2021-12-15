@@ -651,6 +651,7 @@ router.post('/adjustStock', async (req, res) => {
 
     const records = req.body.records;
     const items = [];
+    let packings = [];
     for(let index = 0; index < records.length; index++)
     {
       items[index] = await Item.findById(records[index]._id);
@@ -659,6 +660,11 @@ router.post('/adjustStock', async (req, res) => {
         storeId: store._id,
         userId: req.user._id,
         itemId: items[index]._id,
+        categoryId: items[index].categoryId,
+        packId: null,
+        saleId: null,
+        grnId: null,
+        rtvId: null,
         reasonId: records[index].adjustmentReason,
         quantity: Number( records[index].adjustmentQuantity ),
         notes: req.body.notes ? req.body.notes : "",
@@ -668,11 +674,18 @@ router.post('/adjustStock', async (req, res) => {
       items[index].lastUpdated = now;
       items[index].currentStock = items[index].currentStock + Number( records[index].adjustmentQuantity );
       await items[index].save();
+      //update Current stock field in the Packings if any
+      await Item.updateMany({ packParentId : items[index]._id }, {
+        lastUpdated: now,
+        currentStock: items[index].currentStock
+      });
+      let itemPackings = await Item.find({ packParentId : items[index]._id });
+      packings.push( ...itemPackings  );
     }
     await store.updateLastActivity();
     await store.logCollectionLastUpdated('items', now);
     res.json( {
-      items,
+      items: [...items, ...packings],
       now,
       lastAction
     } );

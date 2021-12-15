@@ -1,6 +1,9 @@
 import axios from "axios";
 import { showError, showSuccess } from './alertActions';
 import { hideProgressBar, showProgressBar } from "./progressActions"
+import { updateSupplier } from "./supplierActions";
+import { actionTypes as accountActions } from "./accountActions";
+import { openPurchaseOrder } from "./purchaseOrderActions";
 
 export const actionTypes = {
   GRNS_LOADED: 'grnsLoaded',
@@ -40,12 +43,18 @@ export const updateGrn = (storeId, grnId, grn) => {
   return { type: actionTypes.GRN_UPDATED, storeId, grnId, grn };
 }
 
-export const deleteGrn = (storeId, grnId) => {
+export const deleteGrn = (storeId, grnId, poId) => {
   return (dispatch, getState) => {
     dispatch(showProgressBar());
     axios.post('/api/grns/delete', { storeId, grnId }).then( ({ data }) => {
       dispatch(hideProgressBar());
       dispatch( { type: actionTypes.GRN_DELETED, storeId, grnId } );
+      if(data.supplier)
+        dispatch( updateSupplier(storeId, data.supplier._id, data.supplier, data.now, data.lastAction) );
+      if(data.accountTxnId)
+        dispatch( { type: accountActions.TRANSACTION_DELETED, storeId, txnId: data.accountTxnId } );
+      if(poId)
+        dispatch( openPurchaseOrder(poId) );
       dispatch( showSuccess('GRN deleted') );
     }).catch( err => {
       dispatch( hideProgressBar() );

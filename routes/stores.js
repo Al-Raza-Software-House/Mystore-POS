@@ -119,6 +119,10 @@ router.post('/create', async (req, res) => {
         grnCursor: 1,
         rtvCursor: 1,
         saleCursor: 1
+      },
+      configuration: {
+        allowNegativeInventory: false,
+        weightedCostPrice:false
       }
     }
     

@@ -24,6 +24,8 @@ import UploadFile from '../../library/UploadFile';
 import { addNewGrn, updateGrn } from '../../../store/actions/grnActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
+import { updateSupplier } from '../../../store/actions/supplierActions';
+import { addNewTxns, updateTxns, actionTypes as accountActions } from '../../../store/actions/accountActions';
 
 const payNowOrCreditOptions = [
   { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
@@ -237,6 +239,14 @@ function EditGrn(props) {
       if(response.data.grn._id)
       {
         dispatch( updateGrn(match.params.storeId, match.params.grnId, response.data.grn) );
+        if(response.data.supplier)
+          dispatch( updateSupplier(match.params.storeId, response.data.supplier._id, response.data.supplier, response.data.now, response.data.lastAction) );
+        if(response.data.deleteAccountTxnId)
+          dispatch( { type: accountActions.TRANSACTION_DELETED, storeId: match.params.storeId, txnId: response.data.deleteAccountTxnId } );
+        if(response.data.addAccountTxn)
+          dispatch( addNewTxns(match.params.storeId, [response.data.addAccountTxn]) );
+        if(response.data.updateAccountTxn)
+          dispatch( updateTxns(match.params.storeId, response.data.updateAccountTxn._id, [response.data.updateAccountTxn]) );
         dispatch( showSuccess("GRN updated") );
         if(formData.printGrn)
           printGrn({ ...response.data.grn, supplier });

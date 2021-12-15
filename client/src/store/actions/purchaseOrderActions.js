@@ -1,4 +1,5 @@
 import axios from "axios";
+import { poStates } from "../../utils/constants";
 import { showError, showSuccess } from './alertActions';
 import { hideProgressBar, showProgressBar } from "./progressActions"
 
@@ -30,6 +31,32 @@ export const loadPurchaseOrders = (recordsPerPage) => {
       dispatch({ type: actionTypes.PURCHASE_ORDERS_LOADED, storeId, orders: data.orders, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => err );
+  }
+}
+
+export const openPurchaseOrder = (poId) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const storeId = state.stores.selectedStoreId;
+    let records = [];
+    if(state.purchaseOrders[storeId] && state.purchaseOrders[storeId].records)
+      records = state.purchaseOrders[storeId].records;
+    let order = records.find(record => record._id === poId);
+    if(!order) return;
+    dispatch( { type: actionTypes.PURCHASE_ORDER_UPDATED, storeId, poId, order: {...order, status: poStates.PO_STATUS_OPEN} } );
+  }
+}
+
+export const closePurchaseOrder = (poId) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const storeId = state.stores.selectedStoreId;
+    let records = [];
+    if(state.purchaseOrders[storeId] && state.purchaseOrders[storeId].records)
+      records = state.purchaseOrders[storeId].records;
+    let order = records.find(record => record._id === poId);
+    if(!order) return;
+    dispatch( { type: actionTypes.PURCHASE_ORDER_UPDATED, storeId, poId, order: {...order, status: poStates.PO_STATUS_CLOSED} } );
   }
 }
 

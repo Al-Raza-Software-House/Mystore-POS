@@ -9,6 +9,7 @@ import moment from 'moment';
 import GRNFilters from './GrnFilters';
 
 function Grns({ storeId, lastEndOfDay, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadGrns, emptyGrns, deleteGrn, printGrn }) {
+  console.log('grns', totalRecords);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
@@ -142,7 +143,7 @@ function Grn({ grn, suppliers, storeId, deleteGrn, lastEndOfDay, printGrn }){
         >
         <Box py={2} px={4} textAlign="center">
           <Typography gutterBottom>Do you want to delete this GRN from store?</Typography>
-          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteGrn(storeId, grn._id)}>
+          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteGrn(storeId, grn._id, grn.poId)}>
             Delete GRN
           </Button>
         </Box>

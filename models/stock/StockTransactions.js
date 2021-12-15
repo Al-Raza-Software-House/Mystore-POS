@@ -14,6 +14,10 @@ const stockTransactionsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'item'
   },
+  categoryId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'category'
+  },
   packId:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'item',
@@ -27,7 +31,7 @@ const stockTransactionsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'grn'
   },
-  returnId:{
+  rtvId:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'vendorReturn'
   },
