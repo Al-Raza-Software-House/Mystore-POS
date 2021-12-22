@@ -5,7 +5,7 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect } from 'react-redux';
-import { showError, showSuccess } from '../../../store/actions/alertActions';
+import { showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
 import { useHistory, useParams } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
@@ -21,11 +21,12 @@ import RadioInput from '../../library/form/RadioInput';
 import { allowOnlyPostiveNumber } from '../../../utils';
 import GrnItemRow from './GrnItemRow';
 import UploadFile from '../../library/UploadFile';
-import { addNewGrn, updateGrn } from '../../../store/actions/grnActions';
+import { updateGrn } from '../../../store/actions/grnActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { addNewTxns, updateTxns, actionTypes as accountActions } from '../../../store/actions/accountActions';
+import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
 
 const payNowOrCreditOptions = [
   { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
@@ -86,9 +87,18 @@ function EditGrn(props) {
   useEffect(() => {
     let formItems = {};
     grn.items.forEach(item => {
+      item.batches.forEach( (batch, index) => {
+        if(item.batches[index].batchExpiryDate)
+          item.batches[index].batchExpiryDate = moment( item.batches[index].batchExpiryDate ).toDate();
+      })
+      if(item.batches.length === 0)
+       item.batches.push({
+         batchNumber: "",
+         batchExpiryDate: null,
+         batchQuantity: 0
+       })
+
       formItems[item._id] = item;
-      if(item.batchExpiryDate)
-        formItems[item._id].batchExpiryDate = moment(item.batchExpiryDate).format("DD MMMM, YYYY");
     })
     let paymentMode = grn.bankId ? paymentModes.PAYMENT_MODE_BANK : paymentModes.PAYMENT_MODE_CASH;
     dispatch(initialize(formName, { ...grn, paymentMode,  items: formItems, grnDate: moment(grn.grnDate).format("DD MMMM, YYYY hh:mm A"), billDate: moment(grn.billDate).format("DD MMMM, YYYY"), billDueDate: moment(grn.billDueDate).format("DD MMMM, YYYY")  }));
@@ -121,7 +131,7 @@ function EditGrn(props) {
         setPo(data.order);
     }).catch(err => err);
 
-  }, [grn, allItems, dispatch]);
+  }, [grn, allItems, dispatch, storeId]);
 
   //pass to item Picker
   const selectItem = useCallback((item) => {
@@ -149,7 +159,7 @@ function EditGrn(props) {
         costPrice = item.packQuantity * costPrice;
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
-      dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, batchNumber: "", batchExpiryDate: null, notes: "" }));
+      dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));
       setItems([
         newItem,
         ...items
@@ -220,7 +230,7 @@ function EditGrn(props) {
       history.push('/purchase/grns');
   }, [submitSucceeded, history])
 
-  const onSubmit = useCallback((formData, dispatch, { match }) => {
+  const onSubmit = useCallback((formData, dispatch, { match, itemsLastUpdatedOn }) => {
     const payload = {...match.params, ...formData};
     payload.grnDate = moment(formData.grnDate, "DD MMMM, YYYY hh:mm A").toDate();
     payload.billDate = moment(formData.billDate, "DD MMMM, YYYY").toDate();
@@ -228,16 +238,19 @@ function EditGrn(props) {
     payload.items = [];
     items.forEach(item => {
       let record = formData.items[item._id];
-      payload.items.push({
-        ...record,
-        batchExpiryDate: record.batchExpiryDate ? moment(record.batchExpiryDate, "DD MMMM, YYYY").toDate() : null
-      })
+      record.batches.forEach((batch, index) => {
+        if(batch.batchExpiryDate)
+          record.batches[index].batchExpiryDate = moment(batch.batchExpiryDate, "DD MMM, YYYY").toDate();
+      });
+      payload.items.push(record);
     });
     dispatch(showProgressBar());
     return axios.post('/api/grns/update', payload).then( response => {
       dispatch(hideProgressBar());
       if(response.data.grn._id)
       {
+        dispatch( syncItems(itemsLastUpdatedOn) );
+        dispatch( itemsStampChanged(match.params.storeId, response.data.now) );
         dispatch( updateGrn(match.params.storeId, match.params.grnId, response.data.grn) );
         if(response.data.supplier)
           dispatch( updateSupplier(match.params.storeId, response.data.supplier._id, response.data.supplier, response.data.now, response.data.lastAction) );
@@ -247,7 +260,10 @@ function EditGrn(props) {
           dispatch( addNewTxns(match.params.storeId, [response.data.addAccountTxn]) );
         if(response.data.updateAccountTxn)
           dispatch( updateTxns(match.params.storeId, response.data.updateAccountTxn._id, [response.data.updateAccountTxn]) );
-        dispatch( showSuccess("GRN updated") );
+        if(response.data.itemsNotUpdated)
+          dispatch( showSuccess(`GRN updated, ${response.data.itemsNotUpdated} item(s) couldn't be updated because those were also purhchased after this GRN`) );
+        else
+          dispatch( showSuccess("GRN updated") );
         if(formData.printGrn)
           printGrn({ ...response.data.grn, supplier });
       }
@@ -373,7 +389,7 @@ function EditGrn(props) {
                 items.length === 0 ?
                 <Typography style={{ color: '#7c7c7c' }} align="center"> Add items manually or select purchase order to create GRN </Typography>
                 :
-                <TableContainer>
+                <TableContainer style={{ overflowY:  "hidden" }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -477,12 +493,10 @@ function EditGrn(props) {
                   name="loadingExpense"
                   label="Loading Expense"
                   placeholder="Loading expense..."
-                  type="number"
                   fullWidth={true}
                   variant="outlined"
                   margin="dense"
                   disabled={beforeLastEndOfDay}
-                  inputProps={{  min: 0 }}
                   showError={false}
                   onKeyDown={allowOnlyPostiveNumber}
                 />
@@ -493,12 +507,10 @@ function EditGrn(props) {
                   name="freightExpense"
                   label="Freight Expense"
                   placeholder="Freight expense..."
-                  type="number"
                   fullWidth={true}
                   variant="outlined"
                   margin="dense"
                   disabled={beforeLastEndOfDay}
-                  inputProps={{  min: 0 }}
                   showError={false}
                   onKeyDown={allowOnlyPostiveNumber}
                 />
@@ -509,12 +521,10 @@ function EditGrn(props) {
                   name="otherExpense"
                   label="Other Expense"
                   placeholder="Other expense..."
-                  type="number"
                   fullWidth={true}
                   variant="outlined"
                   margin="dense"
                   disabled={beforeLastEndOfDay}
-                  inputProps={{  min: 0 }}
                   showError={false}
                   onKeyDown={allowOnlyPostiveNumber}
                 />
@@ -525,13 +535,11 @@ function EditGrn(props) {
                   name="adjustmentAmount"
                   label="Adjustment Amount"
                   placeholder="Adjustment amount..."
-                  type="number"
                   fullWidth={true}
                   variant="outlined"
                   margin="dense"
                   disabled={beforeLastEndOfDay}
                   showError={false}
-                  inputProps={{  min: 0 }}
                 />
               </Box>
               <Box width={{ xs: '100%', md: '48%' }}>
@@ -540,12 +548,10 @@ function EditGrn(props) {
                   name="purchaseTax"
                   label="Purchase Tax"
                   placeholder="Purchase Tax..."
-                  type="number"
                   fullWidth={true}
                   variant="outlined"
                   margin="dense"
                   disabled={beforeLastEndOfDay}
-                  inputProps={{  min: 0 }}
                   showError={false}
                   onKeyDown={allowOnlyPostiveNumber}
                 />
@@ -624,13 +630,35 @@ function EditGrn(props) {
 const validate = (values, props) => {
   const { dirty, lastEndOfDay } = props;
   if(!dirty) return {};
-  const errors = {};
+  const errors = { items: {}};
   if(!values.supplierId)
    errors.supplierId = "Please select supplier first";
   if(lastEndOfDay && moment(values.grnDate, "DD MMMM, YYYY hh:mm A") <= moment(lastEndOfDay))
     errors.grnDate = "Date & time should be after last day closing: " + moment(lastEndOfDay).format("DD MMMM, YYYY hh:mm A");
   else if(moment(values.grnDate, "DD MMMM, YYYY hh:mm A") > moment())
     errors.grnDate = "Date & time should not be after current time: " + moment().format("DD MMMM, YYYY hh:mm A"); 
+  for(let itemId in values.items)
+  {
+    if(values.items[itemId] === undefined) continue;
+    errors.items[itemId] = { batches: {} };
+    let quantity = Number(values.items[itemId].quantity);
+    if( !quantity )
+    {
+      errors.items[itemId].quantity = "invalid quantity";
+      continue;
+    }
+    let batchQuantity = 0;
+    let batchCount = 0;
+    values.items[itemId].batches.forEach((batch, index) => {
+      if(!batch.batchNumber) return;
+      if(!Number(batch.batchQuantity)) errors.items[itemId].batches._error = "Batch quantity is required";
+      if(!batch.batchExpiryDate) errors.items[itemId].batches._error = "Batch expiry date is required";
+      batchCount++;
+      batchQuantity += Number(batch.batchQuantity);
+    });
+    if(batchCount && batchQuantity !== quantity && !errors.items[itemId].batches._error) //batches applied but quantity doesn't match
+      errors.items[itemId].batches._error = "Sum of batch quantities should be equal to total quantity";
+  }
   return errors;
 }
 
@@ -638,10 +666,12 @@ const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
   const store = state.stores.stores.find(store => store._id === storeId);
   const banks = state.accounts.banks[storeId] ? state.accounts.banks[storeId] : [];
+  const itemsLastUpdatedOn = state.system.lastUpdatedStamps[storeId] ? state.system.lastUpdatedStamps[storeId].items : null;
   return{
     storeId,
     banks: banks.map(bank => ({ id: bank._id, title: bank.name }) ),
-    lastEndOfDay: store.lastEndOfDay
+    lastEndOfDay: store.lastEndOfDay,
+    itemsLastUpdatedOn
   }
 }
 

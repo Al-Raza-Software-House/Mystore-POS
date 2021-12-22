@@ -8,7 +8,7 @@ import { payOrCreditOptions } from '../../../utils/constants';
 
 const cellStyle = { border: '1px solid black', textAlign: "center", borderSpacing: "0px", padding: "3px 10px", boxSizing: "border-box" };
 
-function PrintGrn(props){
+function PrintEndOfDay(props){
   const { grn, setGrn } = props;
   const [open, setOpen] = useState(false);
   const handleClose = () => {
@@ -214,4 +214,4 @@ function PrintGrn(props){
   )
 }
 
-export default PrintGrn;
+export default PrintEndOfDay;

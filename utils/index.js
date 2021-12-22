@@ -4,6 +4,7 @@ const moment = require('moment-timezone');
 
 const fs = require('fs')
 const { resolve } = require('path');
+const Item = require( '../models/stock/Item' );
 
 const createJwtToken = (user, expire_in_hours = 5 * 365 * 24) => {
   const payload = {
@@ -71,10 +72,88 @@ const publicS3Object = async (key) => {
   });
 }
 
-module.exports = { 
+//add batches to item, transactionItem=> GRN/RTV/Sale item
+const addBatchStock = (item, transactionItem, now, parentItem = null) => {
+  return new Promise(async (resolve, reject) => {
+    if(!transactionItem || !transactionItem.batches || transactionItem.batches.length === 0) return resolve();
+    let itemBatches = parentItem ? parentItem.batches : item.batches;
+    if(!itemBatches) itemBatches = [];
+    for(let index = 0; index < transactionItem.batches.length; index++)
+    {
+      let newBatch = transactionItem.batches[index];
+      if(!newBatch.batchNumber || !newBatch.batchExpiryDate || newBatch.batchQuantity === 0) continue;
+      let batchQuantity = parentItem ? Number(item.packQuantity) * Number(newBatch.batchQuantity) : Number(newBatch.batchQuantity);
+      let batchExist = itemBatches.find(record => record.batchNumber.toLowerCase() === newBatch.batchNumber.toLowerCase());
+      if(batchExist)
+      {
+        batchExist.batchStock = +(batchExist.batchStock + batchQuantity).toFixed(2);
+        batchExist.batchExpiryDate = moment(newBatch.batchExpiryDate).toDate();
+        itemBatches = itemBatches.map( record => record.batchNumber.toLowerCase() === newBatch.batchNumber.toLowerCase() ? batchExist :  record);
+      }else
+      {
+        itemBatches.push({
+          batchNumber: newBatch.batchNumber,
+          batchExpiryDate: moment(newBatch.batchExpiryDate).toDate(),
+          batchStock: +batchQuantity.toFixed(2)
+        });
+      }
+    }
+    item.batches = itemBatches;
+    await item.save();
+    if(parentItem)
+    {
+      parentItem.batches = itemBatches;
+      await parentItem.save();
+    }
+    // update batches in other packings too;
+    await Item.updateMany({ packParentId: parentItem ? parentItem._id : item._id }, { batches: itemBatches, lastUpdated: now });
+    resolve();
+  });
+}
+
+//remove stock from item, transactionItem=> GRN/RTV/Sale item
+const removeBatchStock = (item, transactionItem, now, parentItem = null) => {
+  return new Promise(async (resolve, reject) => {
+    if(!transactionItem || !transactionItem.batches || transactionItem.batches.length === 0) return resolve();
+    let itemBatches = parentItem ? parentItem.batches : item.batches;
+    if(!itemBatches) itemBatches = [];
+    for(let index = 0; index < transactionItem.batches.length; index++)
+    {
+      let newBatch = transactionItem.batches[index];
+      if(!newBatch.batchNumber || newBatch.batchQuantity === 0) continue;
+      let batchQuantity = parentItem ? Number(item.packQuantity) * Number(newBatch.batchQuantity) : Number(newBatch.batchQuantity); //convert to units if pack
+      let batchExist = itemBatches.find(record => record.batchNumber.toLowerCase() === newBatch.batchNumber.toLowerCase());
+      if(batchExist) //remove stock if batches exist
+      {
+        batchExist.batchStock = +(batchExist.batchStock - batchQuantity).toFixed(2); //minus batch stock 
+        if(batchExist.batchStock <= 0) //remove batch if stock goes 0 or -ve
+          itemBatches  = itemBatches.filter( record => record.batchNumber.toLowerCase() !== batchExist.batchNumber.toLowerCase() );
+        else
+          itemBatches = itemBatches.map( record => record.batchNumber.toLowerCase() === batchExist.batchNumber.toLowerCase() ? batchExist :  record);
+      }
+    }
+    item.batches = itemBatches;
+    await item.save();
+    if(parentItem)
+    {
+      parentItem.batches = itemBatches;
+      await parentItem.save();
+    }
+    // update batches in other packings too;
+    await Item.updateMany({ packParentId: parentItem ? parentItem._id : item._id }, { batches: itemBatches, lastUpdated: now });
+    resolve();
+  });
+}
+
+
+
+module.exports = {
   createJwtToken, 
   getS3ImageUrl, 
   createAuthUser,
   deleteS3Object,
-  publicS3Object
+  publicS3Object,
+
+  addBatchStock,
+  removeBatchStock
 };

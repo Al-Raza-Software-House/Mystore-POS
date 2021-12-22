@@ -216,9 +216,7 @@ function EditTransaction(props) {
             fullWidth={true}
             variant="outlined"
             margin="dense"
-            type="number"
             onKeyDown={allowOnlyPostiveNumber}
-            inputProps={{  min: 1 }}
             disabled={headId === 0}
             />    
           </Box>

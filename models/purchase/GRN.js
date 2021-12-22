@@ -35,9 +35,12 @@ const schema = new mongoose.Schema({
       packSalePrice: Number,
       adjustment: Number,
       tax: Number,
-      batchNumber: String,
-      batchExpiryDate: Date,
       quantity: Number,
+      batches: [{
+        batchNumber: String,
+        batchExpiryDate: Date,
+        batchQuantity: Number
+      }],
       notes: String
     }
   ],
@@ -45,6 +48,8 @@ const schema = new mongoose.Schema({
   totalItems: Number,
   totalQuantity: Number,
   totalAmount: Number,
+  totalExpenses: Number,
+  totalTax: Number,
 
   //Bill details
   supplierInvoiceNumber: String,

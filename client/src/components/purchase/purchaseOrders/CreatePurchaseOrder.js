@@ -247,7 +247,7 @@ function CreatePurchaseOrder(props) {
                 items.length === 0 ?
                 <Typography style={{ color: '#7c7c7c' }} align="center"> add some items to create purchase order </Typography>
                 :
-                <TableContainer>
+                <TableContainer style={{ overflowY:  "hidden" }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -297,9 +297,7 @@ function CreatePurchaseOrder(props) {
                                   fullWidth={true}
                                   variant="outlined"
                                   margin="dense"
-                                  type="number"
                                   disabled={!supplierId}
-                                  inputProps={{  min: 0 }}
                                   showError={false}
                                   onKeyDown={allowOnlyPostiveNumber}
                                 />
@@ -319,8 +317,6 @@ function CreatePurchaseOrder(props) {
                                 variant="outlined"
                                 margin="dense"
                                 disabled={!supplierId}
-                                type="number"
-                                inputProps={{  min: 1 }}
                                 showError={false}
                                 onKeyDown={allowOnlyPostiveNumber}
                               />

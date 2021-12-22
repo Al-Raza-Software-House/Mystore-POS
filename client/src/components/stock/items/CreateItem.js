@@ -102,8 +102,6 @@ function CreateItem(props){
               disabled={!categoryId}
               variant="outlined"
               margin="dense"
-              type="number"
-              inputProps={{  min: 0 }}
               onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
@@ -132,8 +130,6 @@ function CreateItem(props){
               disabled={!categoryId}
               variant="outlined"
               margin="dense"
-              type="number"
-              inputProps={{  min: 0 }}
               onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
@@ -165,8 +161,6 @@ function CreateItem(props){
               disabled={!categoryId}
               variant="outlined"
               margin="dense"
-              type="number"
-              inputProps={{  min: 0 }}
               onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
@@ -195,8 +189,6 @@ function CreateItem(props){
               disabled={!categoryId}
               variant="outlined"
               margin="dense"
-              type="number"
-              inputProps={{  min: 0 }}
               onKeyDown={allowOnlyPostiveNumber}
               InputProps={{
                 endAdornment:
@@ -430,8 +422,6 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     fullWidth={true}
                     variant="outlined"
                     margin="dense"
-                    type="number"
-                    inputProps={{  min: 0 }}
                     onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
@@ -445,8 +435,6 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     fullWidth={true}
                     variant="outlined"
                     margin="dense"
-                    type="number"
-                    inputProps={{  min: 0 }}
                     onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
@@ -460,8 +448,6 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     fullWidth={true}
                     variant="outlined"
                     margin="dense"
-                    type="number"
-                    inputProps={{  min: 0 }}
                     onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
@@ -475,8 +461,6 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     fullWidth={true}
                     variant="outlined"
                     margin="dense"
-                    type="number"
-                    inputProps={{  min: 0 }}
                     onKeyDown={allowOnlyPostiveNumber}
                 />
               </Box>
@@ -540,8 +524,6 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               fullWidth={true}
               variant="outlined"
               margin="dense"
-              type="number"
-              inputProps={{  min: 2 }}
               onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
@@ -554,8 +536,6 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
                 fullWidth={true}
                 variant="outlined"
                 margin="dense"
-                type="number"
-                inputProps={{  min: 0 }}
                 onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>

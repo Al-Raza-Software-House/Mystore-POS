@@ -7,6 +7,7 @@ const DeleteActivity = require( '../models/store/DeleteActivity' );
 const SupplierLedger = require( '../models/parties/SupplierLedger' );
 const { poStates } = require( '../utils/constants' );
 const PurchaseOrder = require( '../models/purchase/PurchaseOrder' );
+const GRN = require( '../models/purchase/GRN' );
 
 router.use(authCheck);
 
@@ -153,6 +154,11 @@ router.post('/delete', async (req, res) => {
     const order = await PurchaseOrder.findOne({ _id: req.body.poId, storeId: req.body.storeId});
     if(!order) throw new Error("invalid Request");
     if(order.status === poStates.PO_STATUS_CLOSED) throw new Error("This purchase order is closed so cannot be deleted");
+
+    const grns = await GRN.find({ storeId: req.body.storeId, poId: req.body.poId });
+    if(grns && grns.length > 0)
+      throw new Error("There is a GRN against this purchase order, so it cannot be deleted");
+
     await PurchaseOrder.findOneAndDelete({ _id: req.body.poId, storeId: req.body.storeId });
     await store.updateLastActivity();
     res.json( { success: true } );

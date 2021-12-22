@@ -36,7 +36,7 @@ function PrintRtv(props){
   }, [items, rtv]);
   const printReceipt = useCallback(() => {
     var mywindow = window.open('', 'PRINT', 'height=600,width=800');
-      mywindow.document.write('<html><head><title>Purchase Order</title>');
+      mywindow.document.write('<html><head><title>Return to Vendor</title>');
       mywindow.document.write('</head><body >');
       mywindow.document.write('<style type="text/css"> @media print { #table-container{ margin-bottom: 40mm; } }  </style>')
       mywindow.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />');
@@ -66,15 +66,21 @@ function PrintRtv(props){
     return (+total.toFixed(2)).toLocaleString()
   }, [rtv]);
 
+
   const totalAmount = useMemo(() => {
     if(!rtv) return 0;
     let total = 0;
     rtv.items.forEach(item => {
-      let costPrice = isNaN(item.costPrice) ? 0 :  Number(item.costPrice);
-      let quantity = isNaN(item.quantity) ? 0 :  Number(item.quantity);
+      let costPrice = item.costPrice;
+      let quantity = item.quantity;
+      let adjustment = item.adjustment * quantity;
+      let tax = item.tax * quantity;
       total += costPrice * quantity;
+      total += tax;
+      total -= adjustment;
     });
     return (+total.toFixed(2)).toLocaleString()
+
   }, [rtv]);
 
   useEffect(() => {
@@ -91,31 +97,23 @@ function PrintRtv(props){
         <DialogContent>
           <Box id="receipt-container" style={{ backgroundColor: '#ececec' }} maxWidth="80mm" margin="auto">
             <Box style={{ fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', padding: "16px 0px", maxWidth: "80mm" }}>
-              <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>Purchase Order</Typography>
+              <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>Return to Vendor</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 18, textAlign: "center" }}>{ store.name }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 12, textAlign: "center" }}>{ store.address }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "8px", fontSize: 12, textAlign: "center" }}>{ store.phone1 }</Typography>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px", textAlign: "center" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Purhcase Order #:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ rtv.poNumber }</Typography>
+                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>RTV #:</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ rtv.rtvNumber }</Typography>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Issue Date:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(rtv.issueDate).format("DD MMM, YYYY") }</Typography>
+                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Date:</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(rtv.rtvDate).format("DD MMM, YYYY") }</Typography>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
                 <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Supplier:</Typography>
                 <Typography style={{ fontSize: "12px", margin: "0px" }}>{ rtv.supplier.name }</Typography>
               </div>
-              {
-                rtv.referenceNumber ? 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
-                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Ref #:</Typography>
-                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ rtv.referenceNumber }</Typography>
-                </div>
-                : null
-              }
               { 
                 rtv.notes ?
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0px 15px" }}>
@@ -124,9 +122,6 @@ function PrintRtv(props){
                 </div>
                 : null
               }
-              <div style={{ margin: "0px 15px" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px", marginBottom: "10px" }}>Your rtv is as follows</Typography>
-              </div>
               <Box id="table-container" style={{ padding: "0px 4px" }}>
                 <table style={{ width: "100%", marginTop: "8px", fontSize: '12px', "borderCollapse": "collapse" }}>
                   <thead>
@@ -153,7 +148,7 @@ function PrintRtv(props){
                           </td>
                           <td style={cellStyle} > { item.costPrice.toLocaleString() } </td>
                           <td style={cellStyle} > { item.quantity.toLocaleString() } </td>
-                          <td style={cellStyle} > { ( +(item.costPrice * item.quantity).toFixed(2) ).toLocaleString() } </td>
+                          <td style={cellStyle} > { ( +( ( (item.costPrice * item.quantity) + (item.tax * item.quantity)) - (item.adjustment * item.quantity)).toFixed(2) ).toLocaleString() } </td>
                         </tr>
                       ))
                     }
@@ -172,7 +167,7 @@ function PrintRtv(props){
               <div style={{ visibility: "hidden" }}>.</div>
               <Box style={{ display: "flex", justifyContent: "space-between", padding: "0px 8px", marginBottom: "16px", marginTop: "10px" }} >
                 <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }} > Prepared By </Box>
-                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }}> Manager </Box>
+                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }}> Purchase Manager </Box>
               </Box>
               <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center" }} id="app-name" >
                 { process.env.REACT_APP_PRINT_FOOTER }

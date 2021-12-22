@@ -220,7 +220,7 @@ function Transaction({ txn, balance, banks, storeId, supplierId, lastEndOfDay, d
           : null
         }
         {
-          txn.grnId || (lastEndOfDay && moment(txn.time) <= moment(lastEndOfDay)) ? null : 
+          txn.grnId || txn.rtvId || (lastEndOfDay && moment(txn.time) <= moment(lastEndOfDay)) ? null : 
           <>
             <IconButton component={Link} to={ '/parties/suppliers/editpayment/' + supplierId + '/' + txn._id } title="Edit Transaction">
               <FontAwesomeIcon icon={faPencilAlt} size="xs" />

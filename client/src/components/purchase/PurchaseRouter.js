@@ -50,9 +50,9 @@ function PurchaseRouter(){
         <Box px={3} pt={2} >
           <Switch>
             
-            <Route path="/purchase/rtvs/edit/:storeId/:rtvId" render={props => <EditRtv {...props} printRTV={setPrintRTV} />} />
-            <Route path="/purchase/rtvs/new" render={props => <CreateRtv {...props} printRTV={setPrintRTV} />} />
-            <Route path="/purchase/rtvs" render={props => <Rtvs {...props} printRTV={setPrintRTV} />} />
+            <Route path="/purchase/rtvs/edit/:storeId/:rtvId" render={props => <EditRtv {...props} printRtv={setPrintRTV} />} />
+            <Route path="/purchase/rtvs/new" render={props => <CreateRtv {...props} printRtv={setPrintRTV} />} />
+            <Route path="/purchase/rtvs" render={props => <Rtvs {...props} printRtv={setPrintRTV} />} />
 
             <Route path="/purchase/grns/edit/:storeId/:grnId" render={props => <EditGrn {...props} printGrn={setPrintGRN} />} />
             <Route path="/purchase/grns/new" render={props => <CreateGrn {...props} printGrn={setPrintGRN} />} />

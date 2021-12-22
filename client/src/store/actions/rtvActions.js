@@ -1,6 +1,8 @@
 import axios from "axios";
 import { showError, showSuccess } from './alertActions';
+import { itemsStampChanged, syncItems } from "./itemActions";
 import { hideProgressBar, showProgressBar } from "./progressActions"
+import { updateSupplier } from "./supplierActions";
 
 export const actionTypes = {
   RTVS_LOADED: 'rtvsLoaded',
@@ -39,10 +41,19 @@ export const updateRtv = (storeId, rtvId, rtv) => {
 
 export const deleteRtv = (storeId, rtvId) => {
   return (dispatch, getState) => {
+    const state = getState();
+    const itemsLastUpdatedOn = state.system.lastUpdatedStamps[storeId] ? state.system.lastUpdatedStamps[storeId].items : null;
     dispatch(showProgressBar());
     axios.post('/api/rtvs/delete', { storeId, rtvId }).then( ({ data }) => {
       dispatch(hideProgressBar());
       dispatch( { type: actionTypes.RTV_DELETED, storeId, rtvId } );
+      if(data.now)
+      {
+        dispatch( syncItems(itemsLastUpdatedOn) );
+        dispatch( itemsStampChanged(storeId, data.now) );
+      }
+      if(data.supplier)
+        dispatch( updateSupplier(storeId, data.supplier._id, data.supplier, data.now, data.lastAction) );
       dispatch( showSuccess('RTV deleted') );
     }).catch( err => {
       dispatch( hideProgressBar() );

@@ -19,9 +19,11 @@ export const isSmallScreen = (screenWidth) => {
 }
 
 export const allowOnlyPostiveNumber = (e) => {
+  //console.log(e.keyCode);
+  let allowedKeys = [8, 9, 38, 40, 110, 190, 37, 39, 46];
   if(!((e.keyCode > 95 && e.keyCode < 106)
     || (e.keyCode > 47 && e.keyCode < 58) 
-    || e.keyCode === 8 || e.keyCode === 9 || e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 110 || e.keyCode === 190 )) {
+    || allowedKeys.indexOf(e.keyCode) !== -1 )) {
       e.preventDefault();
       return false;
   }

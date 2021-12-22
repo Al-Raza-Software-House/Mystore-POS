@@ -16,6 +16,7 @@ import { updatePO } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import { poStates } from '../../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -50,6 +51,10 @@ function EditPurchaseOrder(props) {
     let orders = state.purchaseOrders[storeId] ? state.purchaseOrders[storeId].records : [];
     return orders.find(record => record._id === poId);
   })
+
+  const isClosed = useMemo(() => {
+    return order.status === poStates.PO_STATUS_CLOSED;
+  }, [order])
 
   const classes = useStyles();
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printPo } = props;
@@ -217,7 +222,7 @@ function EditPurchaseOrder(props) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap">
             <Box width={{ xs: '100%', md: '24%' }}>
-              <SelectSupplier formName={formName} />   
+              <SelectSupplier formName={formName} disabled={isClosed} />   
             </Box>
             <Box width={{ xs: '100%', md: '24%' }}>
               <Field
@@ -228,7 +233,7 @@ function EditPurchaseOrder(props) {
               fullWidth={true}
               variant="outlined"
               margin="dense"
-              disabled={!supplierId}
+              disabled={!supplierId || isClosed}
               />    
             </Box>
             <Box width={{ xs: '100%', md: '24%' }}>
@@ -243,7 +248,7 @@ function EditPurchaseOrder(props) {
               disablePast
               margin="dense"
               emptyLabel=""
-              disabled={!supplierId}
+              disabled={!supplierId || isClosed}
               />    
             </Box>
             <Box width={{ xs: '100%', md: '24%' }}>
@@ -258,13 +263,13 @@ function EditPurchaseOrder(props) {
               disablePast
               margin="dense"
               emptyLabel=""
-              disabled={!supplierId}
+              disabled={!supplierId || isClosed}
               />    
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center">
             <Box width={{ xs: '100%', md: '31%' }}>
-              <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
+              <ItemPicker disabled={!supplierId || isClosed} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
             </Box>
             <Box width={{ xs: '100%', md: '31%' }}>
               <Typography align="center">Total Quantity: <b>{ totalQuantity }</b></Typography>
@@ -279,7 +284,7 @@ function EditPurchaseOrder(props) {
                 items.length === 0 ?
                 <Typography style={{ color: '#7c7c7c' }} align="center"> add some items to create purchase order </Typography>
                 :
-                <TableContainer>
+                <TableContainer style={{ overflowY:  "hidden" }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -329,9 +334,7 @@ function EditPurchaseOrder(props) {
                                   fullWidth={true}
                                   variant="outlined"
                                   margin="dense"
-                                  type="number"
-                                  disabled={!supplierId}
-                                  inputProps={{  min: 0 }}
+                                  disabled={!supplierId || isClosed}
                                   showError={false}
                                   onKeyDown={allowOnlyPostiveNumber}
                                 />
@@ -350,9 +353,7 @@ function EditPurchaseOrder(props) {
                                 fullWidth={true}
                                 variant="outlined"
                                 margin="dense"
-                                type="number"
-                                disabled={!supplierId}
-                                inputProps={{  min: 1 }}
+                                disabled={!supplierId || isClosed}
                                 showError={false}
                                 onKeyDown={allowOnlyPostiveNumber}
                               />
@@ -361,7 +362,7 @@ function EditPurchaseOrder(props) {
                               { Number( ( isNaN(values[item._id].costPrice) ? 0 :  values[item._id].costPrice ) * ( isNaN(values[item._id].quantity) ? 0 :  values[item._id].quantity ) ).toLocaleString() }
                             </TableCell>
                             <TableCell align="center">
-                              <IconButton disabled={!supplierId} onClick={() => removeItem(item)}>
+                              <IconButton disabled={!supplierId || isClosed} onClick={() => removeItem(item)}>
                                 <FontAwesomeIcon icon={faTimes} size="xs" />
                               </IconButton>
                             </TableCell>
@@ -387,7 +388,7 @@ function EditPurchaseOrder(props) {
               multiline
               rows={3}
               margin="dense"
-              disabled={!supplierId}
+              disabled={!supplierId || isClosed}
             />
           </Box>
 
@@ -402,7 +403,7 @@ function EditPurchaseOrder(props) {
           </Box>
           
         <Box textAlign="center">
-          <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} >
+          <Button disableElevation type="submit" variant="contained" color="primary" disabled={isClosed || pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} >
             Update Purchase Order
           </Button>
           {
@@ -410,6 +411,11 @@ function EditPurchaseOrder(props) {
             <IconButton style={{ marginLeft: 8}} title="Print Purchase Order" onClick={ () => printPo({ ...order, supplier}) } >
               <FontAwesomeIcon icon={faPrint} size="xs" />
             </IconButton>
+          }
+          {
+            isClosed ?
+            <Typography component="div" style={{ color: '#7c7c7c', marginTop: 10, marginBottom: 10 }}>Closed purchase orders cannot be updated</Typography>
+            : null
           }
           {
             items.length && Number(totalQuantity) === 0 ?

@@ -9,9 +9,8 @@ import moment from 'moment';
 import GRNFilters from './GrnFilters';
 
 function Grns({ storeId, lastEndOfDay, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadGrns, emptyGrns, deleteGrn, printGrn }) {
-  console.log('grns', totalRecords);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const filterRef = useRef();
 
   useEffect(() => {

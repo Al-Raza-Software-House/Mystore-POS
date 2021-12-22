@@ -11,7 +11,7 @@ import PurchaseOrdersFilters from './PurchaseOrdersFilters';
 
 function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder, printPo }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const filterRef = useRef();
 
   useEffect(() => {
@@ -122,16 +122,14 @@ function Order({ order, suppliers, storeId, deletePurchaseOrder, printPo }){
         <IconButton onClick={() => printPo( { ...order, supplier: suppliers[order.supplierId] } ) } title="Print Receipt">
           <FontAwesomeIcon icon={faPrint} size="xs" />
         </IconButton>
+        <IconButton component={Link} to={ '/purchase/orders/edit/' + storeId + '/' + order._id } title="Edit Purchase Order">
+          <FontAwesomeIcon icon={faPencilAlt} size="xs" />
+        </IconButton>
         {
           order.status === poStates.PO_STATUS_OPEN ? 
-          <>
-            <IconButton component={Link} to={ '/purchase/orders/edit/' + storeId + '/' + order._id } title="Edit Purchase Order">
-              <FontAwesomeIcon icon={faPencilAlt} size="xs" />
-            </IconButton>
-            <IconButton onClick={(event) => handleClick(event) } title="Delete Purchase Order">
-              <FontAwesomeIcon icon={faTrash} size="xs" />
-            </IconButton>
-          </>
+          <IconButton onClick={(event) => handleClick(event) } title="Delete Purchase Order">
+            <FontAwesomeIcon icon={faTrash} size="xs" />
+          </IconButton>
           : null
          }
       </TableCell>

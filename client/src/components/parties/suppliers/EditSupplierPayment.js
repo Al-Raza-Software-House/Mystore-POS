@@ -191,9 +191,7 @@ function EditSupplierPayment(props) {
                 fullWidth={true}
                 variant="outlined"
                 margin="dense"
-                type="number"
                 onKeyDown={allowOnlyPostiveNumber}
-                inputProps={{  min: 1 }}
                 />    
               </Box>
 

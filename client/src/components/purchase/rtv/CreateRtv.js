@@ -1,23 +1,26 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, IconButton } from '@material-ui/core'
-import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
+import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
+import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useHistory } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
-import DateInput from '../../library/form/DateInput';
 import { useSelector } from 'react-redux';
 import ItemPicker from '../../library/ItemPicker';
-import { addNewPO } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
-import { allowOnlyPostiveNumber } from '../../../utils';
+import DateTimeInput from '../../library/form/DateTimeInput';
+import SelectInput from '../../library/form/SelectInput';
+import RtvItemRow from './RtvItemRow';
+import UploadFile from '../../library/UploadFile';
+import { updateSupplier } from '../../../store/actions/supplierActions';
+import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
+import { addNewRtv } from '../../../store/actions/rtvActions';
+
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -33,42 +36,67 @@ const useStyles = makeStyles(theme => ({
     textAlign: "center"
   }
 }));
-const formName = "createPurchaseOrder";
-const formSelector = formValueSelector(formName);
 
-const calculateMargin = (item, values, showInPercent=false) => {
-  if(item.salePrice === 0) return 0;
-  let costPrice = isNaN(values[item._id].costPrice) ? 0 : Number(values[item._id].costPrice);
-  let salePrice = item.packParentId ? item.packSalePrice : item.salePrice;
-  let margin = salePrice - costPrice;
-  if(!showInPercent) return (+margin.toFixed(2)).toLocaleString();
-  return +((margin/salePrice)*100).toFixed(2);
-}
+const formName = "createRtv";
 
 function CreateRtv(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { dispatch, storeId, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printRTV} = props;
-  const supplierId = useSelector(state => formSelector(state, 'supplierId'));
+  const { dispatch, storeId, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printRtv} = props;
+  const formValues = useSelector(state => {
+    let formData = getFormValues(formName)(state);
+    if(formData)
+      return !formData.items ? { ...formData, items: []} : formData;
+    else
+      return { items: [] }
+  });
+  const { supplierId, grnId } = formValues;
+  const values = formValues.items;
   const supplier = useSelector(state => state.suppliers[storeId] ? state.suppliers[storeId].find(record => record._id === supplierId) : null);
   const allItems = useSelector(state => state.items[storeId].allItems );
-  const values = useSelector(state => {
-    let records = formSelector(state, 'items');
-    return records ? records : []
-  } );
   
-  const [items, setItems] = useState([]);
-  const selectItem = useCallback((item) => {
-    let isExist = items.find(record => record._id === item._id);
-    if(isExist)
+  const [items, setItems] = useState([]);//selected items
+  const [grns, setGrns] = useState([]); //
+
+  useEffect(() => {
+    if(!supplierId)
     {
-      dispatch( change(formName, `items[${item._id}].quantity`, Number(values[item._id].quantity) + 1));
-      let newItems = items.filter(record => record._id !== item._id);
-      newItems.unshift(isExist);
-      setItems(newItems);
-    }else
+      dispatch( change(formName, 'grnId', 0) )
+      setGrns(prevGrns => prevGrns.length ? [] : prevGrns);
+      return;
+    }
+    dispatch( showProgressBar() );
+    axios.get('/api/grns', { params: { storeId, supplierId } }).then(({ data }) => {
+    dispatch( hideProgressBar() );
+
+      setGrns(data.grns);
+      dispatch( change(formName, 'grnId', 0) )
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
+  }, [supplierId, storeId, dispatch]);
+
+  const grnOption = useMemo(() => {
+    let options = [{ id: 0, title: supplierId && grns.length === 0 ? "No GRNs found, add item manually" : "Select a GRN or add item manually" }];
+    if(!supplierId || grns.length === 0) return options;
+    options = [...options, ...grns.map(option => ({ id: option._id, title: `GRN# ${option.grnNumber} - ${ moment(option.grnDate).format("DD MMMM") }` }))];
+    return options;
+  }, [grns, supplierId])
+
+  useEffect(() => {
+    setItems([]);
+    dispatch(change(formName, 'items', undefined));
+    if(!grnId) return;
+    let grn = grns.find(record => record._id === grnId);
+    if(!grn) return;
+    let newItems = [];
+    for(let index = 0; index< grn.items.length; index++)
     {
-      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice } = item;
+      let record = grn.items[index];
+      let item = allItems.find(elem => elem._id === record._id);
+      if(!item) continue;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, batches } = item;
       let lowStock = item.currentStock < item.minStock;
       let overStock = item.currentStock > item.maxStock
       if(item.packParentId)
@@ -82,10 +110,40 @@ function CreateRtv(props) {
         }
         costPrice = item.packQuantity * costPrice;
       }
-      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
-      dispatch( change(formName, `items[${_id}]._id`, _id));
-      dispatch( change(formName, `items[${_id}].costPrice`, costPrice));
-      dispatch( change(formName, `items[${_id}].quantity`, 1));
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches };
+      dispatch( change(formName, `items[${_id}]`, {_id, currentStock, packQuantity, sourceBatches: batches, packParentId: item.packParentId, costPrice: record.costPrice, quantity: record.quantity, adjustment: record.adjustment, tax: record.tax, notes: "", batches:[{ batchNumber: 0, batchQuantity: 0 }] }));
+      newItems.push(newItem);
+    }
+    setItems(newItems);
+  }, [grnId, dispatch, grns, allItems])
+
+  //pass to item Picker
+  const selectItem = useCallback((item) => {
+    let isExist = items.find(record => record._id === item._id);
+    if(isExist)
+    {
+      dispatch( change(formName, `items[${item._id}].quantity`, Number(values[item._id].quantity) + 1));
+      let newItems = items.filter(record => record._id !== item._id);
+      newItems.unshift(isExist);
+      setItems(newItems);
+    }else
+    {
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, batches } = item;
+      let lowStock = item.currentStock < item.minStock;
+      let overStock = item.currentStock > item.maxStock
+      if(item.packParentId)
+      {
+        let parentItem = allItems.find(record => record._id === item.packParentId);
+        if(parentItem)
+        {
+          currentStock = parentItem.currentStock; 
+          lowStock = parentItem.currentStock < parentItem.minStock;
+          overStock = parentItem.currentStock > parentItem.maxStock
+        }
+        costPrice = item.packQuantity * costPrice;
+      }
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches };
+      dispatch( change(formName, `items[${_id}]`, {_id, currentStock, packQuantity, sourceBatches: batches, packParentId: item.packParentId,  costPrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: 0, batchQuantity: 0 }] }));
       setItems([
         newItem,
         ...items
@@ -93,13 +151,18 @@ function CreateRtv(props) {
     }
   }, [items, values, allItems, dispatch]);
 
+  //Pass to item Picker, or delete item from list
   const removeItem = useCallback((item) => {
     dispatch( change(formName, `items[${item._id}]`, ""));
     setItems(prevItems => prevItems.filter(record => record._id !== item._id));
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(initialize(formName, { issueDate: moment().format("DD MMMM, YYYY"), deliveryDate: moment().format("DD MMMM, YYYY") }));
+    dispatch(initialize(formName, {
+      rtvDate: moment().format("DD MMMM, YYYY hh:mm A"),
+      grnId: 0
+    }
+    ));
   }, [dispatch]);
 
   const totalQuantity = useMemo(() => {
@@ -124,9 +187,13 @@ function CreateRtv(props) {
       if(!item) continue;
       let costPrice = isNaN(item.costPrice) ? 0 :  Number(item.costPrice);
       let quantity = isNaN(item.quantity) ? 0 :  Number(item.quantity);
+      let adjustment = isNaN(values[item._id].adjustment) ? 0 :  quantity * Number(values[item._id].adjustment);
+      let tax = isNaN(values[item._id].tax) ? 0 :  quantity * Number(values[item._id].tax);
       total += costPrice * quantity;
+      total += tax;
+      total -= adjustment;
     }
-    return (+total.toFixed(2)).toLocaleString()
+    return +total.toFixed(2);
   }, [values]);
 
   const anyZeroQuantity = useMemo(() => {
@@ -142,28 +209,32 @@ function CreateRtv(props) {
 
   useEffect(() => {
     if(submitSucceeded)
-      history.push('/purchase');
+      history.push('/purchase/rtvs');
   }, [submitSucceeded, history])
 
-  const onSubmit = useCallback((formValues, dispatch, { storeId }) => {
-    const payload = {storeId, ...formValues};
-    payload.issueDate = moment(formValues.issueDate, "DD MMMM, YYYY").toDate();
-    payload.deliveryDate = moment(formValues.deliveryDate, "DD MMMM, YYYY").toDate();
+  const onSubmit = useCallback((formData, dispatch, { storeId, itemsLastUpdatedOn }) => {
+    const payload = {storeId, ...formData};
+    payload.rtvDate = moment(formData.rtvDate, "DD MMMM, YYYY hh:mm A").toDate();
     payload.items = [];
     items.forEach(item => {
-      payload.items.push(
-        formValues.items[item._id]
-      )
+      let record = formData.items[item._id];
+      if(!record) return;
+      let {_id, costPrice, quantity, adjustment, tax, notes, batches } = record;
+      payload.items.push({_id, costPrice, quantity, adjustment, tax, notes, batches });
     });
     dispatch(showProgressBar());
-    return axios.post('/api/purchaseOrders/create', payload).then( response => {
+    return axios.post('/api/rtvs/create', payload).then( response => {
       dispatch(hideProgressBar());
-      if(response.data.order._id)
+      if(response.data.rtv._id)
       {
-        dispatch( addNewPO(storeId, response.data.order) );
-        dispatch( showSuccess("New purchase order added") );
-        if(formValues.printRTV)
-          printRTV({ ...response.data.order, supplier });
+        dispatch( syncItems(itemsLastUpdatedOn) );
+        dispatch( itemsStampChanged(storeId, response.data.now) );
+        dispatch( addNewRtv(storeId, response.data.rtv) );
+        dispatch( showSuccess("New RTV added") );
+        if(response.data.supplier)
+          dispatch( updateSupplier(storeId, response.data.supplier._id, response.data.supplier, response.data.now, response.data.lastAction) );
+        if(formData.printRtv)
+          printRtv({ ...response.data.rtv, supplier });
       }
 
     }).catch(err => {
@@ -172,169 +243,87 @@ function CreateRtv(props) {
         _error: err.response && err.response.data.message ? err.response.data.message: err.message
       });
     });
-  }, [items, supplier, printRTV]);
+  }, [items, supplier, printRtv]);
     return(
       <>
       <Box width="100%" justifyContent="space-between" display="flex">
         <Typography gutterBottom variant="h6" align="center" style={{ flexGrow: 1 }}>
-          Create New Purchase Order
+          Create New RTV
         </Typography>
       </Box>
       <Box margin="auto" width="100%">
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap">
-            <Box width={{ xs: '100%', md: '24%' }}>
+            <Box width={{ xs: '100%', md: '32%' }}>
               <SelectSupplier formName={formName} />   
             </Box>
-            <Box width={{ xs: '100%', md: '24%' }}>
+            <Box width={{ xs: '100%', md: '32%' }} pt={1}>
               <Field
-              component={TextInput}
-              name="referenceNumber"
-              label="Reference No."
-              placeholder="Reference number..."
-              fullWidth={true}
-              variant="outlined"
-              margin="dense"
-              disabled={!supplierId}
-              />    
+                component={SelectInput}
+                options={grnOption}
+                name="grnId"
+                fullWidth={true}
+                variant="outlined"
+                margin="dense"
+                disabled={!supplierId}
+              />
             </Box>
-            <Box width={{ xs: '100%', md: '24%' }}>
+            <Box width={{ xs: '100%', md: '32%' }}>
               <Field
-              component={DateInput}
-              name="issueDate"
-              label="Issue Date"
-              placeholder="Issue date..."
-              dateFormat="DD MMMM, YYYY"
+              component={DateTimeInput}
+              name="rtvDate"
+              label="Date"
+              dateFormat="DD MMMM, YYYY hh:mm A"
+              placeholder="Date..."
               fullWidth={true}
               inputVariant="outlined"
-              disablePast
               margin="dense"
               emptyLabel=""
-              disabled={!supplierId}
-              />    
-            </Box>
-            <Box width={{ xs: '100%', md: '24%' }}>
-              <Field
-              component={DateInput}
-              name="deliveryDate"
-              label="Delivery Date"
-              placeholder="Delivery date..."
-              dateFormat="DD MMMM, YYYY"
-              fullWidth={true}
-              inputVariant="outlined"
-              disablePast
-              margin="dense"
-              emptyLabel=""
+              minDate={ moment(lastEndOfDay).toDate() }
+              maxDate={ moment().toDate() }
+              showTodayButton
               disabled={!supplierId}
               />    
             </Box>
           </Box>
+          
           <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center">
             <Box width={{ xs: '100%', md: '31%' }}>
-              <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
+              {
+                parseInt(formValues.grnId) !== 0 ? null : 
+                <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
+              }
             </Box>
-            <Box width={{ xs: '100%', md: '31%' }}>
+            <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
               <Typography align="center">Total Quantity: <b>{ totalQuantity }</b></Typography>
             </Box>
-            <Box width={{ xs: '100%', md: '31%' }}>
-              <Typography align="center">Total Amount: <b>{ totalAmount }</b></Typography>
+            <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
+              <Typography align="center">Items Total Amount: <b>{ totalAmount.toLocaleString() }</b></Typography>
             </Box>
           </Box>
           <Box style={{ backgroundColor: '#ececec' }} p={1} borderRadius={6} my={1}>
             <Box style={{ backgroundColor: '#fff' }} p={ items.length === 0 ? 5 : 0 }>
               {
                 items.length === 0 ?
-                <Typography style={{ color: '#7c7c7c' }} align="center"> add some items to create purchase order </Typography>
+                <Typography style={{ color: '#7c7c7c' }} align="center"> Add items manually or select GRN to create RTV </Typography>
                 :
-                <TableContainer>
+                <TableContainer style={{ overflowY:  "hidden" }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
+                        <TableCell style={{ minWidth: 20 }}></TableCell>
                         <TableCell style={{ minWidth: 280 }}>Item</TableCell>
                         <TableCell style={{ minWidth: 50 }} align="center">Stock</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Cost Price</TableCell>
-                        <TableCell style={{ minWidth: 50 }} align="center">Margin</TableCell>
-                        <TableCell style={{ minWidth: 70 }} align="center">Quantity</TableCell>
+                        <TableCell style={{ minWidth: 70 }} align="center">Return Quantity</TableCell>
                         <TableCell style={{ minWidth: 70 }} align="center">Amount</TableCell>
                         <TableCell style={{ minWidth: 40 }} align="center">Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {
-                        items.map((item, index) => (
-                          <TableRow hover key={item._id}>
-                            <TableCell>
-                              <Box my={1} display="flex" justifyContent="space-between">
-                                <span>
-                                  {item.itemName}
-                                </span>
-                                { item.packParentId ? <span style={{ color: '#7c7c7c' }}>Packing <FontAwesomeIcon title="Packing" style={{ marginLeft: 4 }} icon={faBoxOpen} /> </span> : null }
-                                {
-                                  item.sizeName ?
-                                  <span style={{ color: '#7c7c7c' }}> {item.sizeName} | {item.combinationName} </span>
-                                  : null
-                                }
-                              </Box>
-                              <Box mb={1} display="flex" justifyContent="space-between" style={{ color: '#7c7c7c' }}>
-                                <span>{item.itemCode}{item.sizeCode ? '-'+item.sizeCode+'-'+item.combinationCode : '' }</span>
-                                <span>Price: { item.packParentId ? item.packSalePrice.toLocaleString() : item.salePrice.toLocaleString() } </span>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              {item.currentStock.toLocaleString()}
-                              { item.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box height="100%" display="flex" justifyContent="center" alignItems="center">
-                                <Field
-                                  component={TextInput}
-                                  label="Cost Price"
-                                  name={`items[${item._id}].costPrice`}
-                                  placeholder="Cost Price..."
-                                  fullWidth={true}
-                                  variant="outlined"
-                                  margin="dense"
-                                  type="number"
-                                  disabled={!supplierId}
-                                  inputProps={{  min: 0 }}
-                                  showError={false}
-                                  onKeyDown={allowOnlyPostiveNumber}
-                                />
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box mb={1}>{ calculateMargin(item, values) }</Box>
-                              <Box style={{ color: '#7c7c7c' }}>{ calculateMargin(item, values, true) }%</Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Field
-                                component={TextInput}
-                                label="Quantity"
-                                name={`items[${item._id}].quantity`}
-                                placeholder="Quantity..."
-                                fullWidth={true}
-                                variant="outlined"
-                                margin="dense"
-                                disabled={!supplierId}
-                                type="number"
-                                inputProps={{  min: 1 }}
-                                showError={false}
-                                onKeyDown={allowOnlyPostiveNumber}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              { Number( ( isNaN(values[item._id].costPrice) ? 0 :  values[item._id].costPrice ) * ( isNaN(values[item._id].quantity) ? 0 :  values[item._id].quantity ) ).toLocaleString() }
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton disabled={!supplierId} onClick={() => removeItem(item)}>
-                                <FontAwesomeIcon icon={faTimes} size="xs" />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        items.map((item, index) => <RtvItemRow key={item._id} {...{ item, values, supplierId, removeItem }} /> )
                       }
                     </TableBody>
                   </Table>
@@ -343,27 +332,41 @@ function CreateRtv(props) {
             </Box>
           </Box>
 
-          <Box>
-            <Field
-              component={TextInput}
-              name="notes"
-              label="Notes"
-              placeholder="Notes..."
-              type="text"
-              fullWidth={true}
-              variant="outlined"
-              multiline
-              rows={3}
-              margin="dense"
-              disabled={!supplierId}
-            />
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" flexWrap="wrap">
+              <Field
+                component={UploadFile}
+                storeId={storeId}
+                label="Attachment"
+                name="attachment"
+                imageWidth={1920}
+                disabled={!supplierId}
+                fullWidth={true}
+                filePath="rtvs/"
+              />
+            </Box>
+            <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" flexWrap="wrap">
+              <Field
+                component={TextInput}
+                name="notes"
+                label="Notes"
+                placeholder="Notes..."
+                type="text"
+                fullWidth={true}
+                variant="outlined"
+                multiline
+                rows={2}
+                margin="dense"
+                disabled={!supplierId}
+              />
+            </Box>
           </Box>
           
           <Box textAlign="center">
             <Field
               component={CheckboxInput}
-              name="printRTV"
-              label="Print Purchase Order"
+              name="printRtv"
+              label="Print RTV"
               fullWidth={true}
               disabled={pristine || submitting || invalid || !dirty}
             />
@@ -371,7 +374,7 @@ function CreateRtv(props) {
 
         <Box textAlign="center">
           <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} >
-            Create Purchase Order
+            Create RTV
           </Button>
           {
             items.length && Number(totalQuantity) === 0 ?
@@ -399,21 +402,74 @@ function CreateRtv(props) {
 }
 
 const validate = (values, props) => {
-  const { dirty } = props;
+  const { dirty, lastEndOfDay } = props;
   if(!dirty) return {};
-  const errors = {};
+  const errors = { items: {} };
   if(!values.supplierId)
    errors.supplierId = "Please select supplier first";
-  if(!values.issueDate)
-   errors.issueDate = "Issue date is required";
-  if(!values.deliveryDate)
-   errors.deliveryDate = "Delivery date is required";
+  if(lastEndOfDay && moment(values.rtvDate, "DD MMMM, YYYY hh:mm A") <= moment(lastEndOfDay))
+    errors.rtvDate = "Date & time should be after last day closing: " + moment(lastEndOfDay).format("DD MMMM, YYYY hh:mm A");
+  else if(moment(values.rtvDate, "DD MMMM, YYYY hh:mm A") > moment())
+    errors.rtvDate = "Date & time should not be after current time: " + moment().format("DD MMMM, YYYY hh:mm A");
+  let itemsTotalQuantity = {}; //total quantity of single item, there can be multiple packings of same item selected in RTV so sum all of those quntities must be less than curren stock 
+  for(let itemId in values.items)
+  {
+    if(values.items[itemId] === undefined) continue;
+    errors.items[itemId] = { batches: {} };
+    let quantity = Number(values.items[itemId].quantity);
+    if( !quantity )
+    {
+      errors.items[itemId].quantity = "invalid quantity";
+      continue;
+    }
+    let baseItemId = values.items[itemId].packParentId ? values.items[itemId].packParentId : values.items[itemId]._id;
+    if(itemsTotalQuantity[baseItemId] === undefined) itemsTotalQuantity[baseItemId] = 0;
+      
+    let totalQuantity = values.items[itemId].packParentId ? Number(values.items[itemId].packQuantity) * quantity : quantity;
+    itemsTotalQuantity[baseItemId] += totalQuantity;
+    if(totalQuantity > Number(values.items[itemId].currentStock))
+      errors.items[itemId].quantity = `return quantity(${totalQuantity}) should not be greater than available stock(${Number(values.items[itemId].currentStock)})`;
+    let batchQuantity = 0;
+    let batchCount = 0;
+    values.items[itemId].batches.forEach((batch, index) => {
+      if(!batch.batchNumber) return;
+      if(!Number(batch.batchQuantity)) errors.items[itemId].batches._error = "Batch quantity is required";
+      batchCount++;
+      batchQuantity += Number(batch.batchQuantity);
+    });
+    if(batchCount && batchQuantity !== quantity && !errors.items[itemId].batches._error) //batches applied but quantity doesn't match
+      errors.items[itemId].batches._error = "Sum of batch quantities should be equal to total quantity";
+    else if(batchCount === 0 && values.items[itemId].sourceBatches && values.items[itemId].sourceBatches.length > 0 && !errors.items[itemId].quantity)
+      errors.items[itemId].quantity = "Please enter batch details";
+
+  }
+  //sum of qunatities of packs of same item should be less than current stock
+  for(let baseItemId in itemsTotalQuantity)
+  {
+    //show error on base item
+    if(values.items[baseItemId] && Number(values.items[baseItemId].currentStock) < itemsTotalQuantity[baseItemId]  && !errors.items[baseItemId].quantity)  errors.items[baseItemId].quantity = `sum of all pack quantities(${itemsTotalQuantity[baseItemId]}) should be less than current stock(${Number(values.items[baseItemId].currentStock)})`;
+    
+    //show error on packs
+    for(let itemId in values.items)
+    {
+      if(values.items[itemId] === undefined) continue;
+      if(values.items[itemId].packParentId === baseItemId && Number(values.items[itemId].currentStock) < itemsTotalQuantity[baseItemId] && !errors.items[itemId].quantity)
+      {
+        errors.items[itemId].quantity = `sum of all pack quantities(${itemsTotalQuantity[baseItemId]}) should be less than current stock(${Number(values.items[itemId].currentStock)})`;
+      }
+    }
+  }
   return errors;
 }
 
 const mapStateToProps = state => {
+  const storeId = state.stores.selectedStoreId;
+  const store = state.stores.stores.find(store => store._id === storeId);
+  const itemsLastUpdatedOn = state.system.lastUpdatedStamps[storeId] ? state.system.lastUpdatedStamps[storeId].items : null;
   return{
-    storeId: state.stores.selectedStoreId
+    storeId,
+    lastEndOfDay: store.lastEndOfDay,
+    itemsLastUpdatedOn
   }
 }
 

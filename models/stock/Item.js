@@ -25,6 +25,11 @@ const itemSchema = new mongoose.Schema({
   minStock: Number,
   maxStock: Number,
   currentStock: Number,
+  batches: [{
+    batchNumber: String,
+    batchExpiryDate: Date,
+    batchStock: Number
+  }],
   sizeId: mongoose.Schema.Types.ObjectId,
   sizeCode: String,
   sizeName: String,

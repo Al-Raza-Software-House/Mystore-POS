@@ -6,32 +6,41 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'store'
   },
-  userId: {
+  saleId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
+    ref: 'sale'
   },
-  supplierId: {
+  itemId: { //can be unit or pack
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'supplier'
+    ref: 'item'
   },
-  grnId: {
+  parentId: { //parent item of packing, unit id if pack is purchase
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'grn'
+    ref: 'item'
   },
-  rtvId: {
+  baseItemId: { //always unit item
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'rtv'
+    ref: 'item'
   },
-  bankId: {
+  isVoided: Boolean,
+
+  quantity: Number,
+  costPrice: Number,
+  salePrice: Number,
+  discount: Number,
+  
+  batches: [{
+    batchNumber: String,
+    batchExpiryDate: Date,
+    batchQuantity: Number
+  }],
+
+  totalProfit: Number, // form total quntity of this item
+  categoryId: { //always unit item
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'bank'
-  },
-  amount: Number,
-  type: Number, //Purchase, return, 
-  description: String,
-  notes: String,
-  time: Date,
-  lastUpdated: Date
+    ref: 'category'
+  }
+
 })
 
 //store record/settings udpate
@@ -41,4 +50,4 @@ schema.methods.updateLastUpdated = function(){
   return this.save();
 }
 
-module.exports = mongoose.model('supplierLedger', schema);
+module.exports = mongoose.model('saleItem', schema);

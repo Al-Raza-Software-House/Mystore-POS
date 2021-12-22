@@ -5,9 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxOpen, faChevronDown, faChevronUp, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import TextInput from '../../library/form/TextInput';
 import { Field, FieldArray } from 'redux-form';
-import GrnBatches from './GrnBatches';
+import RtvBatches from './RtvBatches';
 
-function GrnItemRow(props){
+function RtvItemRow(props){
   const { item, values, supplierId, beforeLastEndOfDay=false, removeItem } = props;
   const [open, setOpen] = useState(false);
   const itemAmount = useMemo(() => {
@@ -90,6 +90,7 @@ function GrnItemRow(props){
               margin="dense"
               disabled={!supplierId || beforeLastEndOfDay}
               type="text"
+              ignoreTouch={true}
               onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
@@ -136,37 +137,7 @@ function GrnItemRow(props){
                     onKeyDown={allowOnlyPostiveNumber}
                   />
                 </Box>
-                <Box width={{ xs: '100%', md: '48%' }}>
-                  <Field
-                    component={TextInput}
-                    label="Sale Price(unit)"
-                    name={`items[${item._id}].salePrice`}
-                    placeholder="Sale Price..."
-                    fullWidth={true}
-                    variant="outlined"
-                    margin="dense"
-                    disabled={!supplierId || beforeLastEndOfDay}
-                    showError={false}
-                    onKeyDown={allowOnlyPostiveNumber}
-                  />
-                </Box>
-                {
-                  !item.packParentId ? null :
-                  <Box width={{ xs: '100%', md: '48%' }}>
-                    <Field
-                      component={TextInput}
-                      label="Packe Sale Price"
-                      name={`items[${item._id}].packSalePrice`}
-                      placeholder="Pack Sale Price..."
-                      fullWidth={true}
-                      variant="outlined"
-                      margin="dense"
-                      disabled={!supplierId || beforeLastEndOfDay}
-                      showError={false}
-                      onKeyDown={allowOnlyPostiveNumber}
-                    />
-                  </Box>
-                }
+                
                 <Box width={{ xs: '100%', md: '48%' }}>
                   <Field
                     component={TextInput}
@@ -209,8 +180,6 @@ function GrnItemRow(props){
                             <Box width="55%" mb={1}>Units Cost Price</Box>
                             <Box width="30%" mb={1} textAlign="left">{ (+(( isNaN(values[item._id].costPrice) ? 0 :  values[item._id].costPrice ) / item.packQuantity).toFixed(2)).toLocaleString() }</Box>
 
-                            <Box width="55%" mb={1}>Units Sale Price</Box>
-                            <Box width="30%" mb={1} textAlign="left">{ Number(values[item._id].salePrice).toLocaleString() }</Box>
                           </Box>
                         </Box>
                       </Popover>
@@ -220,7 +189,7 @@ function GrnItemRow(props){
               <Box width={{ xs: '100%', md: '48%' }} display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap">
                 { 
                   item.sizeName ? null :
-                  <FieldArray name={`items[${item._id}].batches`} component={GrnBatches} {...{supplierId, beforeLastEndOfDay}} />
+                  <FieldArray name={`items[${item._id}].batches`} component={RtvBatches} {...{supplierId, beforeLastEndOfDay, batches: item.batches}} />
                 }
               </Box>
             </Box>
@@ -232,4 +201,4 @@ function GrnItemRow(props){
   )
 }
 
-export default GrnItemRow;
+export default RtvItemRow;

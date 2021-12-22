@@ -1,17 +1,16 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencilAlt, faTrash, faSync, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, TablePagination, Typography, Chip } from '@material-ui/core';
+import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, TablePagination, Typography } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { loadRtvs, emptyRtvs, deleteRtv } from '../../../store/actions/rtvActions';
-import { poStates } from '../../../utils/constants';
 import moment from 'moment';
 import RtvFilters from './RtvFilters';
 
-function Rtvs({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadRtvs, emptyRtvs, deleteRtv, printRTV }) {
+function Rtvs({ storeId, suppliers, lastEndOfDay, records, filters, totalRecords, recordsLoaded, loadingRecords, loadRtvs, emptyRtvs, deleteRtv, printRtv }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const filterRef = useRef();
 
   useEffect(() => {
@@ -50,7 +49,7 @@ function Rtvs({ storeId, suppliers, records, filters, totalRecords, recordsLoade
       {
         records.length === 0 && recordsLoaded && !loadingRecords ?
         <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
-          <Typography gutterBottom>No purchase orders found</Typography>
+          <Typography gutterBottom>No RTV found</Typography>
           <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => emptyRtvs(storeId)} color="primary" disableElevation  >Refresh</Button>
         </Box>
         :
@@ -59,19 +58,18 @@ function Rtvs({ storeId, suppliers, records, filters, totalRecords, recordsLoade
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell align="center">Po No.</TableCell>
-                  <TableCell align="center">Issue Date</TableCell>
+                  <TableCell align="center">RTV No.</TableCell>
+                  <TableCell align="center">Date</TableCell>
                   <TableCell align="center">Supplier</TableCell>
                   <TableCell align="center">Items</TableCell>
                   <TableCell align="center">Quantity</TableCell>
                   <TableCell align="center">Amount</TableCell>
-                  <TableCell align="center">Status</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {
-                  rows.map(order => <Transaction {...{order, suppliers, storeId, deleteRtv, printRTV}} key={order._id}  /> )
+                  rows.map(rtv => <Transaction {...{rtv, suppliers, lastEndOfDay, storeId, deleteRtv, printRtv}} key={rtv._id}  /> )
                 }
               </TableBody>
             </Table>
@@ -92,7 +90,7 @@ function Rtvs({ storeId, suppliers, records, filters, totalRecords, recordsLoade
 }
 
 
-function Transaction({ order, suppliers, storeId, deleteRtv, printRTV }){
+function Transaction({ rtv, suppliers, lastEndOfDay, storeId, deleteRtv, printRtv }){
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -106,33 +104,25 @@ function Transaction({ order, suppliers, storeId, deleteRtv, printRTV }){
   return(
     <>
     <TableRow hover>
-      <TableCell align="center">{ order.poNumber  }</TableCell>
-      <TableCell align="center">{ moment(order.issueDate).format("DD MMM, YYYY")  }</TableCell>
-      <TableCell align="center">{ suppliers[order.supplierId] ? suppliers[order.supplierId].name : "" }</TableCell>
-      <TableCell align="center">{ order.totalItems.toLocaleString() }</TableCell>
-      <TableCell align="center">{ order.totalQuantity.toLocaleString() }</TableCell>
-      <TableCell align="center">{ order.totalAmount.toLocaleString() }</TableCell>
-
-      <TableCell align="center">
-        { order.status === poStates.PO_STATUS_OPEN ? <Chip label="Open" color="primary" /> : null }
-        { order.status === poStates.PO_STATUS_CLOSED ? <Chip label="Closed"  /> : null }
-      </TableCell>
+      <TableCell align="center">{ rtv.rtvNumber  }</TableCell>
+      <TableCell align="center">{ moment(rtv.rtvDate).format("DD MMM, YYYY")  }</TableCell>
+      <TableCell align="center">{ suppliers[rtv.supplierId] ? suppliers[rtv.supplierId].name : "" }</TableCell>
+      <TableCell align="center">{ rtv.totalItems.toLocaleString() }</TableCell>
+      <TableCell align="center">{ rtv.totalQuantity.toLocaleString() }</TableCell>
+      <TableCell align="center">{ rtv.totalAmount.toLocaleString() }</TableCell>
       
       <TableCell align="right">
-        <IconButton onClick={() => printRTV( { ...order, supplier: suppliers[order.supplierId] } ) } title="Print Receipt">
+        <IconButton onClick={() => printRtv( { ...rtv, supplier: suppliers[rtv.supplierId] } ) } title="Print RTV">
           <FontAwesomeIcon icon={faPrint} size="xs" />
         </IconButton>
+        <IconButton component={Link} to={ '/purchase/rtvs/edit/' + storeId + '/' + rtv._id } title="Edit RTV">
+          <FontAwesomeIcon icon={faPencilAlt} size="xs" />
+        </IconButton>
         {
-          order.status === poStates.PO_STATUS_OPEN ? 
-          <>
-            <IconButton component={Link} to={ '/purchase/orders/edit/' + storeId + '/' + order._id } title="Edit Purchase Order">
-              <FontAwesomeIcon icon={faPencilAlt} size="xs" />
-            </IconButton>
-            <IconButton onClick={(event) => handleClick(event) } title="Delete Purchase Order">
+          (lastEndOfDay && moment(rtv.rtvDate) <= moment(lastEndOfDay)) ? null :
+          <IconButton onClick={(event) => handleClick(event) } title="Delete RTV">
               <FontAwesomeIcon icon={faTrash} size="xs" />
             </IconButton>
-          </>
-          : null
          }
       </TableCell>
     </TableRow>
@@ -151,9 +141,9 @@ function Transaction({ order, suppliers, storeId, deleteRtv, printRTV }){
         }}
         >
         <Box py={2} px={4} textAlign="center">
-          <Typography gutterBottom>Do you want to delete this order from store?</Typography>
-          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteRtv(storeId, order._id)}>
-            Delete Purchase Order
+          <Typography gutterBottom>Do you want to delete this RTV from store?</Typography>
+          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteRtv(storeId, rtv._id)}>
+            Delete RTV
           </Button>
         </Box>
       </Popover>
@@ -163,6 +153,7 @@ function Transaction({ order, suppliers, storeId, deleteRtv, printRTV }){
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
+  const store = state.stores.stores.find(store => store._id === storeId);
   const suppliers = state.suppliers[storeId] ? state.suppliers[storeId] : [];
   const suppliersMap = {};
   for(let i=0; i<suppliers.length; i++)
@@ -170,7 +161,7 @@ const mapStateToProps = state => {
     suppliersMap[ suppliers[i]._id ] = suppliers[i];
   }
 
-  const purchaseOrders = state.purchaseOrders[storeId] ? state.purchaseOrders[storeId] : {
+  const rtvs = state.rtvs[storeId] ? state.rtvs[storeId] : {
     records: [],
     totalRecords: 0,
     recordsLoaded: false,
@@ -180,8 +171,9 @@ const mapStateToProps = state => {
   return {
     storeId,
     suppliers: suppliersMap,
-    ...purchaseOrders,
-    loadingRecords: state.progressBar.loading
+    ...rtvs,
+    loadingRecords: state.progressBar.loading,
+    lastEndOfDay: store.lastEndOfDay,
   }
 }
 

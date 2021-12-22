@@ -33,13 +33,18 @@ const stockTransactionsSchema = new mongoose.Schema({
   },
   rtvId:{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'vendorReturn'
+    ref: 'rtv'
   },
   reasonId:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'adjustmentReason'
   },
   quantity: Number,
+  batches: [{
+    batchNumber: String,
+    batchExpiryDate: Date,
+    batchQuantity: Number
+  }],
   notes: String,
   time: Date,
 })

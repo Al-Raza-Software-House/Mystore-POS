@@ -197,6 +197,7 @@ router.post('/makePayment', async (req, res) => {
       userId: req.user._id,
       supplierId: req.body.supplierId,
       grnId: null,
+      rtvId: null,
       bankId: parseInt(req.body.type) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
       amount: parseInt(req.body.payOrRecieve) * Number(req.body.amount),
       type: supplierTxns.SUPPLIER_TXN_TYPE_PAYMENT,

@@ -3,12 +3,12 @@ const Store = require('../models/store/Store');
 const Supplier = require('../models/parties/Supplier');
 const { authCheck } = require('../utils/middlewares');
 const moment = require("moment-timezone");
-const DeleteActivity = require( '../models/store/DeleteActivity' );
 const SupplierLedger = require( '../models/parties/SupplierLedger' );
 const { poStates, payOrCreditOptions, paymentModes, supplierTxns } = require( '../utils/constants' );
 const PurchaseOrder = require( '../models/purchase/PurchaseOrder' );
 const GRN = require( '../models/purchase/GRN' );
-const { publicS3Object, deleteS3Object } = require( '../utils' );
+const RTV = require( '../models/purchase/RTV' );
+const { publicS3Object, deleteS3Object, addBatchStock, removeBatchStock } = require( '../utils' );
 const AccountTransaction = require( '../models/accounts/AccountTransaction' );
 const StockTransactions = require( '../models/stock/StockTransactions' );
 const Item = require( '../models/stock/Item' );
@@ -63,9 +63,12 @@ router.post('/create', async (req, res) => {
       lastUpdated: now,
     }
     let items = req.body.items ? req.body.items : [];
+
     let totalItems = 0;
     let totalQuantity = 0;
     let totalAmount = 0;
+    let totalExpenses = 0;
+    let totalTax = 0;
 
     items.forEach(item => {
       let costPrice = isNaN(item.costPrice) ? 0 : Number(item.costPrice);
@@ -78,6 +81,19 @@ router.post('/create', async (req, res) => {
       totalAmount += costPrice * quantity;
       totalAmount += tax;
       totalAmount -= adjustment;
+      totalTax += tax;
+      totalExpenses -= adjustment; // it is deducted from total amount
+      let batches = [];
+      if(item.batches && item.batches.length !== 0)
+        item.batches.forEach(batch => {
+          if(!batch.batchNumber || !batch.batchExpiryDate || batch.batchQuantity === 0) return;
+          batches.push({
+            batchNumber: batch.batchNumber,
+            batchExpiryDate: moment(batch.batchExpiryDate).toDate(),
+            batchQuantity: +Number(batch.batchQuantity).toFixed(2)
+          })
+        });
+
 
       record.items.push({
         _id: item._id,
@@ -86,13 +102,18 @@ router.post('/create', async (req, res) => {
         packSalePrice: isNaN(item.packSalePrice) ? 0 : Number(item.packSalePrice),
         adjustment: isNaN(item.adjustment) ? 0 : Number(item.adjustment),
         tax: isNaN(item.tax) ? 0 : Number(item.tax),
-        batchNumber: item.batchNumber ? item.batchNumber : "",
-        batchExpiryDate: item.batchExpiryDate ? moment(item.batchExpiryDate).toDate() : null,
         quantity,
+        batches,
         notes: item.notes ? item.notes : ""
       });
 
     });
+
+    totalExpenses += isNaN(req.body.loadingExpense) ? 0 : Number(req.body.loadingExpense);
+    totalExpenses += isNaN(req.body.freightExpense) ? 0 : Number(req.body.freightExpense);
+    totalExpenses += isNaN(req.body.otherExpense) ? 0 : Number(req.body.otherExpense);
+    totalExpenses += isNaN(req.body.adjustmentAmount) ? 0 : Number(req.body.adjustmentAmount);
+    totalTax += isNaN(req.body.purchaseTax) ? 0 : Number(req.body.purchaseTax);
 
     totalAmount += isNaN(req.body.loadingExpense) ? 0 : Number(req.body.loadingExpense);
     totalAmount += isNaN(req.body.freightExpense) ? 0 : Number(req.body.freightExpense);
@@ -103,6 +124,8 @@ router.post('/create', async (req, res) => {
     record.totalItems = totalItems;
     record.totalQuantity = +totalQuantity.toFixed(2);
     record.totalAmount = +totalAmount.toFixed(2);
+    record.totalExpenses = +totalExpenses.toFixed(2);
+    record.totalTax = +totalTax.toFixed(2);
 
     const grn = new GRN(record);
     await grn.save();
@@ -133,6 +156,7 @@ router.post('/create', async (req, res) => {
         rtvId: null,
         reasonId: null,
         quantity: parentItem ? item.quantity * dbItem.packQuantity : item.quantity,
+        batches: item.batches,
         notes: item.notes,
         time: now
       }).save();
@@ -166,6 +190,7 @@ router.post('/create', async (req, res) => {
       }
       //update other packings of Item
       await Item.updateMany({ packParentId: parentItem ? parentItem._id : dbItem._id }, { currentStock: itemUpdate.currentStock, costPrice, salePrice: itemUpdate.salePrice, lastUpdated: now });
+      await addBatchStock(dbItem, item, now, parentItem);
     }
 
     await grn.save(); //save previous costs
@@ -188,6 +213,7 @@ router.post('/create', async (req, res) => {
       userId: req.user._id,
       supplierId: req.body.supplierId,
       grnId: grn._id,
+      rtvId: null,
       bankId: null,
       amount: grn.totalAmount,
       type: supplierTxns.SUPPLIER_TXN_TYPE_PURCHASE,
@@ -204,6 +230,7 @@ router.post('/create', async (req, res) => {
       totalPurchases: +(supplier.totalPurchases + grn.totalAmount).toFixed(2),
       totalPayment: supplier.totalPayment,
       currentBalance: +(supplier.currentBalance + grn.totalAmount).toFixed(2),
+      lastPurchase: now,
       lastUpdated: now,
     }
     //Pay now case
@@ -218,6 +245,7 @@ router.post('/create', async (req, res) => {
         userId: req.user._id,
         supplierId: req.body.supplierId,
         grnId: grn._id,
+        rtvId: null,
         bankId: Number(req.body.paymentMode) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
         amount: -1 * grn.totalAmount,
         type: supplierTxns.SUPPLIER_TXN_TYPE_PAYMENT,
@@ -282,7 +310,7 @@ router.post('/update', async (req, res) => {
     const grn = await GRN.findOne({ _id: req.body.grnId, storeId: req.body.storeId});
     if(!grn) throw new Error("invalid Request");
     if(store.lastEndOfDay && moment(grn.grnDate) <= moment(store.lastEndOfDay))
-      throw new Error("Cannot delete GRN done before last end of day");
+      throw new Error("Cannot update GRN done before last end of day");
     
     const now = moment().tz('Asia/Karachi').toDate();
     if(req.body.attachment && grn.attachment !== req.body.attachment) // uploaded new image, 
@@ -328,7 +356,7 @@ router.post('/update', async (req, res) => {
 
     let newGrnItems = []; //new & Final list of GRN items
     let itemsNotUpdated = 0;
-    for(index = 0; index < grn.items.length; index++)
+    for(let index = 0; index < grn.items.length; index++)
     {
       let item =  grn.items[index];
       let conditions = {
@@ -345,14 +373,23 @@ router.post('/update', async (req, res) => {
       let futureGrn = await GRN.findOne(conditions);
       if(futureGrn)
       {
-        itemsNotUpdated++;
+        itemsNotUpdated += 1;
         newGrnItems.push( item ); //items remain unchanged, no updates no deletes
         delete itemMaps[item._id]; //delete from formItems 
         continue;
       }
       
       let formItem = itemMaps[item._id];
+      
+      let dbItem = await Item.findById(item._id);
+      if(!dbItem){
+        delete itemMaps[item._id]; //delete from formItems 
+        continue;
+      }
+      let parentItem = dbItem.packParentId ? await Item.findById(dbItem.packParentId) : null;
 
+      await removeBatchStock(dbItem, item, now, parentItem); //if item removed from GRN or Item update in GRN
+      
       if(!formItem || isNaN(formItem.quantity) || Number(formItem.quantity) === 0 ) // item deleted or item quantity 0
       {
         let baseItemId = item.parentId ? item.parentId : item._id;
@@ -360,6 +397,7 @@ router.post('/update', async (req, res) => {
           storeId: store._id,
           grnId: grn._id,
           itemId: baseItemId,
+          packId: item.parentId ? item._id : null,
         });
 
         let aggregate = await StockTransactions.aggregate([
@@ -374,18 +412,21 @@ router.post('/update', async (req, res) => {
         delete itemMaps[item._id];
         continue;
       }
-
-      let dbItem = await Item.findById(item._id);
-      if(!dbItem){
-        delete itemMaps[item._id]; //delete from formItems 
-        continue;
-      }
-      let parentItem = dbItem.packParentId ? await Item.findById(dbItem.packParentId) : null;
       
       let costPrice = isNaN(formItem.costPrice) ? 0 : Number(formItem.costPrice);
       let quantity = isNaN(formItem.quantity) ? 0 : Number(formItem.quantity);
       let adjustment = isNaN(formItem.adjustment) ? 0 :  quantity * Number(formItem.adjustment);
       let tax = isNaN(formItem.tax) ? 0 :  quantity * Number(formItem.tax);
+      let batches = [];
+      if(formItem.batches && formItem.batches.length !== 0)
+        formItem.batches.forEach(batch => {
+          if(!batch.batchNumber || !batch.batchExpiryDate || batch.batchQuantity === 0) return;
+          batches.push({
+            batchNumber: batch.batchNumber,
+            batchExpiryDate: moment(batch.batchExpiryDate).toDate(),
+            batchQuantity: +Number(batch.batchQuantity).toFixed(2)
+          })
+        });
 
       let grnItem = {
         _id: formItem._id,
@@ -396,11 +437,10 @@ router.post('/update', async (req, res) => {
         costPrice,
         salePrice: isNaN(formItem.salePrice) ? 0 : Number(formItem.salePrice),
         packSalePrice: isNaN(formItem.packSalePrice) ? 0 : Number(formItem.packSalePrice),
-        adjustment,
-        tax,
-        batchNumber: formItem.batchNumber ? formItem.batchNumber : "",
-        batchExpiryDate: formItem.batchExpiryDate ? moment(formItem.batchExpiryDate).toDate() : null,
+        adjustment: isNaN(formItem.adjustment) ? 0 : Number(formItem.adjustment),
+        tax: isNaN(formItem.tax) ? 0 : Number(formItem.tax),
         quantity,
+        batches,
         notes: formItem.notes ? formItem.notes : "",
       }
       newGrnItems.push(grnItem);
@@ -409,10 +449,12 @@ router.post('/update', async (req, res) => {
         storeId: store._id,
         grnId: grn._id,
         itemId: parentItem ? parentItem._id : dbItem._id,
+        packId: parentItem ? dbItem._id : null,
       }, {
         userId: req.user._id,
         packId: parentItem ? dbItem._id : null,
         quantity: parentItem ? quantity * dbItem.packQuantity : quantity, //convert to units if pack
+        batches,
         notes: item.notes,
         time: now
       });
@@ -452,6 +494,7 @@ router.post('/update', async (req, res) => {
       }
       //update all packings of item
       await Item.updateMany({ packParentId: parentItem ? parentItem._id : dbItem._id }, { currentStock, costPrice: unitCostPrice, salePrice: grnItem.salePrice, lastUpdated: now });
+      await addBatchStock(dbItem, grnItem, now, parentItem);
       delete itemMaps[item._id]; //delete from formItems 
     }
 
@@ -469,10 +512,21 @@ router.post('/update', async (req, res) => {
         continue;
       }
       let parentItem = dbItem.packParentId ? await Item.findById(dbItem.packParentId) : null;
+
+      let batches = [];
+      if(item.batches && item.batches.length !== 0)
+        item.batches.forEach(batch => {
+          if(!batch.batchNumber || !batch.batchExpiryDate || batch.batchQuantity === 0) return;
+          batches.push({
+            batchNumber: batch.batchNumber,
+            batchExpiryDate: moment(batch.batchExpiryDate).toDate(),
+            batchQuantity: +Number(batch.batchQuantity).toFixed(2)
+          })
+        });
       
       grnItem = {
         _id: item._id,
-        parentId: parentItem ? parentItem._id : dbItem._id,
+        parentId: parentItem ? parentItem._id : null,
         prevCostPrice: parentItem ? parentItem.costPrice : dbItem.costPrice,
         prevSalePrice: parentItem ? parentItem.salePrice : dbItem.salePrice,
         prevPackSalePrice: parentItem ? dbItem.packSalePrice : 0,
@@ -481,9 +535,8 @@ router.post('/update', async (req, res) => {
         packSalePrice: isNaN(item.packSalePrice) ? 0 : Number(item.packSalePrice),
         adjustment: isNaN(item.adjustment) ? 0 : Number(item.adjustment),
         tax: isNaN(item.tax) ? 0 : Number(item.tax),
-        batchNumber: item.batchNumber ? item.batchNumber : "",
-        batchExpiryDate: item.batchExpiryDate ? moment(item.batchExpiryDate).toDate() : null,
         quantity,
+        batches,
         notes: item.notes ? item.notes : ""
       };
       newGrnItems.push(grnItem);
@@ -499,6 +552,7 @@ router.post('/update', async (req, res) => {
         rtvId: null,
         reasonId: null,
         quantity: parentItem ? grnItem.quantity * dbItem.packQuantity : grnItem.quantity,
+        batches,
         notes: item.notes,
         time: now
       }).save();
@@ -532,6 +586,7 @@ router.post('/update', async (req, res) => {
       }
       //update other packings of Item
       await Item.updateMany({ packParentId: parentItem ? parentItem._id : dbItem._id }, { currentStock: itemUpdate.currentStock, costPrice, salePrice: itemUpdate.salePrice, lastUpdated: now });
+      await addBatchStock(dbItem, grnItem, now, parentItem);
     }
 
     record.items = newGrnItems;
@@ -539,6 +594,8 @@ router.post('/update', async (req, res) => {
     let totalItems = 0;
     let totalQuantity = 0;
     let totalAmount = 0;
+    let totalExpenses = 0;
+    let totalTax = 0;
 
     record.items.forEach(item => {
       totalItems++;
@@ -546,7 +603,16 @@ router.post('/update', async (req, res) => {
       totalAmount += item.costPrice * item.quantity;
       totalAmount += item.tax * item.quantity;
       totalAmount -= item.adjustment * item.quantity;
+
+      totalExpenses -= item.adjustment * item.quantity;
+      totalTax += item.tax * item.quantity;
     });
+
+    totalExpenses += isNaN(req.body.loadingExpense) ? 0 : Number(req.body.loadingExpense);
+    totalExpenses += isNaN(req.body.freightExpense) ? 0 : Number(req.body.freightExpense);
+    totalExpenses += isNaN(req.body.otherExpense) ? 0 : Number(req.body.otherExpense);
+    totalExpenses += isNaN(req.body.adjustmentAmount) ? 0 : Number(req.body.adjustmentAmount);
+    totalTax += isNaN(req.body.purchaseTax) ? 0 : Number(req.body.purchaseTax);
 
     totalAmount += isNaN(req.body.loadingExpense) ? 0 : Number(req.body.loadingExpense);
     totalAmount += isNaN(req.body.freightExpense) ? 0 : Number(req.body.freightExpense);
@@ -557,6 +623,8 @@ router.post('/update', async (req, res) => {
     record.totalItems = totalItems;
     record.totalQuantity = +totalQuantity.toFixed(2);
     record.totalAmount = +totalAmount.toFixed(2);
+    record.totalExpenses = +totalExpenses.toFixed(2);
+    record.totalTax = +totalTax.toFixed(2);
 
     grn.set(record);
     await grn.save();
@@ -589,6 +657,7 @@ router.post('/update', async (req, res) => {
         userId: req.user._id,
         supplierId: req.body.supplierId,
         grnId: grn._id,
+        rtvId: null,
         bankId: Number(req.body.paymentMode) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
         amount: -1 * grn.totalAmount,
         type: supplierTxns.SUPPLIER_TXN_TYPE_PAYMENT,
@@ -669,6 +738,7 @@ router.post('/update', async (req, res) => {
     res.json({
       grn,
       supplier,
+      itemsNotUpdated,
       deleteAccountTxnId: Number(req.body.payOrCredit) === payOrCreditOptions.ON_CREDIT && accountPaymentTxn ? accountPaymentTxn._id : null,
       addAccountTxn: Number(req.body.payOrCredit) === payOrCreditOptions.ON_CREDIT || haveOldAccountTxn ?  null : accountPaymentTxn, //pay now and old txn, don't add new txn
       updateAccountTxn: Number(req.body.payOrCredit) === payOrCreditOptions.ON_CREDIT || !haveOldAccountTxn ?  null : accountPaymentTxn, // pay now and don't have old txn, don't update txn
@@ -695,7 +765,7 @@ router.post('/delete', async (req, res) => {
       throw new Error("Cannot delete GRN done before last end of day");
 
     let anyFutureGRNofItems = false;//if any item of this GRN was purchased after this GRN, the block delete
-    for(index = 0; index < grn.items.length; index++)
+    for(let index = 0; index < grn.items.length; index++)
     {
       let item =  grn.items[index];
       let conditions = {
@@ -719,6 +789,9 @@ router.post('/delete', async (req, res) => {
 
     if(anyFutureGRNofItems)
       throw new Error("This GRN contains some items that were also purchased after this GRN so this GRN cannot be deleted");
+    const rtvs = await RTV.find({ storeId: req.body.storeId, grnId: req.body.grnId });
+    if(rtvs && rtvs.length > 0)
+      throw new Error("There is an RTV against this GRN, so it cannot be deleted");
 
     const now = moment().tz('Asia/Karachi').toDate();
     if(grn.poId)
@@ -726,7 +799,9 @@ router.post('/delete', async (req, res) => {
       await PurchaseOrder.findByIdAndUpdate(grn.poId, { status: poStates.PO_STATUS_OPEN, lastUpdated: now });
     }
 
-    for(index = 0; index < grn.items.length; index++)
+    let dbItem = null;
+    let parentItem = null;
+    for(let index = 0; index < grn.items.length; index++)
     {
       let item =  grn.items[index];
       let baseItemId = item.parentId ? item.parentId : item._id;
@@ -734,6 +809,7 @@ router.post('/delete', async (req, res) => {
         storeId: store._id,
         grnId: grn._id,
         itemId: baseItemId,
+        packId: item.parentId ? item._id : null
       });
 
       let aggregate = await StockTransactions.aggregate([
@@ -744,7 +820,12 @@ router.post('/delete', async (req, res) => {
       await Item.findByIdAndUpdate(baseItemId, { currentStock, costPrice: item.prevCostPrice, salePrice: item.prevSalePrice, lastUpdated: now }); //revert old cost and sale price
       await Item.updateMany({ packParentId: baseItemId }, { currentStock, costPrice: item.prevCostPrice, salePrice: item.prevSalePrice, lastUpdated: now }); //update old cost and current stock in all packings 
       if(item.parentId) //update pack sale of this specific packing
-        await Item.findByIdAndUpdate(item._id, { packSalePrice: item.prevPackSalePrice,  lastUpdated: now })
+        await Item.findByIdAndUpdate(item._id, { packSalePrice: item.prevPackSalePrice,  lastUpdated: now });
+      
+      dbItem = await Item.findById(item._id);
+      if(!dbItem) continue;
+      parentItem = dbItem.packParentId ? await Item.findById(dbItem.packParentId) : null;
+      await removeBatchStock(dbItem, item, now, parentItem);
     }
 
     let supplier = await Supplier.findById(grn.supplierId);
@@ -827,5 +908,31 @@ router.post('/', async (req, res) => {
   }
 });
 
+
+router.get('/', async (req, res) => {
+  try
+  {
+    if(!req.query.storeId) throw new Error("Store id is required");
+    if(!req.query.supplierId) throw new Error("supplierId id is required");
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
+    if(!store) throw new Error("invalid Request");
+    await store.updateLastVisited();
+
+    const conditions = {
+      storeId: req.query.storeId,
+      supplierId: req.query.supplierId
+    }
+    if(req.query.grnId)
+      conditions._id = req.query.grnId;
+    const grns = await GRN.find(conditions, null, { sort : { creationDate: -1 }  });
+    if(req.query.grnId)
+      res.json({ grn:  grns.length ? grns[0] : null });
+    else
+      res.json({ grns });
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
 
 module.exports = router;

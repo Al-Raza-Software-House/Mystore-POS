@@ -2,7 +2,7 @@ import React from 'react';
 import { Select, FormControl, FormHelperText, InputLabel, MenuItem } from '@material-ui/core';
 
 const SelectInput = ({
-  label, input, options, id, fullWidth,
+  label, input, options, id, fullWidth, showError=true, ignoreTouch=false,
   meta: { touched, invalid, error },
   ...custom
 }) => {
@@ -21,12 +21,16 @@ const SelectInput = ({
           ))
         }
       </Select>
-       <FormHelperText error={ touched && invalid }>
-        {
-          touched && error ? <span>{ touched && error }</span> : <span>&nbsp;</span>
-        }
-        
-      </FormHelperText>
+      {
+        showError ? 
+        <FormHelperText error={ (ignoreTouch || touched) && invalid }>
+          {
+            (ignoreTouch || touched) && error ? <span>{ (ignoreTouch || touched) && error }</span> : <span>&nbsp;</span>
+          }
+          
+        </FormHelperText>
+        : null
+      }
     </FormControl>
   );
 }

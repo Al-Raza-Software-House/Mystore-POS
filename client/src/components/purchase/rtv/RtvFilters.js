@@ -3,7 +3,7 @@ import { Box, Button, makeStyles } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faSync, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { changeFilters } from '../../../store/actions/purchaseOrderActions';
+import { changeFilters } from '../../../store/actions/rtvActions';
 import { Field, reduxForm, getFormValues, initialize } from 'redux-form';
 import { useSelector } from 'react-redux';
 import { compose } from 'redux';
@@ -11,7 +11,7 @@ import { connect } from 'react-redux';
 import DateRangeInput from '../../library/form/DateRangeInput';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 
-const formName = 'purchaseOrdersFilters';
+const formName = 'rtvFilters';
 
 const useStyles = makeStyles(theme => ({
   searchBtn: {
@@ -115,7 +115,7 @@ function RtvFilters(props){
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
-  const purchaseOrders = state.purchaseOrders[storeId] ? state.purchaseOrders[storeId] : {
+  const rtvs = state.rtvs[storeId] ? state.rtvs[storeId] : {
     records: [],
     totalRecords: 0,
     recordsLoaded: false,
@@ -123,7 +123,7 @@ const mapStateToProps = state => {
   }
   return {
     storeId,
-    storeFilters: purchaseOrders.filters
+    storeFilters: rtvs.filters
   }
 }
 

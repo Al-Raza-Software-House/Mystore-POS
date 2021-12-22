@@ -18,19 +18,33 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'grn'
   },
-  rtvId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'rtv'
-  },
-  bankId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'bank'
-  },
-  amount: Number,
-  type: Number, //Purchase, return, 
-  description: String,
+  rtvNumber: Number,
+  items: [
+    {
+      _id: mongoose.Schema.Types.ObjectId,
+      parentId: mongoose.Schema.Types.ObjectId, //parent item ID if item is packing
+      costPrice: Number,
+      adjustment: Number,
+      tax: Number,
+      quantity: Number,
+      batches: [{
+        batchNumber: String,
+        batchExpiryDate: Date,
+        batchQuantity: Number
+      }],
+      notes: String
+    }
+  ],
+
+  totalItems: Number,
+  totalQuantity: Number,
+  totalAmount: Number,
+  
+  attachment: String,
   notes: String,
-  time: Date,
+
+  rtvDate: Date,
+  creationDate: Date,
   lastUpdated: Date
 })
 
@@ -41,4 +55,4 @@ schema.methods.updateLastUpdated = function(){
   return this.save();
 }
 
-module.exports = mongoose.model('supplierLedger', schema);
+module.exports = mongoose.model('rtv', schema);
