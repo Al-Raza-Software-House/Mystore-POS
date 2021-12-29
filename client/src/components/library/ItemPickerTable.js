@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import ItemImage from './ItemImage';
 
 function ItemPickerTable(props){
   const { items, selectItem, removeItem, selectedItems } = props;
@@ -45,7 +46,8 @@ function ItemPickerTable(props){
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map( (row) => (<Item key={row._id} item={row}  selectItem={selectItem} removeItem={removeItem} selectedItems={selectedItems} />) )
+              {
+                rows.map( (row) => (<Item key={row._id} item={row}  selectItem={selectItem} removeItem={removeItem} selectedItems={selectedItems} />) )
               }
             </TableBody>
           </Table>
@@ -58,8 +60,8 @@ function ItemPickerTable(props){
             count={items.length}
             rowsPerPage={rowsPerPage}
             page={items.length && items.length < (page+1)*rowsPerPage ? page : 0}
-            onChangePage={handleChangePage}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Box>
       </Box>
@@ -112,7 +114,10 @@ function Item({ item, selectItem, removeItem, selectedItems }){
       <TableCell>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography>{item.itemName}</Typography>
-          <Typography style={{ color: '#6c6a6a', fontSize: 14 }}>{item.sizeName} { item.sizeName && item.combinationName ? "|" : ""  } {item.combinationName}</Typography>
+          <Typography style={{ color: '#6c6a6a', fontSize: 14 }}>
+            {item.sizeName} { item.sizeName && item.combinationName ? "|" : ""  } {item.combinationName}
+            <ItemImage item={item} />
+          </Typography>
         </Box>
       </TableCell>
       <TableCell align="center">

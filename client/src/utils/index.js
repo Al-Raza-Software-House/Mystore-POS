@@ -28,3 +28,14 @@ export const allowOnlyPostiveNumber = (e) => {
       return false;
   }
 }
+
+export const allowOnlyNumber = (e) => {
+  console.log(e.keyCode);
+  let allowedKeys = [8, 9, 38, 40, 110, 190, 37, 39, 46, 189, 109];
+  if(!((e.keyCode > 95 && e.keyCode < 106)
+    || (e.keyCode > 47 && e.keyCode < 58) 
+    || allowedKeys.indexOf(e.keyCode) !== -1 )) {
+      e.preventDefault();
+      return false;
+  }
+}

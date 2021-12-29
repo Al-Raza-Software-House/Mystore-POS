@@ -3,7 +3,7 @@ import { makeStyles, Paper, Box } from '@material-ui/core';
 import StyledTabs from '../library/StyledTabs';
 import { Route, Switch } from 'react-router-dom';
 import { connect } from 'react-redux';
-import SaleAndReturn from './SaleAndReturn';
+import SaleAndReturn from './pos/SaleAndReturn';
 import Sales from './Sales';
 import EndOfDay from './EndOfDay';
 import EndOfDayList from './EndOfDayList';

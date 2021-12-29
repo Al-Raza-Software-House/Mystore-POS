@@ -174,8 +174,8 @@ function SupplierLedger({ lastEndOfDay, banks, loadingRecords, dispatch, printTx
               count={stats.totalRecords}
               rowsPerPage={rowsPerPage}
               page={stats.totalRecords ? page : 0}
-              onChangePage={handleChangePage}
-              onChangeRowsPerPage={handleChangeRowsPerPage}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
             />
           </Box>
         </Box>

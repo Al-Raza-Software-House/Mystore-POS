@@ -8,8 +8,7 @@ import ItemPickerPopup from './ItemPickerPopup';
 
 const useStyles = makeStyles(theme => ({
   inputNoBorder:{
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
+    borderRadius: 0,
   },
   option: {
     '&:not(:last-child)':{
@@ -23,7 +22,7 @@ const useStyles = makeStyles(theme => ({
 
 function ItemPicker(props) {
   const classes = useStyles();
-  const { supplierId, selectedItems, selectItem, removeItem, disabled=false, showServiceItems=false } = props;
+  const { supplierId, selectedItems, selectItem, removeItem, disabled=false, showServiceItems=false, autoFocus=false } = props;
   const storeId = useSelector(state => state.stores.selectedStoreId);
   let items = useSelector(state => state.items[storeId].allItems );
   items = useMemo(() => showServiceItems ? items.filter(item => item.isActive === true) : items.filter(item => item.isServiceItem === false && item.isActive === true), [items, showServiceItems]);
@@ -67,7 +66,7 @@ function ItemPicker(props) {
   return(
     <Box display="flex" position="relative" id="item-picker-container">
       <Autocomplete
-      renderInput={(params) => <TextField  {...params} label="Search Items" InputLabelProps={{ shrink: true }} margin="dense" inputRef={inputRef}  placeholder="type item name or scan code" variant="outlined" style={{ borderRadius: 0 }} onKeyPress={event => {if(event.key === "Enter") event.preventDefault()}} />}
+      renderInput={(params) => <TextField  {...params} label="Search Items" autoFocus={autoFocus} InputLabelProps={{ shrink: true }} margin="dense" inputRef={inputRef}  placeholder="type item name or scan code" variant="outlined" style={{ borderRadius: 0 }} onKeyPress={event => {if(event.key === "Enter") event.preventDefault()}} />}
       classes={{ inputRoot: classes.inputNoBorder, option: classes.option, paper: classes.paper }}
       value={null}
       fullWidth={true}
@@ -77,7 +76,6 @@ function ItemPicker(props) {
       disabled={disabled}
       inputValue={inputValue}
       onInputChange={(event, newInputValue) => {
-        console.log('newinputvalue', event.type);
         if(event && event.type === 'blur')
         {
         }else

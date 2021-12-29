@@ -84,8 +84,8 @@ function AccountTransactions({ storeId, heads, banks, lastEndOfDay, records, fil
             count={totalRecords}
             rowsPerPage={rowsPerPage}
             page={totalRecords ? page : 0}
-            onChangePage={handleChangePage}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Box>
       }

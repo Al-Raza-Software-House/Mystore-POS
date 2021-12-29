@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText } from '@material-ui/core'
+import { makeStyles, Button, Box, Typography, FormHelperText, CircularProgress } from '@material-ui/core'
 import { Field, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
@@ -31,19 +31,24 @@ const useStyles = makeStyles(theme => ({
 function CreateCustomer(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, closeDialog } = props;
   useEffect(() => {
-    if(submitSucceeded)
+    if(submitSucceeded && !closeDialog)
+    {
       history.push('/parties/customers');
-  }, [submitSucceeded, history])
+    }
+  }, [submitSucceeded, history, closeDialog])
     return(
       <>
-      <Box width="100%" justifyContent="flex-end" display="flex">
-        <Button disableElevation color="primary" startIcon={<FontAwesomeIcon icon={faLongArrowAltLeft} />} component={Link} to="/parties/customers">
-          Customers
-        </Button>
-      </Box>
-      <Box margin="auto" width={{ xs: '100%', md: '50%' }}>
+      {
+        closeDialog ? null : 
+        <Box width="100%" justifyContent="flex-end" display="flex">
+          <Button disableElevation color="primary" startIcon={<FontAwesomeIcon icon={faLongArrowAltLeft} />} component={Link} to="/parties/customers">
+            Customers
+          </Button>
+        </Box>
+      }
+      <Box margin="auto" width={{ xs: '100%', md: closeDialog ? '100%' : '50%' }}>
         <Typography gutterBottom variant="h6" align="center">Add New Customer</Typography>
         <form onSubmit={handleSubmit}>
           <Box display="flex" justifyContent="space-between">
@@ -151,7 +156,7 @@ function CreateCustomer(props) {
           
         <Box textAlign="center">
           <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid || !dirty} >
-            Add Customer
+            Add Customer { closeDialog && submitting && <CircularProgress style={{ marginLeft: 8 }} size={24} /> }
           </Button>
           {  
             <FormHelperText className={classes.formError} error={true} style={{visibility: !submitting && error ? 'visible' : 'hidden' }}>
@@ -165,18 +170,21 @@ function CreateCustomer(props) {
     )
 }
 
-const onSubmit = (values, dispatch, { storeId }) => {
-  dispatch(showProgressBar());
+const onSubmit = (values, dispatch, { storeId, closeDialog }) => {
+  if(!closeDialog)
+    dispatch(showProgressBar());
   return axios.post('/api/customers/create', {storeId, ...values}).then( response => {
-    dispatch(hideProgressBar());
+    if(!closeDialog) dispatch(hideProgressBar());
     if(response.data.customer._id)
     {
       dispatch( createCustomer(storeId, response.data.customer, response.data.now, response.data.lastAction) );
       dispatch( showSuccess("New customer added") );
+      if(closeDialog)
+       closeDialog(response.data.customer._id);
     }
 
   }).catch(err => {
-    dispatch(hideProgressBar());
+    if(!closeDialog) dispatch(hideProgressBar());
     throw new SubmissionError({
       _error: err.response && err.response.data.message ? err.response.data.message: err.message
     });

@@ -115,8 +115,8 @@ function Suppliers({ storeId, records, deleteSupplier }) {
             count={filteredRecords.length}
             rowsPerPage={rowsPerPage}
             page={filteredRecords.length ? page : 0}
-            onChangePage={handleChangePage}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Box>
       }

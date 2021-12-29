@@ -1,8 +1,8 @@
-import { createMuiTheme, useMediaQuery  } from "@material-ui/core";
+import { createTheme, useMediaQuery  } from "@material-ui/core";
 import { blue } from "@material-ui/core/colors";
 import { useTheme } from '@material-ui/styles';
 
-const theme = createMuiTheme({
+const theme = createTheme({
   palette: {
     primary: blue  
   }

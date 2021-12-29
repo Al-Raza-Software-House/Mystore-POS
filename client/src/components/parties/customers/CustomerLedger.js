@@ -174,8 +174,8 @@ function CustomerLedger({ lastEndOfDay, banks, printTxn, loadingRecords, dispatc
               count={stats.totalRecords}
               rowsPerPage={rowsPerPage}
               page={stats.totalRecords ? page : 0}
-              onChangePage={handleChangePage}
-              onChangeRowsPerPage={handleChangeRowsPerPage}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
             />
           </Box>
         </Box>

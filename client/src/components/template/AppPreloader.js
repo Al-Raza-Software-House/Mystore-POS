@@ -16,7 +16,7 @@ const AppPreloader = ({ message }) => {
   const classes = useStyles();
   return (
     <ThemeProvider theme={theme}>
-      <Grid container className={classes.container} alignContent="center" justify="center">
+      <Grid container className={classes.container} alignContent="center" justifyContent="center">
         <Grid item className={classes.item}>
           <CircularProgress color="primary"/>
           <Typography variant="h6">{message}</Typography>

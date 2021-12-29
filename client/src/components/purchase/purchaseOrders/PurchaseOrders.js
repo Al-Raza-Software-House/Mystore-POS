@@ -82,8 +82,8 @@ function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, re
             count={totalRecords}
             rowsPerPage={rowsPerPage}
             page={totalRecords ? page : 0}
-            onChangePage={handleChangePage}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Box>
       }

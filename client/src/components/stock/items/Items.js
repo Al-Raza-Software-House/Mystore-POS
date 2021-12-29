@@ -124,8 +124,8 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
           count={filteredItemsCount}
           rowsPerPage={rowsPerPage}
           page={filteredItemsCount ? page : 0}
-          onChangePage={handleChangePage}
-          onChangeRowsPerPage={handleChangeRowsPerPage}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Box>
       
