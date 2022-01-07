@@ -4,10 +4,10 @@ import { change, Field, formValueSelector, initialize, reduxForm, SubmissionErro
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxOpen, faExclamationTriangle, faPrint, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { useHistory, useParams } from 'react-router-dom';
+import { Redirect, useHistory, useParams } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import DateInput from '../../library/form/DateInput';
 import { useSelector } from 'react-redux';
@@ -53,6 +53,7 @@ function EditPurchaseOrder(props) {
   })
 
   const isClosed = useMemo(() => {
+    if(!order) return false;
     return order.status === poStates.PO_STATUS_CLOSED;
   }, [order])
 
@@ -67,6 +68,7 @@ function EditPurchaseOrder(props) {
   } );
   
   useEffect(() => {
+    if(!order) return;
     let formItems = {};
     order.items.forEach(item => {
       formItems[item._id] = item;
@@ -210,6 +212,12 @@ function EditPurchaseOrder(props) {
       });
     });
   }, [items, supplier, printPo]);
+  
+  if(!poId || !order)
+  {
+    dispatch(showError("Record not found"));
+    return <Redirect to="/purchase" />
+  }
     return(
       <>
       <Box width="100%" justifyContent="space-between" display="flex">

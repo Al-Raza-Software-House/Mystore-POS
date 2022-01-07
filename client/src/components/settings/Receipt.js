@@ -35,7 +35,19 @@ const Receipt = (props) => {
         </Box>
 
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
-          <Field component={SwitchInput} name="showPrintPreview" label="Show Print Preview" />    
+          <Field component={SwitchInput} name="printSaleId" label="Print Receipt ID" />    
+        </Box>
+
+        <Box mb={2}width={{ xs: '100%', md: '50%' }} margin="auto" >
+          <Field component={SwitchInput} name="printSalesperson" label="Print Salesperson" />    
+        </Box>
+
+        <Box mb={2}width={{ xs: '100%', md: '50%' }} margin="auto" >
+          <Field component={SwitchInput} name="printCustomerName" label="Print Customer name" />    
+        </Box>
+
+        <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
+          <Field component={SwitchInput} name="printSaleNotes" label="Print Sale Notes" />    
         </Box>
 
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
@@ -47,33 +59,19 @@ const Receipt = (props) => {
         </Box>
 
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
-          <Field component={SwitchInput} name="printSaleId" label="Print Sale ID" />    
-        </Box>
-
-        <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
-          <Field component={SwitchInput} name="printSaleComments" label="Print Sale Comments" />    
-        </Box>
-
-        <Box mb={2}width={{ xs: '100%', md: '50%' }} margin="auto" >
           <Field component={SwitchInput} name="printCustomerLedger" label="Print Customer Ledger" />    
-        </Box>
-
-        <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
-          <Field component={SwitchInput} name="printGST" label="Print GST" />    
         </Box>
 
         <Box>
           <Field
           component={TextInput}
-          id="header"
-          name="header"
-          label="Header"
-          placeholder="Receipt header"
+          id="receiptTitle"
+          name="receiptTitle"
+          label="Receipt Title"
+          placeholder="Receipt Title"
           fullWidth={true}
           variant="outlined"
           margin="dense"
-          multiline={true}
-          rows={3}
           />    
         </Box>
 
@@ -90,34 +88,6 @@ const Receipt = (props) => {
           multiline={true}
           rows={3}
           />    
-        </Box>
-
-        <Box>
-          <Field
-            component={TextInput}
-            id="marginTop"
-            name="marginTop"
-            label="Margin Top"
-            type="number"
-            fullWidth={true}
-            variant="outlined"
-            placeholder="Top spacing of receipt"
-            margin="dense"
-          />
-        </Box>
-
-        <Box>
-          <Field
-            component={TextInput}
-            id="marginLeft"
-            name="marginLeft"
-            label="Margin Left"
-            type="number"
-            fullWidth={true}
-            variant="outlined"
-            placeholder="Left spacing of receipt"
-            margin="dense"
-          />
         </Box>
 
         <Box display="flex" alignItems="center" justifyContent="center" flexDirection="column"> 

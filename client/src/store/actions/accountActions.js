@@ -20,6 +20,8 @@ export const actionTypes = {
   EMPTY_TRANSACTIONS: 'emptyTransactions',
   FILTERS_CHANGED: 'transactionsFiltersChanged',
 
+  SALE_TRANSACTIONS_DELETED: 'saleTransactionsDeleted',
+
   LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged', //cannot put in system actions, it creates chicken egg problem both files importing form each other
 }
 

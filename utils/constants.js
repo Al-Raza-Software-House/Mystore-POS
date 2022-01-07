@@ -17,10 +17,9 @@ const categoryTypes = {
 const itemTypesFilter = {
   LOW_STOCK_ITEMS: 1,
   OVER_STOCK_ITEMS: 2,
-  EXPIRED_ITEMS: 3,
-  SERVICE_ITEMS: 4,
-  ACTIVE_ITEMS: 5,
-  INACTIVE_ITEMS: 6,
+  SERVICE_ITEMS: 3,
+  ACTIVE_ITEMS: 4,
+  INACTIVE_ITEMS: 5,
 }
 
 const stockTxnTypes = {
@@ -58,6 +57,11 @@ const poStates = {
   PO_STATUS_CLOSED: 2
 }
 
+const closingStates = {
+  CLOSING_STATUS_OPEN: 1,
+  CLOSING_STATUS_CLOSED: 2
+}
+
 const payOrCreditOptions = {
   PAY_NOW: 1,
   ON_CREDIT: 2
@@ -74,5 +78,6 @@ module.exports = {
   supplierTxns,
   customerTxns,
   poStates,
-  payOrCreditOptions
+  payOrCreditOptions,
+  closingStates
 }

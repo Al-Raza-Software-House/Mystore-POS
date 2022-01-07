@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography } from '@material-ui/core';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTachometerAlt, faLayerGroup, faShoppingCart, faShoppingBasket, faUserFriends, faMoneyBill, faChartLine, faCog, faStoreAlt, faQuestionCircle, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { faTachometerAlt, faLayerGroup, faShoppingCart, faShoppingBasket, faUserFriends, faMoneyBill, faChartLine, faCog, faStoreAlt, faQuestionCircle, faCreditCard, faCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { connect } from 'react-redux';
 import { Link, useLocation, Redirect } from 'react-router-dom';
@@ -13,6 +13,7 @@ import { sidebarSalesPerson as sidebarSalesPersonBlackList } from '../../config/
 import moment from 'moment';
 import { amber } from '@material-ui/core/colors';
 import { syncData } from '../../store/actions/systemActions';
+import { syncSale } from 'store/actions/saleActions';
 
 const drawerWidth = 256;
 
@@ -26,7 +27,8 @@ const useStyles = makeStyles((theme) => ({
   paper:{
     color: '#606060',
     fontWeight: '500',
-    fontSize: '15px'
+    fontSize: '15px',
+    justifyContent: "space-between"
   },
   drawerOpen: {
     width: '100%',
@@ -112,7 +114,7 @@ const menues = [
 
 const publicPages = ['/signin', '/signup', '/reset-password', '/'];
 
-function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLargeScreen, syncData }) {
+function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLargeScreen, syncData, syncSale, online, offlineSales }) {
   const classes = useStyles();
   const { pathname } = useLocation();
   const pingInterval = useRef();
@@ -134,6 +136,11 @@ function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLarge
       }
     }
   }, [selectedStoreId, syncData]);
+
+  useEffect(() => {
+    if(!online || !selectedStoreId) return;
+    syncSale(selectedStoreId);
+  }, [syncSale, online, selectedStoreId])
 
   if(uid && publicPages.indexOf(pathname) !== -1) return <Redirect to="/dashboard" />
   
@@ -165,24 +172,38 @@ function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLarge
         }),
       }}
     >
-    <div className={classes.toolbar} />
-      <List>
-        {sideMenues.map((item, index) => (
-          <ListItem button onClick={() => !isLargeScreen ? setOpen(false) : null} component={Link} key={item.to} to={item.to} 
-            className={clsx({ 
-              [classes.activeMenue]: pathname.startsWith(item.to),
-              [classes.expired]: item.to === '/billing' && expiryStatus === 'expired',
-              [classes.aboutToExpire]: item.to === '/billing' && expiryStatus === 'aboutToExpire',
-            })}
-          >
-            <ListItemIcon className={clsx(classes.drawerIcon, { [classes.drawerActiveIcon]: pathname.startsWith(item.to) })}>{ item.icon }</ListItemIcon>
-            <ListItemText primary={item.title} disableTypography={true} className={clsx({
-              [classes.drawerOpenText]: open,
-              [classes.drawerCloseText]: !open,
-            })} />
-          </ListItem>
-        ))}
-      </List>
+      <Box>
+        <div className={classes.toolbar} />
+        <List>
+          {sideMenues.map((item, index) => (
+            <ListItem button onClick={() => !isLargeScreen ? setOpen(false) : null} component={Link} key={item.to} to={item.to} 
+              className={clsx({ 
+                [classes.activeMenue]: pathname.startsWith(item.to),
+                [classes.expired]: item.to === '/billing' && expiryStatus === 'expired',
+                [classes.aboutToExpire]: item.to === '/billing' && expiryStatus === 'aboutToExpire',
+              })}
+            >
+              <ListItemIcon className={clsx(classes.drawerIcon, { [classes.drawerActiveIcon]: pathname.startsWith(item.to) })}>{ item.icon }</ListItemIcon>
+              <ListItemText primary={item.title} disableTypography={true} className={clsx({
+                [classes.drawerOpenText]: open,
+                [classes.drawerCloseText]: !open,
+              })} />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+      <Box px={3} mb={3}>
+        { offlineSales ? <Typography>{offlineSales} <span className={clsx({
+                [classes.drawerOpenText]: open,
+                [classes.drawerCloseText]: !open,
+              })}>sale(s) are not uploaded </span></Typography> : null }
+        <Typography style={{ display:"flex", justifyContent: "flex-start", alignItems: "center" }}> <FontAwesomeIcon icon={faCircle} style={{ color: online ? 'green' : '#828282' }} size="xs" />
+          <span className={clsx({
+                [classes.drawerOpenText]: open,
+                [classes.drawerCloseText]: !open,
+              })}> &nbsp; { online ? "Online" : "Offline" }</span>
+        </Typography>
+      </Box>
     </Drawer>
   );
 }
@@ -190,12 +211,19 @@ function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLarge
 
 const mapStateToProps = (state) => {
   const store = state.stores.stores.find(item => item._id === state.stores.selectedStoreId);
+  const storeId = state.stores.selectedStoreId;
+  let offlineSales = 0;
+  if(storeId)
+    offlineSales = state.sales[storeId] ? state.sales[storeId].offlineRecords.length : 0;
   return {
    uid: state.auth.uid,
-   selectedStoreId: state.stores.selectedStoreId,
+   selectedStoreId: storeId,
    userRole: state.stores.userRole,
-   store
+   store,
+   online: state.system.online,
+   offlineSales
   }
 }
 
-export default connect(mapStateToProps, { syncData })(Sidebar);
+
+export default connect(mapStateToProps, { syncData, syncSale})(Sidebar);

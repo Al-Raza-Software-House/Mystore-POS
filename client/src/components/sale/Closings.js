@@ -1,14 +1,15 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencilAlt, faSync, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faSync, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, TablePagination, Typography } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { loadSales, emptySales } from '../../store/actions/saleActions';
+import { loadClosings, emptyClosings } from '../../store/actions/closingActions';
 import moment from 'moment';
-import SaleFilters from './SaleFilters';
+import ClosingFilters from './ClosingFilters';
+import { closingStates } from 'utils/constants';
 
-function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loadingRecords, loadSales, emptySales, printSale }) {
+function Closings({ storeId, records, filters, totalRecords, recordsLoaded, loadingRecords, loadClosings, emptyClosings, printClosing, offlineSales }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const filterRef = useRef();
@@ -18,14 +19,14 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
       setPage(0);
     filterRef.current = filters;
     if(records.length === 0 && !loadingRecords && !recordsLoaded)// on Page load or filters changed or reset button
-      loadSales(rowsPerPage); 
-  }, [filters, records.length, loadingRecords, recordsLoaded, loadSales, page, rowsPerPage]);
+      loadClosings(rowsPerPage); 
+  }, [filters, records.length, loadingRecords, recordsLoaded, loadClosings, page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => { 
     setPage(newPage);
     let pageRecords = records.slice(newPage * rowsPerPage, newPage * rowsPerPage + rowsPerPage);
     if( pageRecords.length < rowsPerPage && records.length < totalRecords )//next page records are 0 or less than rows per page but server has more rows, 
-      loadSales(rowsPerPage);
+      loadClosings(rowsPerPage);
    };
 
   const handleChangeRowsPerPage = (event) => {
@@ -34,7 +35,7 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
     setPage(0);
     if( records.length < newValue && records.length < totalRecords ) //there are more rows on server and current rows are less then recordsPerPage
     {
-      loadSales(newValue);
+      loadClosings(newValue);
     }
   };
 
@@ -45,12 +46,12 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
   
   return(
     <>
-      <SaleFilters />
+      <ClosingFilters />
       {
         records.length === 0 && recordsLoaded && !loadingRecords ?
         <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
-          <Typography gutterBottom>No Sales found</Typography>
-          <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => emptySales(storeId)} color="primary" disableElevation  >Refresh</Button>
+          <Typography gutterBottom>No closings found</Typography>
+          <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => emptyClosings(storeId)} color="primary" disableElevation  >Refresh</Button>
         </Box>
         :
         <Box>
@@ -58,17 +59,14 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell align="center">Receipt #</TableCell>
-                  <TableCell align="center">Date</TableCell>
-                  <TableCell align="center">Items</TableCell>
-                  <TableCell align="center">Quantity</TableCell>
-                  <TableCell align="center">Amount</TableCell>
+                  <TableCell align="center">Start Time</TableCell>
+                  <TableCell align="center">End Time</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {
-                  rows.map(sale => <Sale {...{sale, storeId, printSale}} key={sale._id}  /> )
+                  rows.map(closing => <Closing {...{closing, storeId, printClosing, offlineSales}} key={closing._id}  /> )
                 }
               </TableBody>
             </Table>
@@ -89,32 +87,37 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
 }
 
 
-function Sale({ sale, storeId, printSale }){
+function Closing({ closing, storeId, printClosing, offlineSales }){
   return(
-    <>
-    <TableRow hover style={{ textDecoration: sale.isVoided ? "line-through" : "none", backgroundColor: sale.isVoided ? "#7c7c7c" : "transparent" }}>
-      <TableCell align="center">{ sale.saleNumber  }</TableCell>
-      <TableCell align="center">{ moment(sale.saleDate).format("DD MMM, YYYY hh:mm A")  }</TableCell>
-      <TableCell align="center">{ sale.totalItems.toLocaleString() }</TableCell>
-      <TableCell align="center">{ sale.totalQuantity.toLocaleString() }</TableCell>
-      <TableCell align="center">{ sale.totalAmount.toLocaleString() }</TableCell>
+    <TableRow hover>
+      <TableCell align="center">{ moment(closing.startTime).format("DD MMM, YYYY hh:mm A")  }</TableCell>
+      <TableCell align="center">{ closing.endTime ? moment(closing.endTime).format("DD MMM, YYYY hh:mm A") : null }</TableCell>
       
       <TableCell align="right">
-        <IconButton onClick={() => printSale( sale ) } title="Print Sale">
-          <FontAwesomeIcon icon={faPrint} size="xs" />
-        </IconButton>
-        <IconButton component={Link} to={ '/sale/view/' + storeId + '/' + sale._id } title="View Sale">
-          <FontAwesomeIcon icon={faPencilAlt} size="xs" />
-        </IconButton>
+        {
+          closing.status === closingStates.CLOSING_STATUS_CLOSED ? 
+          <IconButton onClick={() => printClosing( closing ) } title="Print Closing">
+            <FontAwesomeIcon icon={faPrint} size="xs" />
+          </IconButton>
+          : null
+        }
+        {
+          closing.status === closingStates.CLOSING_STATUS_OPEN && offlineSales > 0 ? "Uploading sales...wait" : 
+          <IconButton component={Link} to={ '/sale/closings/view/' + storeId + '/' + closing._id } title="View Closing">
+            <FontAwesomeIcon icon={faEye} size="xs" />
+          </IconButton>
+        }
       </TableCell>
     </TableRow>
-  </>
   )
 }
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
-  const sales = state.sales[storeId] ? state.sales[storeId] : {
+  let offlineSales = 0;
+  if(storeId)
+    offlineSales = state.sales[storeId] ? state.sales[storeId].offlineRecords.length : 0;
+  const closings = state.closings[storeId] ? state.closings[storeId] : {
     records: [],
     totalRecords: 0,
     recordsLoaded: false,
@@ -123,10 +126,11 @@ const mapStateToProps = state => {
 
   return {
     storeId,
-    ...sales,
+    ...closings,
     loadingRecords: state.progressBar.loading,
+    offlineSales
   }
 }
 
 
-export default connect(mapStateToProps, { loadSales, emptySales })(Sales);
+export default connect(mapStateToProps, { loadClosings, emptyClosings })(Closings);

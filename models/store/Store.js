@@ -20,21 +20,19 @@ const registorSchema = new mongoose.Schema({
 });
 
 const receiptSettingsSchema = new mongoose.Schema({
-  header: String,
   logo: String,  
-  footer: String,
-  marginTop: Number,
-  marginLeft: Number,
+  printSalesReceipt: Boolean,
+  printSaleId: Boolean,
+  printSalesperson: Boolean,
+  printCustomerName: Boolean,
+  printSaleNotes: Boolean,
 
   printItemName: Boolean,
   printItemCode: Boolean,
-  printSaleId: Boolean,
-  printSaleComments: Boolean,
   printCustomerLedger: Boolean,
-  printGST: Boolean,
 
-  showPrintPreview: Boolean,
-  printSalesReceipt: Boolean
+  receiptTitle: String,
+  footer: String,
 
 });
 
@@ -94,6 +92,7 @@ const storeSchema = new mongoose.Schema({
     Purchase: mongoose.Schema.Types.ObjectId,
     CustomerReceipt: mongoose.Schema.Types.ObjectId,
     SupplierPayment: mongoose.Schema.Types.ObjectId,
+    BankAccount: mongoose.Schema.Types.ObjectId,
   },
   idsCursors:{
     poCursor: Number,

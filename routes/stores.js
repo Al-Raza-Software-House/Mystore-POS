@@ -5,6 +5,7 @@ const moment = require('moment-timezone');
 const bcrypt = require('bcryptjs');
 const { authCheck } = require('../utils/middlewares');
 const { storeStates, userRoles, accountHeadTypes } = require('../utils/constants');
+const { createNewClosingRecord } = require('../utils/index');
 const mongoose = require('mongoose');
 const ItemProperty = require( '../models/stock/ItemProperty' );
 const AdjustmentReason = require( '../models/stock/AdjustmentReason' );
@@ -83,7 +84,7 @@ router.post('/create', async (req, res) => {
       lastActivity: now,
       lastUpdated: now,
       lastPayment: null,
-      lastEndOfDay: null,
+      lastEndOfDay: now,
       expiryDate: moment().tz('Asia/Karachi').add(process.env.TRIAL_PERIOD, 'days').toDate(),
 
       monthlyPricing: process.env.STORE_PRICING,
@@ -99,7 +100,19 @@ router.post('/create', async (req, res) => {
         notes: ''
       }],
       receiptSettings: {
-        printSalesReceipt: true
+        logo: null,  
+        printSalesReceipt: true,
+        printSaleId: true,
+        printSalesperson: true,
+        printCustomerName: true,
+        printSaleNotes: true,
+
+        printItemName: true,
+        printItemCode: false,
+        printCustomerLedger: true,
+
+        receiptTitle: "Sale Receipt",
+        footer: "Thank you for your visit",
       },
       dataUpdated: {
         stores: now,
@@ -121,8 +134,8 @@ router.post('/create', async (req, res) => {
         saleCursor: 1
       },
       configuration: {
-        allowNegativeInventory: false,
-        weightedCostPrice:false
+        allowNegativeInventory: true,
+        weightedCostPrice: true
       }
     }
     
@@ -205,7 +218,7 @@ router.post('/create', async (req, res) => {
     let storeAccountHeads = await AccountHead.find({ storeId: newStore._id });
     newStore.set('accountHeadIds', accountHeadIds);
     await newStore.save();
-
+    await createNewClosingRecord(newStore._id, req.user._id, now, 0);
     let store = await Store.findById(newStore._id).populate('users.record', 'name phone profilePicture');
     res.json({
       store,

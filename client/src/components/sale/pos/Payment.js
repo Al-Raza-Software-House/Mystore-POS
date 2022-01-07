@@ -2,22 +2,28 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Box, Dialog, DialogContent, DialogActions, Button, DialogTitle, IconButton, Typography, FormHelperText } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCreditCard, faSave, faTimesCircle, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { allowOnlyPostiveNumber } from 'utils';
+import { allowOnlyNumber } from 'utils';
 import { change, Field, formValueSelector } from 'redux-form';
 import TextInput from 'components/library/form/TextInput';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import SelectInput from 'components/library/form/SelectInput';
 
-function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity, totalAmount, formName, banks, submitForm }) {
+function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity, totalAmount, formName, banks, handleSubmit, onSubmit, sale, editSale, disableEdit }) {
   const [open, setOpen] = useState(false);
   const { customerId, cashPaid, creditAmount, bankAmount } = useSelector(state => formValueSelector(formName)(state, "customerId", "creditAmount", "cashPaid", "bankAmount"));
   const customer = useSelector(state => customerId ? state.customers[storeId].find(record => record._id === customerId) : null);
   const dispatch = useDispatch();
 
   useEffect(() => {
+    if(sale && pristine) return;
     dispatch( change(formName, 'cashPaid', totalAmount) );
-  }, [open, totalAmount, dispatch, formName]);
+  }, [open, totalAmount, dispatch, formName, sale, pristine]);
+
+  useEffect(() => {
+    if(!customer || !customer.allowCredit)
+      dispatch( change(formName, 'creditAmount', 0) );
+  }, [dispatch, formName, customer]);
 
   const totalPayment = useMemo(() => {
     let cash = isNaN(cashPaid) ? 0 : Number(cashPaid);
@@ -38,14 +44,33 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
 
     let totalPayment = +( cash + credit + bank ).toFixed(2);
     let bankPlusCredit = +( credit + bank ).toFixed(2);
-    if(totalPayment < netTotal)
+    if(!error && netTotal > 0) //Postive amount
+    {
+      if(totalPayment < netTotal)
       error = `Total payment(${totalPayment.toLocaleString()}) is less than Net Total(${netTotal.toLocaleString()})`;
-    else if(bankPlusCredit > netTotal && customer && customer.allowCredit)
+
+      else if(bankPlusCredit > netTotal && customer && customer.allowCredit)
       error = `Credit amount(${credit.toLocaleString()}) plus bank amount(${bank.toLocaleString()}) should not be greater than Net Total(${netTotal.toLocaleString()})`;
-    else if(bankPlusCredit > netTotal && (!customer || !customer.allowCredit))
-      error = `Bank amount(${bank.toLocaleString()}) should not be greater than Net Total(${netTotal.toLocaleString()})`;
-    else if(customer && customer.allowCredit && ( customer.currentBalance + credit ) > customer.creditLimit )
-      error = `Credit amount(${credit.toLocaleString()}) plus current receivable(${customer.currentBalance.toLocaleString()}) is greater than customer's credit limit(${customer.creditLimit.toLocaleString()})`;
+    
+      else if(bankPlusCredit > netTotal && (!customer || !customer.allowCredit))
+        error = `Bank amount(${bank.toLocaleString()}) should not be greater than Net Total(${netTotal.toLocaleString()})`;
+      
+      else if(customer && customer.allowCredit && ( customer.currentBalance + credit ) > customer.creditLimit )
+        error = `Credit amount(${credit.toLocaleString()}) plus current receivable(${customer.currentBalance.toLocaleString()}) is greater than customer's credit limit(${customer.creditLimit.toLocaleString()})`;
+    }else if(!error && netTotal < 0) //Postive amount
+    {
+      if(totalPayment > netTotal)
+        error = `Total payment(${totalPayment.toLocaleString()}) is less than Net Total(${netTotal.toLocaleString()})`;
+
+      else if(bankPlusCredit < netTotal && customer && customer.allowCredit)
+      error = `Credit amount(${credit.toLocaleString()}) plus bank amount(${bank.toLocaleString()}) should not be greater than Net Total(${netTotal.toLocaleString()})`;
+    
+      else if(bankPlusCredit < netTotal && (!customer || !customer.allowCredit))
+        error = `Bank amount(${bank.toLocaleString()}) should not be greater than Net Total(${netTotal.toLocaleString()})`;
+      
+      else if(customer && customer.allowCredit && ( customer.currentBalance + credit ) > customer.creditLimit )
+        error = `Credit amount(${credit.toLocaleString()}) plus current receivable(${customer.currentBalance.toLocaleString()}) is greater than customer's credit limit(${customer.creditLimit.toLocaleString()})`;
+    }
     return error;
   }, [cashPaid, customer, creditAmount, bankAmount, totalAmount]);
 
@@ -59,11 +84,13 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
   const handleClose = () => setOpen(false);
   const submitSale = () => {
     setOpen(false);
-    submitForm();
+    if(sale) editSale();
+    else
+      handleSubmit(onSubmit)();
   }
   return(
     <>
-    <Button variant="outlined" onClick={() => setOpen(true) } color="primary" disabled={pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0} startIcon={<FontAwesomeIcon icon={faCreditCard} />} >Payment</Button>
+    <Button variant="outlined" onClick={() => setOpen(true) } color="primary" disabled={pristine || submitting || invalid || !dirty || Number(totalQuantity) === 0 || disableEdit} startIcon={<FontAwesomeIcon icon={faCreditCard} />} >{ sale ? "Update": "Payment"}</Button>
     <Dialog  maxWidth="sm" fullWidth={true}  open={open} onClose={handleClose} aria-labelledby="form-dialog-title" onClick={(event) => { event.stopPropagation(); }}>
         <DialogTitle disableTypography style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#ececec", padding: "0px 12px" }}>
           <Typography variant="h6">Payment</Typography>
@@ -93,7 +120,7 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
               margin="dense"
               type="text"
               showError={false}
-              onKeyDown={allowOnlyPostiveNumber}
+              onKeyDown={allowOnlyNumber}
             />
           </Box>
           {
@@ -126,7 +153,7 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
                   margin="dense"
                   type="text"
                   showError={false}
-                  onKeyDown={allowOnlyPostiveNumber}
+                  onKeyDown={allowOnlyNumber}
                 />
               </Box>
             </Box>
@@ -175,7 +202,7 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
                   margin="dense"
                   type="text"
                   showError={false}
-                  onKeyDown={allowOnlyPostiveNumber}
+                  onKeyDown={allowOnlyNumber}
                 />
               </Box>
             </Box>

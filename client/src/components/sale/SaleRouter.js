@@ -5,8 +5,10 @@ import { Route, Switch } from 'react-router-dom';
 import { connect } from 'react-redux';
 import SaleAndReturn from './pos/SaleAndReturn';
 import Sales from './Sales';
-import EndOfDay from './EndOfDay';
-import EndOfDayList from './EndOfDayList';
+import PrintSale from './PrintSale';
+import Closings from './Closings';
+import ViewClosing from './ViewClosing';
+import PrintClosing from './PrintClosing';
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -17,20 +19,18 @@ const useStyles = makeStyles(theme => ({
 const menues = [
   {to: '/sale', title: 'Sale & Return'},
   {to: '/sale/list', title: 'History'},
-  {to: '/sale/endofday', title: 'End of Day'}
+  {to: '/sale/closings', title: 'End of Day'}
 ]
 
 function SaleRouter(){
   const classes = useStyles();
   const [printSale, setPrintSale] = useState(null);
-  const [printGRN, setPrintGRN] = useState(null);
-  const [printRTV, setPrintRTV] = useState(null);
+  const [printClosing, setPrintClosing] = useState(null);
 
   return(
     <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
-      {/* <PrintPurchaseOrder order={printSale} setOrder={setPrintSale} />
-      <PrintGRN grn={printGRN} setGrn={setPrintGRN} />
-      <PrintRtv rtv={printRTV} setRtv={setPrintRTV} /> */}
+      <PrintSale sale={printSale} setSale={setPrintSale} />
+      <PrintClosing closing={printClosing} setClosing={setPrintClosing} />
       <Paper className={classes.paper} square>
         <Box>
           <Box px={3} pt={0}>
@@ -42,8 +42,8 @@ function SaleRouter(){
         <Box px={3} pt={2} >
           <Switch>
 
-            <Route path="/sale/endofday/view/:storeId/:eodId" render={props => <EndOfDay {...props} printSale={setPrintSale} />} />
-            <Route path="/sale/endofday" render={props => <EndOfDayList {...props} printSale={setPrintSale} />} />
+            <Route path="/sale/closings/view/:storeId/:closingId" render={props => <ViewClosing {...props} printClosing={setPrintClosing} />} />
+            <Route path="/sale/closings" render={props => <Closings {...props} printClosing={setPrintClosing} />} />
 
             <Route path="/sale/view/:storeId/:saleId" render={props => <SaleAndReturn {...props} printSale={setPrintSale} />} />
             <Route path="/sale/list" render={props => <Sales {...props} printSale={setPrintSale} />} />

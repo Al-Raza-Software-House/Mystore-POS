@@ -5,9 +5,9 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
-import { useHistory, useParams } from 'react-router-dom';
+import { Redirect, useHistory, useParams } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import DateInput from '../../library/form/DateInput';
 import { useSelector } from 'react-redux';
@@ -64,6 +64,7 @@ function EditGrn(props) {
     return grns.find(record => record._id === grnId);
   })
   const beforeLastEndOfDay = useMemo(() => {
+    if(!grn) return false;
     return lastEndOfDay && moment(grn.grnDate) <= moment(lastEndOfDay);
   }, [grn, lastEndOfDay]);
 
@@ -85,6 +86,7 @@ function EditGrn(props) {
   const [po, setPo] = useState(null);
 
   useEffect(() => {
+    if(!grn) return;
     let formItems = {};
     grn.items.forEach(item => {
       item.batches.forEach( (batch, index) => {
@@ -275,6 +277,12 @@ function EditGrn(props) {
       });
     });
   }, [items, supplier, printGrn]);
+
+  if(!grnId || !grn)
+  {
+    dispatch(showError("Record not found"));
+    return <Redirect to="/purchase/grns" />
+  }
     return(
       <>
       <Box width="100%" justifyContent="space-between" display="flex">
@@ -599,7 +607,7 @@ function EditGrn(props) {
           }
           {
             beforeLastEndOfDay ?
-            <Typography component="div" style={{ color: '#7c7c7c', marginTop: 10, marginBottom: 10 }}>Cannot update this GRN because it is dated before Last end of Day: { moment(lastEndOfDay).format("DD MMM, YYY, hh:MM A") }</Typography>
+            <Typography component="div" style={{ color: '#7c7c7c', marginTop: 10, marginBottom: 10 }}>Cannot update this GRN because it is dated before Last end of Day: { moment(lastEndOfDay).format("DD MMM, YYYY, hh:mm A") }</Typography>
             : null
           }
           {

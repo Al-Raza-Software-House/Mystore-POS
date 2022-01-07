@@ -5,6 +5,8 @@ const moment = require('moment-timezone');
 const fs = require('fs')
 const { resolve } = require('path');
 const Item = require( '../models/stock/Item' );
+const { closingStates } = require( './constants' );
+const Closing = require( '../models/sale/Closing' );
 
 const createJwtToken = (user, expire_in_hours = 5 * 365 * 24) => {
   const payload = {
@@ -145,6 +147,117 @@ const removeBatchStock = (item, transactionItem, now, parentItem = null) => {
   });
 }
 
+//auto remove quntity from batches in the order of first expiring, first out
+const autoRemoveBatchStock = (item, transactionItem, now, parentItem = null) => {
+  return new Promise(async (resolve, reject) => {
+    if(!transactionItem || transactionItem.quantity === 0 || transactionItem.batches.length !== 0) return resolve(); //batches specified, dont' auto decide
+    let itemBatches = parentItem ? parentItem.batches : item.batches;
+    let sourceBatches = [...itemBatches];
+    if(sourceBatches.length === 0) return resolve();
+    sourceBatches.sort(function compare(a, b) {
+      return a.batchExpiryDate - b.batchExpiryDate;
+    });
+    let transactionBatches = []; // batches and their quntity that was removed
+
+    if(parentItem) //quantity is in packs
+    {
+      let remainingQuantityToDeduct = transactionItem.quantity;
+      let packQuantity = item.packQuantity; 
+      for(let batchIndex = 0; batchIndex < sourceBatches.length; batchIndex++)
+      {
+        if(sourceBatches[batchIndex].batchStock < packQuantity) continue; //one pack must be removed from one batch only, one pack cannot be deducted from two different batches, 
+        let packsToDeduct = 0;
+        if(sourceBatches[batchIndex].batchStock >= (remainingQuantityToDeduct * packQuantity)) //enough stock to remove all pending batchs
+        {
+          packsToDeduct = remainingQuantityToDeduct;
+        }else //batch stock not enough, not all packs can be deducted, find the number of packs that can be deducted
+        {
+          let remainder = sourceBatches[batchIndex].batchStock % packQuantity;
+          packsToDeduct = (sourceBatches[batchIndex].batchStock - remainder) / packQuantity;
+        }
+        
+        transactionBatches.push({
+          batchNumber: sourceBatches[batchIndex].batchNumber,
+          batchExpiryDate: sourceBatches[batchIndex].batchExpiryDate,
+          batchQuantity: packsToDeduct
+        })
+        sourceBatches[batchIndex].batchStock -= packsToDeduct * packQuantity;
+        remainingQuantityToDeduct = remainingQuantityToDeduct - packsToDeduct; //get remaining packs that still needs to be deducted
+
+        if(remainingQuantityToDeduct <= 0) break;// no more packs to deduct
+      }
+    }else // quantity in units
+    {
+      let remainingQuantityToDeduct = transactionItem.quantity;
+      for(let batchIndex = 0; batchIndex < sourceBatches.length; batchIndex++)
+      {
+        transactionBatches.push({
+          batchNumber: sourceBatches[batchIndex].batchNumber,
+          batchExpiryDate: sourceBatches[batchIndex].batchExpiryDate,
+          batchQuantity: sourceBatches[batchIndex].batchStock >= remainingQuantityToDeduct ? remainingQuantityToDeduct : sourceBatches[batchIndex].batchStock
+        })
+        sourceBatches[batchIndex].batchStock -= remainingQuantityToDeduct;
+        if(sourceBatches[batchIndex].batchStock < 0) //batch stock was less the deduct quntity, find remain quantity and deduct from next batch
+          remainingQuantityToDeduct = Math.abs(sourceBatches[batchIndex].batchStock);
+        else if( sourceBatches[batchIndex].batchStock >= 0 ) break; //all quantity deducted, break
+      }
+    }
+
+    transactionItem.batches = transactionBatches;
+    await transactionItem.save();
+    sourceBatches = sourceBatches.filter(batch => batch.batchStock > 0);
+    item.batches = sourceBatches;
+    await item.save();
+    if(parentItem)
+    {
+      parentItem.batches = sourceBatches;
+      await parentItem.save();
+    }
+    // update batches in other packings too;
+    await Item.updateMany({ packParentId: parentItem ? parentItem._id : item._id }, { batches: sourceBatches, lastUpdated: now });
+    resolve();
+  });
+}
+
+//create new Closing record at store creation, or after end of day
+const createNewClosingRecord = async (storeId, userId, startTime, openingCash = 0) => {
+  let record = {
+    storeId: storeId,
+    userId: userId,
+    startTime: startTime,
+    endTime: null,
+
+    status: closingStates.CLOSING_STATUS_OPEN, //open or closed
+
+    openingCash: openingCash,
+    totalInflow: 0,
+    totalOutflow: 0,
+    expectedCash: 0,
+    cashCounted: 0,
+    cashDifference: 0,
+    notes: "",
+
+    inflows:{
+      cashSales: 0,
+      customerCreditPayments: 0,
+      income: 0,
+      cashFromBank: 0,
+      other: 0, //all other heads where type is income or (general and cash received)
+    },
+
+    outflows: {
+      cashPurchases: 0,
+      supplierPayments: 0,
+      expenses: 0,
+      cashToBank: 0,
+      other: 0, //all other heads where type is expense or (general and cash paid)
+    }
+  }
+
+  let closing = new Closing(record);
+  await closing.save();
+  return closing;
+}
 
 
 module.exports = {
@@ -155,5 +268,7 @@ module.exports = {
   publicS3Object,
 
   addBatchStock,
-  removeBatchStock
+  removeBatchStock,
+  autoRemoveBatchStock,
+  createNewClosingRecord
 };

@@ -19,6 +19,8 @@ import purchaseOrdersReducer from './purchaseOrdersReducer';
 import rtvsReducer from './rtvsReducer';
 import grnsReducer from './grnsReducer';
 import salesReducer from './salesReducer';
+import closingsReducer from './closingsReducer';
+import dashboardReducer from './dashboardReducer';
 
 function storeageReducer(state = { loaded: false }, action) {
     switch (action.type) {
@@ -42,6 +44,8 @@ export const staticReducers = {
   progressBar: progressReducer,
   alert: alertReducer,
   storage: storeageReducer, //IndexedDB persistant Storage
+  //dashboard
+  dashboard: dashboardReducer,
   //Stock Module
   items: itemReducer,
   categories: categoryReducer,
@@ -49,6 +53,7 @@ export const staticReducers = {
   adjustmentReasons: adjustmentReasonsReducer,
   //Sales Module
   sales: salesReducer,
+  closings: closingsReducer,
   //Purchase module
   purchaseOrders: purchaseOrdersReducer,
   grns: grnsReducer,

@@ -203,7 +203,7 @@ function Transaction({ txn, balance, banks, storeId, customerId, customer, print
       <TableCell align="center">
         { txn.type === customerTxns.CUSTOMER_TXN_TYPE_PAYMENT ? <Chip label="Payment" color="primary" /> : null }
         { txn.type === customerTxns.CUSTOMER_TXN_TYPE_SALE ? <Chip label="Sale" /> : null }
-        { txn.type === customerTxns.CUSTOMER_TXN_TYPE_SALE ? <Chip label="Return" variant="outlined" /> : null }
+        { txn.type === customerTxns.CUSTOMER_TXN_TYPE_RETURN ? <Chip label="Return" variant="outlined" /> : null }
       </TableCell>
       <TableCell align="center">{ txn.amount.toLocaleString() }</TableCell>
       <TableCell align="center">{ balance.toLocaleString() }</TableCell>

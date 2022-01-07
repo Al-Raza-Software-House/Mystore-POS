@@ -38,6 +38,10 @@ function CreateCustomer(props) {
       history.push('/parties/customers');
     }
   }, [submitSucceeded, history, closeDialog])
+  const submitForm = (event) => {
+    event.stopPropagation();
+    handleSubmit(event);
+  }
     return(
       <>
       {
@@ -50,7 +54,7 @@ function CreateCustomer(props) {
       }
       <Box margin="auto" width={{ xs: '100%', md: closeDialog ? '100%' : '50%' }}>
         <Typography gutterBottom variant="h6" align="center">Add New Customer</Typography>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={submitForm}>
           <Box display="flex" justifyContent="space-between">
             <Box width={{ xs: '100%', md: '48%'}}>
               <Field

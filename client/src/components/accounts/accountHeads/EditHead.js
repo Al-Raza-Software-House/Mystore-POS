@@ -5,11 +5,11 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { useSelector } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { updateHead } from '../../../store/actions/accountActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import { accountHeadTypes } from '../../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
@@ -42,6 +42,7 @@ function EditHead(props) {
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
 
   useEffect(() => {
+    if(!head) return;
     dispatch( initialize('editHead', {
       name: head.name,
       notes: head.notes
@@ -51,6 +52,11 @@ function EditHead(props) {
     if(submitSucceeded)
       history.push('/accounts/heads');
   }, [submitSucceeded, history])
+  if(!headId || !head)
+  {
+    dispatch(showError("Record not found"));
+    return <Redirect to="/accounts/heads" />
+  }
     return(
       <>
       <Box width="100%" justifyContent="flex-end" display="flex">

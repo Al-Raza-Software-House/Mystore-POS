@@ -387,6 +387,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
         fields.push(variant);
     }
   }, [sizes, combinations]);
+  
   return(
     <>
     <Box display="flex" justifyContent="space-between" flexWrap="wrap">

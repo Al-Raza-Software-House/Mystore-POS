@@ -70,3 +70,8 @@ export const poStates = {
   PO_STATUS_OPEN: 1,
   PO_STATUS_CLOSED: 2
 }
+
+export const closingStates = {
+  CLOSING_STATUS_OPEN: 1,
+  CLOSING_STATUS_CLOSED: 2
+}

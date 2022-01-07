@@ -261,7 +261,7 @@ router.post('/create', async (req, res) => {
         storeId: req.body.storeId,
         userId: req.user._id,
         parentId: ledgerTxn._id,
-        headId: store.accountHeadIds.SupplierPayment,
+        headId: store.accountHeadIds.Purchase,
         bankId: Number(req.body.paymentMode) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
         amount: -1 * grn.totalAmount,
         type: parseInt(req.body.paymentMode), //cash or bank
@@ -676,7 +676,7 @@ router.post('/update', async (req, res) => {
         storeId: req.body.storeId,
         userId: req.user._id,
         parentId: ledgerPaymentTxn._id,
-        headId: store.accountHeadIds.SupplierPayment,
+        headId: store.accountHeadIds.Purchase,
         bankId: Number(req.body.paymentMode) === paymentModes.PAYMENT_MODE_BANK ? req.body.bankId : null,
         amount: -1 * grn.totalAmount,
         type: parseInt(req.body.paymentMode), //cash or bank

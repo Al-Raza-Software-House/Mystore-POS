@@ -21,10 +21,11 @@ const customerSchema = new mongoose.Schema({
   totalPayment: Number,
   currentBalance: Number,
 
-  creationDate: Date,
-  lastUpdated: Date,
   lastPayment: Date,
   lastSale: Date,
+
+  creationDate: Date,
+  lastUpdated: Date,
 })
 
 //store record/settings udpate

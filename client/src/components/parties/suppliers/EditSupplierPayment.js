@@ -5,7 +5,7 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
@@ -75,10 +75,10 @@ function EditSupplierPayment(props) {
         setTxn(data);
       }
     }).catch(err => {
+      console.log(err);
       dispatch(hideProgressBar());
-      throw new SubmissionError({
-        _error: err.response && err.response.data.message ? err.response.data.message: err.message
-      });
+      dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
+      history.push('/parties');
     })
   }, [supplierId, txnId, dispatch, storeId, defaultBankId]);
 

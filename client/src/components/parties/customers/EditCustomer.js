@@ -5,10 +5,10 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { useSelector } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import { updateCustomer } from '../../../store/actions/customerActions';
 
@@ -43,6 +43,11 @@ function EditCustomer(props) {
     if(submitSucceeded)
       history.push('/parties/customers');
   }, [submitSucceeded, history])
+  if(!customerId || !customer)
+  {
+    dispatch( showError("Record not found") );
+    return <Redirect to="/parties/customers" />
+  }
     return(
       <>
       <Box width="100%" justifyContent="flex-end" display="flex">

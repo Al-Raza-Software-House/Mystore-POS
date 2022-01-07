@@ -48,34 +48,37 @@ mongoose.connect(process.env.MONGODB_URI, mongooseConfig)
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use((req, res, next) => setTimeout(next, 400));
+app.use((req, res, next) => setTimeout(next, 1000));
 app.use(express.static( path.join(__dirname, '/client/build') ));
 app.use('/fonts', express.static( path.join(__dirname, '/assets/fonts') ));
 app.use('/images', express.static( path.join(__dirname, '/images') ));
-
-// app.use('/api/admin/topics', require('./routes/admin/topics'));
-// app.use('/api/admin/posts', require('./routes/admin/posts'));
-
-// app.use('/api/posts', require('./routes/posts'));
-// app.use('/api/topics', require('./routes/topics'));
+//Dasboard
+app.use('/api/dashboard', require('./routes/dashboard'));
+//stock module
+app.use('/api/items', require('./routes/items'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/itemProperties', require('./routes/itemProperties'));
+app.use('/api/adjustmentReasons', require('./routes/adjustmentReasons'));
+//Sals Module
+app.use('/api/sales', require('./routes/sales'));
+app.use('/api/closings', require('./routes/closings'));
+//Purchase module
 app.use('/api/purchaseOrders', require('./routes/purchaseOrders'));
 app.use('/api/grns', require('./routes/grns'));
 app.use('/api/rtvs', require('./routes/rtvs'));
-
-app.use('/api/accounts', require('./routes/accounts'));
-
+//Parties Module
 app.use('/api/suppliers', require('./routes/suppliers'));
 app.use('/api/customers', require('./routes/customers'));
-app.use('/api/items', require('./routes/items'));
-app.use('/api/services', require('./routes/services'));
+//Accounts module
+app.use('/api/accounts', require('./routes/accounts'));
 
-app.use('/api/itemProperties', require('./routes/itemProperties'));
-app.use('/api/adjustmentReasons', require('./routes/adjustmentReasons'));
-app.use('/api/categories', require('./routes/categories'));
+//Billing, settings, stores, help
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api/stores', require('./routes/stores'));
 app.use('/api/help', require('./routes/help'));
+//login, signup, profile settings
 app.use('/api/users', require('./routes/users'));
+app.use('/api/services', require('./routes/services'));
 
 //app.set('view engine', 'ejs');
 const ejs = require('ejs');

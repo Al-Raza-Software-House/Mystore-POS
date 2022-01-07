@@ -7,11 +7,11 @@ import RadioInput from '../../library/form/RadioInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { categoryTypes } from '../../../utils/constants';
 import { useSelector } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { updateCategory } from '../../../store/actions/categoryActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 
 let categoryTypeOptions = [
   { id: categoryTypes.CATEGORY_TYPE_STANDARD, title: "Standard" },
@@ -42,6 +42,7 @@ function EditCategory(props) {
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
 
   useEffect(() => {
+    if(!category) return;
     dispatch( initialize('editCategory', {
       type: category.type,
       name: category.name,
@@ -52,6 +53,13 @@ function EditCategory(props) {
     if(submitSucceeded)
       history.push('/stock/categories');
   }, [submitSucceeded, history])
+
+  if(!categoryId || !category)
+  {
+    dispatch( showError("Category not found") );
+    return <Redirect to="/stock/categories" />
+  }
+
     return(
       <>
       <Box width="100%" justifyContent="flex-end" display="flex">

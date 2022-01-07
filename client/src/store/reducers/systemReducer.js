@@ -6,7 +6,9 @@ const initState = {
   masterDataLoaded:{ }, //flag for each store
   lastUpdatedStamps: { }, //las updated timestamps of data collections for each store
   syncinProgress: false, //  show sync dialog,
-  syncStatus: "" // show status i.e Loading categories...
+  syncStatus: "", // show status i.e Loading categories...,
+  online: true, //check if there is an internet connection,
+  pinging: false
 }
 
 const systemReducer = (state = initState, action) => {
@@ -16,6 +18,11 @@ const systemReducer = (state = initState, action) => {
       return{
         ...state,
         appVersion: action.appVersion
+      }
+    case actionTypes.ONLINE_STATUS_CHANGED:
+      return{
+        ...state,
+        online: action.status
       }
     case actionTypes.MASTER_DATA_LOADED:
       return{
@@ -55,6 +62,17 @@ const systemReducer = (state = initState, action) => {
         syncinProgress: false,
         syncStatus: ""
       }
+    case actionTypes.PING_STARTED:
+      return{
+        ...state,
+        pinging: true
+      }
+    case actionTypes.PING_STOPPED:
+      return{
+        ...state,
+        pinging: false
+      }
+    
     case actionTypes.SYNC_STATUS_UPDATED:
       return{
         ...state,

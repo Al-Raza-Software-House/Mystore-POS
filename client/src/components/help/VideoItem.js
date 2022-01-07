@@ -4,7 +4,7 @@ import { Badge, Box, Dialog, DialogContent, DialogActions, Button, useTheme, use
 function VideoItem({ video }) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const handleClose = () => setOpen(false);
   return(
     <>

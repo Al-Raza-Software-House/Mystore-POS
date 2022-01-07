@@ -16,7 +16,11 @@ export const actionTypes = {
   DATA_SYNC_STARTED: 'dataSyncStarted',
   DATA_SYNC_STOPPED: 'dataSyncStopped',
   SYNC_STATUS_UPDATED: 'syncStatusUpdated',
-  LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged'
+  LAST_UPDATED_SINGLE_STAMP_CHANGED: 'lastUpdatedSingleStampChanged',
+  ONLINE_STATUS_CHANGED: 'onlineStatusChanged', //internet or no internet
+
+  PING_STARTED: 'pingStarted',
+  PING_STOPPED: 'pingStopped',
 }
 
 const deleteActionsMap = {
@@ -71,14 +75,17 @@ export const syncData = () => {
     const storeId = state.stores.selectedStoreId;
     if(!storeId) return null;
     if(state.system.syncinProgress) return; //A sync is already in progress;
+    if(state.system.pinging) return; //A sync is already in progress;
     if(!state.system.masterDataLoaded[storeId])
     {
       dispatch(loadMasterData());
       return;
     }
+    dispatch( startPing() );
     const store = state.stores.stores.find(store => store._id === storeId);
     let lastTimestamps = state.system.lastUpdatedStamps[storeId] ? { ...state.system.lastUpdatedStamps[storeId] }: {};
     axios.get('/api/stores/getUpdateTimestamps', {params: { storeId }}).then( ({ data }) => {
+      dispatch( changeOnlineStatus(true) );
       if(!data.storeId) //store deleted or user access removed
       {
         dispatch( selectStore(null, null) );
@@ -94,7 +101,11 @@ export const syncData = () => {
         if(lastTimestamps[key] !== data.dataUpdated[key] && syncActionsMap[key]) //if system stamp doesn't match with server stamp, sync data
           dispatch( syncActionsMap[key](  lastTimestamps[key]  ) );
       }
-    }).catch( err => err );
+      dispatch( stopPing() );
+    }).catch( err => {
+      dispatch( stopPing() );
+      dispatch( changeOnlineStatus(false) );
+    });
   }
 }
 
@@ -200,6 +211,10 @@ export const appVersionChanged = (appVersion) => {
   return { type: actionTypes.APP_VERSION_CHANGED, appVersion }
 }
 
+export const changeOnlineStatus = (status) => {
+  return { type: actionTypes.ONLINE_STATUS_CHANGED, status }
+}
+
 export const lastUpdatedStampsChanged = (storeId, lastUpdatedStamps) => {
   return { type: actionTypes.LAST_UPDATED_STAMPS_CHANGED, storeId, lastUpdatedStamps }
 }
@@ -210,6 +225,14 @@ export const startSync = () => {
 
 export const stopSync = () => {
   return { type: actionTypes.DATA_SYNC_STOPPED }
+}
+
+export const startPing = () => {
+  return { type: actionTypes.PING_STARTED }
+}
+
+export const stopPing = () => {
+  return { type: actionTypes.PING_STOPPED }
 }
 
 export const syncStatusUpdated = (text) => {

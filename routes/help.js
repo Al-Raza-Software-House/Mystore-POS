@@ -23,7 +23,7 @@ router.get('/videos/new', async (req, res) => {
   {
     const now = moment().tz('Asia/Karachi').toDate();
     let record = {
-      moduleName: 'general',
+      moduleName: '',
       screenId: '/dashboard',
       order: 1,
       thumbnail: 'https://picsum.photos/296/166',
@@ -34,7 +34,7 @@ router.get('/videos/new', async (req, res) => {
     }
     await new Video(record).save();
     await Store.updateMany({}, {'dataUpdated.videos' : now });
-    //await Video.updateMany({}, { youtubeId: 'OHuNnQ_pcRU' });
+    await Video.updateMany({}, { youtubeId: 'OHuNnQ_pcRU', moduleName: "" });
     res.json({ success: true });
   }catch(err)
   {

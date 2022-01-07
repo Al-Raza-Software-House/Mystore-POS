@@ -13,10 +13,12 @@ import TextInput from '../library/form/TextInput';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { amber } from '@material-ui/core/colors';
+import { useDispatch } from 'react-redux';
 
 function CurrentBill(props){
   const { selectedMonths, store, loadSelectedStore, storesStampChanged, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty } = props;
   const timer = useRef();
+  const dispatch = useDispatch();
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
 
@@ -24,8 +26,8 @@ function CurrentBill(props){
     axios.get('/api/billing/ping', { params: { storeId: store._id, txnId: store.paymentTxnId } }).then(({ data }) => {
       if(data.success)
       {
-        loadSelectedStore();
-        storesStampChanged(store._id, data.lastUpdated);
+        dispatch(loadSelectedStore());
+        dispatch(storesStampChanged(store._id, data.lastUpdated));
         setPaymentCompleted(true);
       }
       else
@@ -33,7 +35,7 @@ function CurrentBill(props){
     }).catch(err => {
       timer.current = setTimeout(ping, 6000);
     });
-  }, [store._id, store.paymentTxnId, loadSelectedStore, storesStampChanged]);
+  }, [store._id, store.paymentTxnId, loadSelectedStore, storesStampChanged, dispatch]);
 
   useEffect(() => {
     if(timer.current)

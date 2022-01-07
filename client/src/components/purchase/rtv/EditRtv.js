@@ -5,9 +5,9 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { compose } from 'redux';
-import { useHistory, useParams } from 'react-router-dom';
+import { Redirect, useHistory, useParams } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import { useSelector } from 'react-redux';
 import ItemPicker from '../../library/ItemPicker';
@@ -72,6 +72,7 @@ function EditRtv(props) {
     return rtvs.find(record => record._id === rtvId);
   })
   const beforeLastEndOfDay = useMemo(() => {
+    if(!rtv) return;
     return lastEndOfDay && moment(rtv.rtvDate) <= moment(lastEndOfDay);
   }, [rtv, lastEndOfDay]);
 
@@ -93,6 +94,7 @@ function EditRtv(props) {
   const [grn, setGrn] = useState(null);
 
   useEffect(() => {
+    if(!rtv) return;
     let formItems = {};
     rtv.items.forEach(item => {
       let batches = [];
@@ -265,6 +267,13 @@ function EditRtv(props) {
       });
     });
   }, [items, supplier, printRtv]);
+
+  if(!rtvId || !rtv)
+  {
+    dispatch(showError("Record not found"));
+    return <Redirect to="/purchase/rtvs" />
+  }
+
     return(
       <>
       <Box width="100%" justifyContent="space-between" display="flex">
@@ -397,7 +406,7 @@ function EditRtv(props) {
           }
           {
             beforeLastEndOfDay ?
-            <Typography component="div" style={{ color: '#7c7c7c', marginTop: 10, marginBottom: 10 }}>Cannot update this RTV because it is dated before Last end of Day: { moment(lastEndOfDay).format("DD MMM, YYY, hh:MM A") }</Typography>
+            <Typography component="div" style={{ color: '#7c7c7c', marginTop: 10, marginBottom: 10 }}>Cannot update this RTV because it is dated before Last end of Day: { moment(lastEndOfDay).format("DD MMM, YYYY, hh:mm A") }</Typography>
             : null
           }
           {

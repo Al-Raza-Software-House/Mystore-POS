@@ -9,7 +9,7 @@ import { makeStyles } from '@material-ui/styles';
 import ItemImage from 'components/library/ItemImage';
 const rowsPerPage = 12;
 
-function ItemsGrid({ selectItem }){
+function ItemsGrid({ selectItem, disabled }){
   const storeId = useSelector(state => state.stores.selectedStoreId);
   let items = useSelector(state => state.items[storeId].allItems );
   const totalPages = useMemo(() => Math.ceil( items.length / rowsPerPage ), [items]);
@@ -24,7 +24,7 @@ function ItemsGrid({ selectItem }){
     <Box width="100%" height="320px" px={2} py={1} borderRadius={5} style={{ boxSizing: "border-box" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
       {
         rows.map(item => (
-          <Item item={item} key={item._id} selectItem={selectItem} />
+          <Item item={item} key={item._id} selectItem={selectItem} disabled={disabled} />
         ))
       }
     </Box>
@@ -43,10 +43,10 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-function Item({ item, selectItem }){
+function Item({ item, selectItem, disabled }){
   const classes = useStyles();
   return(
-    <ButtonBase style={{ boxSizing: "border-box", width: "32%", cursor: "pointer", marginBottom: "8px" }} onClick={() => selectItem(item)}>
+    <ButtonBase style={{ boxSizing: "border-box", width: "32%", cursor: "pointer", marginBottom: "8px" }} onClick={() => selectItem(item)} disabled={disabled}>
       <Paper style={{ width: "100%" }}  elevation={3} className={classes.root}>
         <Box p={1}>
           <Typography title={item.itemName} align="center" style={{ fontSize: 12, fontWeight: "bold", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}> {item.itemName}  </Typography>

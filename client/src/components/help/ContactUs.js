@@ -9,8 +9,11 @@ function ContactUs(props) {
   return(
     <Box>
       <Typography gutterBottom>Please check the related help section first. If you have any query or suggestion, You can reach us through WhatsApp or Facebook </Typography>
-      <Typography variant="h5" gutterBottom>
-        <FontAwesomeIcon style={{ color: '#25D366' }} icon={faWhatsapp} /> { process.env.REACT_APP_CONTACT_US_NUMBER }
+      <Typography variant="h5" gutterBottom style={{ display: 'flex', alignItems: 'center' }}>
+        <FontAwesomeIcon style={{ color: '#25D366', marginRight: 6 }} icon={faWhatsapp} /> 
+        <Link target="_blank" style={{fontSize: '16px'}} href={'https://api.whatsapp.com/send?phone='+ process.env.REACT_APP_CONTACT_US_NUMBER.replace('+', '') }>
+          { process.env.REACT_APP_CONTACT_US_NUMBER }
+        </Link>
       </Typography>
       <Typography variant="h5" style={{ display: 'flex', alignItems: 'center' }}>
         <FontAwesomeIcon style={{ color: '#4267B2', marginRight: 4 }} icon={faFacebook} /> 

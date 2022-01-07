@@ -5,11 +5,11 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { connect, useSelector } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { updateTxns } from '../../../store/actions/accountActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import { paymentModes, accountHeadTypes } from '../../../utils/constants';
 import DateTimeInput from '../../library/form/DateTimeInput';
 import moment from 'moment';
@@ -68,6 +68,7 @@ function EditTransaction(props) {
   const { banks, heads, defaultBankId, lastEndOfDay } = props;
 
   useEffect(() => {
+    if(!txn) return;
     dispatch( initialize(formName, {
       time: moment(txn.time).format("DD MMMM, YYYY hh:mm A"),
       headId: txn.headId,
@@ -94,19 +95,25 @@ function EditTransaction(props) {
   }, [banks]);
 
   useEffect(() => {
+    if(!txn) return;
     if(selectedHead && selectedHead.name === "Bank Account")
       dispatch( change(formName, 'type', paymentModes.PAYMENT_MODE_CASH) );
     if((selectedHead && selectedHead.name === "Bank Account") || parseInt(type) === paymentModes.PAYMENT_MODE_BANK)
       dispatch( change(formName, 'bankId', txn.bankId ? txn.bankId : defaultBankId) );
     else if ( parseInt(type) === paymentModes.PAYMENT_MODE_CASH )
       dispatch( change(formName, 'bankId', null) );
-  }, [selectedHead, type, defaultBankId, txn.bankId, dispatch]);
+  }, [selectedHead, type, defaultBankId, txn, dispatch]);
 
 
   useEffect(() => {
     if(submitSucceeded)
       history.push('/accounts');
   }, [submitSucceeded, history])
+  if(!txnId || !txn)
+  {
+    dispatch( showError("Record not found") );
+    return <Redirect to="/accounts" />
+  }
     return(
       <>
       <Box width="100%" justifyContent="flex-end" display="flex">

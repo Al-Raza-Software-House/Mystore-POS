@@ -17,6 +17,8 @@ import AccountsRouter from '../accounts/AccountsRouter';
 import PartiesRouter from '../parties/PartiesRouter';
 import PurchaseRouter from '../purchase/PurchaseRouter';
 import SaleRouter from '../sale/SaleRouter';
+import NoInternetBlock from 'components/library/NoInternetBlock';
+import AppExpiredBlock from 'components/library/AppExpiredBlock';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -25,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(0),
     paddingTop: theme.spacing(8),
     boxSizing: 'border-box',
-    height: '100%',
+    minHeight: '100%',
     width: 'calc(100% - 256px)',
     position: 'relative'
   }
@@ -43,6 +45,8 @@ function Content({ userRole }) {
   return (
     <main className={classes.content}>
       <InterfaceBlock />
+      <NoInternetBlock />
+      <AppExpiredBlock />
       <Switch>
         <Route exact path="/account-settings" component={AccountSettings} />
         <Route exact path="/dashboard" component={Dashboard} />

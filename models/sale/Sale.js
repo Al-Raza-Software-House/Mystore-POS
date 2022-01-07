@@ -21,20 +21,20 @@ const schema = new mongoose.Schema({
   totalItems: Number,
   totalQuantity: Number,
   totalDiscount: Number,
+  totalCost: Number,
   totalAmount: Number,
   
   adjustment: Number,
   profit: Number,
 
-  cashAmount: Number, //amount paid in cash, can be full or partial cash
+  cashPaid: Number, //Total Cash paid by customer
   bankAmount: Number, //amount paid via bank. can be full or partial
   creditAmount: Number, //Amount to put in customer ledger
+  cashAmount: Number, // actual cash charged to customer
+  balanceAmount: Number, //cash returned to customer
 
   bankId: mongoose.Schema.Types.ObjectId,
   chequeTxnId: String,
-
-  cashPaid: Number, // cash given by customer
-  balanceAmount: Number, //cash returned to customer
 
   notes: String,
 

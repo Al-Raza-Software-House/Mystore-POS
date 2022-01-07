@@ -528,6 +528,7 @@ router.get('/transaction', async (req, res) => {
     if(!store) throw new Error("invalid Request");
 
     const ledgerTxn = await CustomerLedger.findOne({ _id: req.query.txnId, customerId: req.query.customerId, storeId: req.query.storeId });
+    if(!ledgerTxn) throw new Error("invalid request");
     await store.updateLastVisited();
     res.json( ledgerTxn );
   }catch(err)

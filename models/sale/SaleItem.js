@@ -22,6 +22,10 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'item'
   },
+  categoryId: { //always unit item
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'category'
+  },
   isVoided: Boolean,
 
   quantity: Number,
@@ -36,11 +40,6 @@ const schema = new mongoose.Schema({
   }],
 
   totalProfit: Number, // form total quntity of this item
-  categoryId: { //always unit item
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'category'
-  }
-
 })
 
 //store record/settings udpate

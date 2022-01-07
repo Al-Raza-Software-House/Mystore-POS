@@ -5,11 +5,11 @@ import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { useSelector } from 'react-redux';
-import { showSuccess } from '../../../store/actions/alertActions';
+import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { updateBank } from '../../../store/actions/accountActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import CheckboxInput from '../../library/form/CheckboxInput';
 
 const useStyles = makeStyles(theme => ({
@@ -36,6 +36,7 @@ function EditBank(props) {
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
 
   useEffect(() => {
+    if(!bank) return;
     dispatch( initialize('editBank', {
       name: bank.name,
       default: bank.default,
@@ -46,6 +47,11 @@ function EditBank(props) {
     if(submitSucceeded)
       history.push('/accounts/banks');
   }, [submitSucceeded, history])
+  if(!bankId || !bank)
+  {
+    dispatch(showError("Record not found"));
+    return <Redirect to="/accounts/banks" />
+  }
     return(
       <>
       <Box width="100%" justifyContent="flex-end" display="flex">

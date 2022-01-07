@@ -494,6 +494,7 @@ router.get('/transaction', async (req, res) => {
     if(!store) throw new Error("invalid Request");
 
     const ledgerTxn = await SupplierLedger.findOne({ _id: req.query.txnId, supplierId: req.query.supplierId, storeId: req.query.storeId });
+    if(!ledgerTxn) throw new Error("invalid request");
     await store.updateLastVisited();
     res.json( ledgerTxn );
   }catch(err)

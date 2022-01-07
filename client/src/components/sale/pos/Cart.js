@@ -10,8 +10,9 @@ import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useState } from 'react';
 import SaleBatches from './SaleBatches';
+import ReturnBatches from './ReturnBatches';
 
-function Cart({ formItems, items, formName }){
+function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
   const totals = useMemo(() => {
     let totalQuantity = 0;
     let totalAmount = 0;
@@ -53,7 +54,7 @@ function Cart({ formItems, items, formName }){
       <Box width="100%" height="369px" id="cart-container"  borderRadius={5} style={{ boxSizing: "border-box", overflowY: "auto" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
         {
           items.map(item => (
-            <Item item={item} formItem={formItems[item._id]} key={item._id} formName={formName} />
+            <Item item={item} formItem={formItems[item._id]} key={item._id} formName={formName} allowNegativeInventory={allowNegativeInventory} disabled={disabled} />
           ))
         }
       </Box>
@@ -64,7 +65,7 @@ function Cart({ formItems, items, formName }){
 
 
 
-function Item({ item, formItem, formName }){
+function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   let quantity = isNaN(formItem.quantity) ? 0 : Number(formItem.quantity);
@@ -117,15 +118,18 @@ function Item({ item, formItem, formName }){
               variant="outlined"
               margin="dense"
               type="text"
-              showError={false}
+              showError={allowNegativeInventory ? false:  true}
+              ignoreTouch={allowNegativeInventory ? false:  true}
               onKeyDown={allowOnlyNumber}
               inputProps={{ style: { textAlign: "center" } }}
+              disabled={disabled}
               InputProps={{
                   startAdornment:
                     <InputAdornment position="start">
                       <IconButton
                         onClick={decreaseQuantity}
                         onMouseDown={(event) => event.preventDefault()}
+                        disabled={disabled}
                       >
                         { <FontAwesomeIcon icon={ faMinus } size="xs" /> }
                       </IconButton>
@@ -135,6 +139,7 @@ function Item({ item, formItem, formName }){
                       <IconButton
                         onClick={increaseQuantity}
                         onMouseDown={(event) => event.preventDefault()}
+                        disabled={disabled}
                       >
                         { <FontAwesomeIcon icon={ faPlus } size="xs" /> }
                       </IconButton>
@@ -149,7 +154,7 @@ function Item({ item, formItem, formName }){
           <Typography style={{ fontSize: 16, fontWeight: "bold" }}>{ (+((quantity * salePrice) - (quantity * discount)).toFixed(2)).toLocaleString() }</Typography>
         </Box>
         <Box width="90px" textAlign="center">
-          <Button type="button" variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid} > { formItem.isVoided ? "unVoid" : "Void" } </Button>
+          <Button type="button" disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid} > { formItem.isVoided ? "unVoid" : "Void" } </Button>
         </Box>
       </Box>
       <Collapse in={open} style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
@@ -166,6 +171,7 @@ function Item({ item, formItem, formName }){
               type="text"
               showError={false}
               onKeyDown={allowOnlyNumber}
+              disabled={disabled}
             />
           </Box>
           <Box px={1} width={{ xs: "100%", md: "48%" }}>
@@ -180,13 +186,18 @@ function Item({ item, formItem, formName }){
               type="text"
               showError={false}
               onKeyDown={allowOnlyNumber}
+              disabled={disabled}
             />
           </Box>
         </Box>
         <Box px={1}>
           { 
             item.sizeName ? null :
-            <FieldArray name={`items[${item._id}].batches`} component={SaleBatches} {...{batches: item.batches}} />
+            (
+               quantity > 0 ? <FieldArray name={`items[${item._id}].batches`} component={SaleBatches} {...{batches: item.batches}} disabled={disabled} />  : 
+               (quantity < 0 ? <FieldArray name={`items[${item._id}].batches`} component={ReturnBatches} disabled={disabled} /> : null)
+              
+            )
           }
         </Box>
       </Collapse>

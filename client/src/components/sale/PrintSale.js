@@ -4,20 +4,31 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
-import { payOrCreditOptions } from '../../../utils/constants';
 
-const cellStyle = { border: '1px solid black', textAlign: "center", borderSpacing: "0px", padding: "3px 10px", boxSizing: "border-box" };
+const cellStyle = { borderTop: '1px dotted black', textAlign: "center", borderSpacing: "0px", padding: "3px 10px", boxSizing: "border-box" };
 
 function PrintSale(props){
-  const { grn, setGrn } = props;
+  const { sale, setSale } = props;
   const [open, setOpen] = useState(false);
   const handleClose = () => {
     setOpen(false);
-    setGrn(false);
+    setSale(false);
   };
   const store = useSelector(state => {
     let storeId = state.stores.selectedStoreId;
     return state.stores.stores.find(record => record._id === storeId);
+  });
+
+  const user = useMemo(() => {
+    if(!sale) return null;
+    let user = store.users.find(user => user.record._id === sale.userId);
+    return user ? user.record : null;
+  }, [store, sale]);
+
+  const customer = useSelector(state => {
+    if(!sale || !sale.customerId) return null;
+    let storeId = state.stores.selectedStoreId;
+    return state.customers[storeId].find(record => record._id === sale.customerId);
   });
   
   const banks = useSelector(state => {
@@ -35,20 +46,20 @@ function PrintSale(props){
   
   const itemMaps = useMemo(() => {
     let newMap = {};
-    if(!grn) return newMap;
-    grn.items.forEach(record => {
+    if(!sale) return newMap;
+    sale.items.forEach(record => {
       let item = items.find(item => item._id === record._id);
       if(item)
         newMap[item._id] = item;
     });
     return newMap;
-  }, [items, grn]);
+  }, [items, sale]);
 
   const printReceipt = useCallback(() => {
     var mywindow = window.open('', 'PRINT', 'height=600,width=800');
-      mywindow.document.write('<html><head><title>Goods Receipt Note</title>');
+      mywindow.document.write('<html><head><title>Sale Receipt</title>');
       mywindow.document.write('</head><body >');
-      mywindow.document.write('<style type="text/css"> @media print { #table-container{ margin-bottom: 40mm; } }  </style>')
+      mywindow.document.write('<style type="text/css"> @media print { #table-container{ margin-bottom: 10mm; } }  </style>')
       mywindow.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />');
       mywindow.document.write(document.getElementById("receipt-container").innerHTML);
       mywindow.document.write('</body></html>');
@@ -64,138 +75,225 @@ function PrintSale(props){
       return true;
   }, []);
 
-  const totalItemAmount = useMemo(() => {
-    if(!grn) return 0;
-    let total = 0;
-    grn.items.forEach(item => {
-      let costPrice = item.costPrice;
-      let quantity = item.quantity;
-      let adjustment = item.adjustment * quantity;
-      let tax = item.tax * quantity;
-      total += costPrice * quantity;
-      total += tax;
-      total -= adjustment;
-    });
-    return (+total.toFixed(2)).toLocaleString()
+  const stats = useMemo(() => {
+    let stats = {
+      totalItems: 0,
+      totalQuantity: 0,
+      totalAmount: 0,
+      totalDiscount: 0
+    }
+    if(!sale) return stats;
+    sale.items.forEach(item => {
+      if(item.isVoided) return;
 
-  }, [grn]);
+      let salePrice = Number(item.salePrice);
+      let quantity = Number(item.quantity);
+      let discount = Number(item.discount);
+      stats.totalItems += 1;
+      stats.totalQuantity += quantity;
+      stats.totalAmount += salePrice * quantity;
+      stats.totalDiscount += discount * quantity;
+    });
+    return stats;
+
+  }, [sale]);
+
+  const netTotal = useMemo(() => {
+    if(!sale) return 0;
+    return +((stats.totalAmount - stats.totalDiscount) + Number(sale.adjustment)).toFixed(2);
+  }, [stats, sale])
+
+  const totalPayment = useMemo(() => {
+    if(!sale) return 0;
+    let cash = isNaN(sale.cashPaid) ? 0 : Number(sale.cashPaid);
+    let credit = isNaN(sale.creditAmount) ? 0 : Number(sale.creditAmount);
+    let bank = isNaN(sale.bankAmount) ? 0 : Number(sale.bankAmount);
+    let total = +( cash + credit + bank ).toFixed(2);
+    return total;
+    
+  }, [sale]);
 
   useEffect(() => {
-    if(grn)
+    if(sale)
+    {
       setOpen(true);
+      if(sale.printSalesReceipt)
+        setTimeout(() => {
+          printReceipt();
+          setOpen(false);
+        }, 100)
+    }
     else
       setOpen(false);
-  }, [grn])
+  }, [sale, printReceipt])
 
   return(
     <Dialog open={open} fullWidth maxWidth="xs" onClose={handleClose} aria-labelledby="form-dialog-title">
       {
-        !grn ?  null :
+        !sale ?  null :
         <DialogContent>
           <Box id="receipt-container" style={{ backgroundColor: '#ececec', padding: '0px 10px' }} maxWidth="80mm" margin="auto">
             <Box style={{ fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', padding: "16px 0px", maxWidth: "80mm" }}>
-              <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>Goods Receipt Note</Typography>
+              <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>{ store.receiptSettings.receiptTitle }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 18, textAlign: "center" }}>{ store.name }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 12, textAlign: "center" }}>{ store.address }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "8px", fontSize: 12, textAlign: "center" }}>{ store.phone1 }</Typography>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "center" }}>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}><span style={{ fontWeight: "bold" }}>Invoice #:</span> { grn.supplierInvoiceNumber }</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px", marginLeft: "8px" }}><span style={{ fontWeight: "bold" }}>Date:</span> { moment(grn.grnDate).format("DD MMM, YYYY") }</Typography>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "center" }}>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}><span style={{ fontWeight: "bold" }}>GRN #:</span> { grn.grnNumber }</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px", marginLeft: "8px" }}><span style={{ fontWeight: "bold" }}>Bill:</span> { grn.billNumber }</Typography>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Supplier:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.supplier.name }</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}>
+                  { 
+                    store.receiptSettings.printSaleId ?
+                    <>
+                    <span style={{ fontWeight: "bold" }}> Receipt #:</span> { sale.saleNumber }
+                    </> : null
+                  }
+                </Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px", marginLeft: "8px" }}><span style={{ fontWeight: "bold" }}>Date:</span> { moment(sale.saleDate).format("DD MMM, YYYY hh:mm A") }</Typography>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Bill Date:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(grn.billDate).format("DD MMM, YYYY") }</Typography>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Bill Due Date:</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ moment(grn.billDueDate).format("DD MMM, YYYY") }</Typography>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Payment Mode</Typography>
-                <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.payOrCredit === payOrCreditOptions.ON_CREDIT ? "Credit" : (grn.bankId ? banks[grn.bankId].name : "Cash") }</Typography>
-              </div>
               {
-                grn.payOrCredit === payOrCreditOptions.ON_CREDIT || !grn.bankId ? null : 
+                store.receiptSettings.printSalesperson && user ? 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Cheque No./Txn ID</Typography>
-                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.chequeTxnId }</Typography>
-                </div>
-              }
-              
-              { 
-                grn.notes ?
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Notes:</Typography>
-                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ grn.notes }</Typography>
+                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Salesperson:</Typography>
+                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ user.name }</Typography>
                 </div>
                 : null
               }
+              {
+                store.receiptSettings.printCustomerName && customer ? 
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Customer:</Typography>
+                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ customer.name }</Typography>
+                </div>
+                : null
+              }
+              
+              
+              
+              { 
+                store.receiptSettings.printSaleNotes && sale.notes ?
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Notes:</Typography>
+                  <Typography style={{ fontSize: "12px", margin: "0px" }}>{ sale.notes }</Typography>
+                </div>
+                : null
+              }
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography style={{ fontSize: "12px", fontWeight: "bold", margin: "0px" }}>Total Items: &nbsp; { stats.totalItems }</Typography>
+                <Typography style={{ fontSize: "12px", margin: "0px" }}></Typography>
+              </div>
               
               <Box id="table-container" style={{ padding: "0px 4px" }}>
                 <table style={{ width: "100%", marginTop: "8px", fontSize: '12px', "borderCollapse": "collapse" }}>
                   <thead>
                     <tr>
-                      <th style={{...cellStyle, textAlign: "left"}} >Item</th>
-                      <th style={cellStyle} >Cost</th>
-                      <th style={cellStyle} >Qty</th>
-                      <th style={cellStyle} >Amt</th>
+                      <th style={{...cellStyle, textAlign: "left", borderTop: "1px solid black", borderBottom: "1px solid black"}} >Item</th>
+                      <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Price</th>
+                      <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Qty</th>
+                      <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {
-                      grn.items.map(item => (
+                      sale.items.map(item => item.isVoided ? null :
+                      (
                         <tr key={item._id}>
                           <td style={{...cellStyle, textAlign: "left"}} >
-                            <span>{itemMaps[item._id].itemCode}{itemMaps[item._id].sizeCode ? '-'+itemMaps[item._id].sizeCode+'-'+itemMaps[item._id].combinationCode : '' }</span> 
-                            <br/>
-                            <span>{itemMaps[item._id].itemName}</span>
                             {
-                              itemMaps[item._id].sizeName ?
-                              <span> <br/>{itemMaps[item._id].sizeName} | {itemMaps[item._id].combinationName} </span>
-                              : null
+                              store.receiptSettings.printItemCode ? 
+                              <>
+                              <span>{itemMaps[item._id].itemCode}{itemMaps[item._id].sizeCode ? '-'+itemMaps[item._id].sizeCode+'-'+itemMaps[item._id].combinationCode : '' }</span> 
+                              <br/> 
+                              </> : null
+                            }
+                            {
+                              store.receiptSettings.printItemName ? <span>{itemMaps[item._id].itemName}</span> : null
                             }
                           </td>
-                          <td style={cellStyle} > { item.costPrice.toLocaleString() } </td>
+                          <td style={cellStyle} > { item.salePrice.toLocaleString() } </td>
                           <td style={cellStyle} > { item.quantity.toLocaleString() } </td>
-                          <td style={cellStyle} > { ( +( ( (item.costPrice * item.quantity) + (item.tax * item.quantity)) - (item.adjustment * item.quantity)).toFixed(2) ).toLocaleString() } </td>
+                          <td style={cellStyle} > { ( +(Number(item.salePrice) * Number(item.quantity)).toFixed(2) ).toLocaleString() } </td>
                         </tr>
                       ))
                     }
                     <tr>
-                      <td style={cellStyle} colSpan="2"> <b>Total</b> </td>
-                      <td style={cellStyle}>{ grn.totalQuantity }</td>
-                      <td style={cellStyle}>{ totalItemAmount }</td>
+                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} colSpan="2"> <b>Total</b> </td>
+                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}}>{ stats.totalQuantity }</td>
+                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}}>{ stats.totalAmount }</td>
                     </tr>
                   </tbody>
                 </table>
-                <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0px", flexWrap: "wrap" }}>
-                  { grn.loadingExpense === 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px"}}>Loading Expense: <b>{ grn.loadingExpense.toLocaleString() } </b></Typography> }
-                  { grn.freightExpense === 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Freight Expense: <b>{ grn.freightExpense.toLocaleString() } </b></Typography> }
-                  { grn.otherExpense === 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Other Expense: <b>{ grn.otherExpense.toLocaleString() } </b></Typography> }
-                  { grn.adjustmentAmount === 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Adjustment: <b>{ grn.adjustmentAmount.toLocaleString() } </b></Typography> }
-                  { grn.purchaseTax === 0 ? null : <Typography style={{ fontSize: "12px", width: "45%", margin: "0px" }}>Purchase Tax: <b>{ grn.purchaseTax.toLocaleString() } </b></Typography> }
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 15px", }}>
-                  <Typography style={{ fontSize: "12px", margin: "0px", textAlign: "left" }}>Total Items: <b>{ grn.items.length } </b></Typography>
-                  <Typography style={{ fontSize: "12px", margin: "0px", textAlign: "center" }}>Net Total: <b>{ grn.totalAmount.toLocaleString() } </b></Typography>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", margin: "10px 15px", }}>
+                  {
+                    stats.totalDiscount > 0 ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Discount: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+stats.totalDiscount.toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
+                  {
+                    Number(sale.adjustment) !== 0 ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Adjustment: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+Number(sale.adjustment).toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
+                  <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Net Total: </div>
+                  <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  netTotal.toLocaleString() } </div>
+                  {
+                    Number(sale.cashPaid) !== 0 ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Cash Paid: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+Number(sale.cashPaid).toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
+                  {
+                    Number(sale.bankAmount) !== 0 ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Bank({ banks[sale.bankId] ? banks[sale.bankId].name : null  }) Payment: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+Number(sale.bankAmount).toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
+                  {
+                    Number(sale.bankAmount) !== 0 && sale.chequeTxnId ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}> Cheque/Txn ID: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  sale.chequeTxnId } </div>
+                    </> : null
+                  }
+                  {
+                    Number(sale.creditAmount) !== 0 ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Credit Amount: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+Number(sale.creditAmount).toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
+                  {
+                    customer && customer.allowCredit && store.receiptSettings.printCustomerLedger ? 
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Previous Balance: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+(customer.currentBalance - Number(sale.creditAmount)).toFixed(2)).toLocaleString() } </div>
+
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>New Balance: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+Number(customer.currentBalance).toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
+                  {
+                    totalPayment - netTotal > 0 ?
+                    <>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Cash returned: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+(totalPayment - netTotal).toFixed(2)).toLocaleString() } </div>
+                    </> : null
+                  }
                 </div>
               </Box>
-              <div style={{ visibility: "hidden" }}>.</div>
-              <Box style={{ display: "flex", justifyContent: "space-between", padding: "0px 8px", marginBottom: "16px", marginTop: "10px" }} >
-                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }} > Received By </Box>
-                <Box style={{ borderTop: "1px solid black", textAlign: "center", width: "45%", paddingTop: "8px", fontSize: '12px' }}> Approved By </Box>
-              </Box>
-              <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center" }} id="app-name" >
+              {
+                 store.receiptSettings.footer ?
+                  <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center",  }} >
+                    { store.receiptSettings.footer }
+                  </Box> : null
+              }
+              <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center", marginTop: "10px" }} id="app-name" >
                 { process.env.REACT_APP_PRINT_FOOTER }
               </Box>
             </Box>

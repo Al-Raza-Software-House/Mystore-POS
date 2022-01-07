@@ -429,10 +429,6 @@ router.post('/search', async (req, res) => {
         case itemTypesFilter.OVER_STOCK_ITEMS:
           conditions['$expr'] = { $gt: ["$currentStock", "$maxStock"] };
           break;
-        case itemTypesFilter.EXPIRED_ITEMS:
-          const now = moment().tz('Asia/Karachi').toDate();
-          conditions.expiryDate = { $lt: now };
-          break;
         case itemTypesFilter.SERVICE_ITEMS:
           conditions.isServiceItem = true;
           break;

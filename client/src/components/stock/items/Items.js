@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Typography, Popover, IconButton } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync, faPencilAlt, faTrash,  faArrowAltCircleUp } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { connect, useSelector } from 'react-redux';
 import { loadItems, resetItems, deleteItem } from '../../../store/actions/itemActions';
 import ItemFilters from './ItemFilters';
@@ -161,10 +161,6 @@ function Item({ item, categoriesMap, storeId, deleteItem }){
           item.isServiceItem ? null :
           <>
             <AdjustStock storeId={storeId} itemId={item._id} />
-
-            <IconButton onClick={(event) => handleClick(event) } title="Add Stock">
-              <FontAwesomeIcon icon={faArrowAltCircleUp} size="xs" />
-            </IconButton>
           </>
         }
         <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id }  title="Edit Item">
