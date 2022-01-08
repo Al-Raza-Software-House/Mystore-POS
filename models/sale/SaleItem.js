@@ -39,7 +39,8 @@ const schema = new mongoose.Schema({
     batchQuantity: Number
   }],
 
-  totalProfit: Number, // form total quntity of this item
+  totalProfit: Number, // form total quntity of this item,
+  time: Date
 })
 
 //store record/settings udpate

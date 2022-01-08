@@ -31,7 +31,7 @@ export const syncCustomers = (lastUpatedStamp) => {
 
     }catch(err)
     {
-
+      dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     }
   }
 }

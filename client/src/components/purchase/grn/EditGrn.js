@@ -131,7 +131,9 @@ function EditGrn(props) {
     axios.get('/api/purchaseOrders/', { params: { storeId, supplierId: grn.supplierId, poId: grn.poId } }).then(({ data }) => {
       if(data.order._id)
         setPo(data.order);
-    }).catch(err => err);
+    }).catch(err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
 
   }, [grn, allItems, dispatch, storeId]);
 

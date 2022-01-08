@@ -39,20 +39,20 @@ router.get('/stats', async (req, res) => {
     //Todays sale stats
     aggregate = await Sale.aggregate([
       { $match: { storeId: store._id, saleDate: { $gte: todayStart, $lte: todayEnd } } },
-      { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalCustomers: { $sum: 1 } } }
+      { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
     ]);
     stats.sale.today.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
     stats.sale.today.grossProfit = aggregate.length ? +(aggregate[0].totalGrossProfit).toFixed(2) : 0;
-    stats.sale.today.customers = aggregate.length ? +(aggregate[0].totalCustomers).toFixed(2) : 0;
+    stats.sale.today.receipts = aggregate.length ? +(aggregate[0].totalReceipts).toFixed(2) : 0;
 
     //yesterday sale stats
     aggregate = await Sale.aggregate([
       { $match: { storeId: store._id, saleDate: { $gte: yesterdayStart, $lte: yesterdayEnd } } },
-      { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalCustomers: { $sum: 1 } } }
+      { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
     ]);
     stats.sale.yesterday.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
     stats.sale.yesterday.grossProfit = aggregate.length ? +(aggregate[0].totalGrossProfit).toFixed(2) : 0;
-    stats.sale.yesterday.customers = aggregate.length ? +(aggregate[0].totalCustomers).toFixed(2) : 0;
+    stats.sale.yesterday.receipts = aggregate.length ? +(aggregate[0].totalReceipts).toFixed(2) : 0;
 
     stats.totals.categories = await Category.countDocuments({ storeId: store._id });
     stats.totals.items = await Item.countDocuments({ storeId: store._id, varientParentId: null, packParentId: null });
@@ -75,7 +75,7 @@ router.get('/stats', async (req, res) => {
 
     aggregate = await Sale.aggregate([
       { $match: { storeId: store._id, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
-      { $group: { _id: { $dayOfYear: {date: "$saleDate",timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalCustomers: { $sum: 1 } } },
+      { $group: { _id: { $dayOfYear: {date: "$saleDate",timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
       {$sort: {_id: 1}}
     ]);
     stats.dailySales = aggregate;

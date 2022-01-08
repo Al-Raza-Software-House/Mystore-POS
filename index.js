@@ -35,7 +35,8 @@ const mongooseConfig = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
-  useFindAndModify: false  
+  useFindAndModify: false,
+  autoIndex: false  
 }
 
 mongoose.connect(process.env.MONGODB_URI, mongooseConfig)

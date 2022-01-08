@@ -1,7 +1,7 @@
 import { actionTypes } from '../actions/dashboardActions';
 const initState = { }
 const defaultStoreDashboard = {
-  stats: {},
+  stats: null,
   loadingStats: false,
 }
 const dashboardReducer = (state = initState, action) => {

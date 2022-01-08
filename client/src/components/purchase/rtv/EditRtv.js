@@ -144,7 +144,9 @@ function EditRtv(props) {
     axios.get('/api/grns/', { params: { storeId, supplierId: rtv.supplierId, grnId: rtv.grnId } }).then(({ data }) => {
       if(data.grn._id)
         setGrn(data.grn);
-    }).catch(err => err);
+    }).catch(err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
 
   }, [rtv, allItems, dispatch, storeId]);
 

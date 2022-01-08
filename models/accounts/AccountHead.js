@@ -4,7 +4,7 @@ const moment = require("moment-timezone");
 const schema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'store'
+    ref: 'store',
   },
   name: String,
   editAble: Boolean, //cannot be edit/deleted
@@ -22,5 +22,6 @@ schema.methods.updateLastUpdated = function(){
   this.lastUpdated = now;
   return this.save();
 }
+
 
 module.exports = mongoose.model('accountHead', schema);

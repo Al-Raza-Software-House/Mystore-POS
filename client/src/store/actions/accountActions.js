@@ -31,7 +31,9 @@ export const loadAccountHeads = () => {
     const storeId = state.stores.selectedStoreId;
     axios.get('/api/accounts/heads', { params: { storeId } }).then( ({ data }) => {
       dispatch({ type: actionTypes.ACCOUNT_HEADS_LOADED, storeId, heads: data });
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 
@@ -88,7 +90,9 @@ export const loadBanks = () => {
     const storeId = state.stores.selectedStoreId;
     axios.get('/api/accounts/banks', { params: { storeId } }).then( ({ data }) => {
       dispatch({ type: actionTypes.BANKS_LOADED, storeId, banks: data });
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 
@@ -155,7 +159,10 @@ export const loadTxns = (recordsPerPage) => {
     axios.post('/api/accounts/transactions', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
       dispatch({ type: actionTypes.TRANSACTIONS_LOADED, storeId, txns: data.txns, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 
@@ -173,7 +180,7 @@ export const deleteTxn = (storeId, txnId) => {
     }).catch( err => {
       dispatch( hideProgressBar() );
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
-    } );
+    });
   }
 }
 

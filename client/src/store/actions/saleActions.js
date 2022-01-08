@@ -116,7 +116,7 @@ export const syncSale = (storeId) => {
         dispatch( addNewTxns(storeId, data.accountTxns) );
       dispatch( syncSale(storeId) );
     }).catch( err => {
-      //dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });
   }
 }

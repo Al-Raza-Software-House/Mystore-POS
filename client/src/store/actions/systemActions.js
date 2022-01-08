@@ -8,6 +8,7 @@ import { actionTypes as helpActions, syncVideos } from "./helpActions";
 import { actionTypes as itemActions, syncItems } from "./itemActions";
 import { actionTypes as itemPropertiesActions, loadItemProperties } from "./itemPropertiesActions";
 import { actionTypes as supplierActions, syncSuppliers } from "./supplierActions";
+import { showError } from "./alertActions";
 
 export const actionTypes = {
   MASTER_DATA_LOADED: 'masterDataLoaded',
@@ -48,7 +49,7 @@ export const syncDeleteActivity = (lastUpatedStamp) => {
       }
     }catch(err)
     {
-
+      dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     }
   }
 }

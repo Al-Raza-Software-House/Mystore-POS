@@ -20,7 +20,9 @@ export const loadItemProperties = () => {
     const storeId = state.stores.selectedStoreId;
     axios.get('/api/itemProperties', { params: { storeId } }).then( ({ data }) => {
       dispatch({ type: actionTypes.ITEM_PROPERTIES_LOADED, storeId, properties: data });
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
   }
 }
 

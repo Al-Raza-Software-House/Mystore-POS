@@ -14,6 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { amber } from '@material-ui/core/colors';
 import { useDispatch } from 'react-redux';
+import { showError } from 'store/actions/alertActions';
 
 function CurrentBill(props){
   const { selectedMonths, store, loadSelectedStore, storesStampChanged, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty } = props;
@@ -33,6 +34,7 @@ function CurrentBill(props){
       else
         timer.current = setTimeout(ping, 6000);
     }).catch(err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
       timer.current = setTimeout(ping, 6000);
     });
   }, [store._id, store.paymentTxnId, loadSelectedStore, storesStampChanged, dispatch]);

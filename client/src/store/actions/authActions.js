@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { showError } from './alertActions';
+import { hideProgressBar } from './progressActions';
 
 export const actionTypes = {
   SIGNUP_SUCCESS: 'signUpSuccess',
@@ -25,7 +27,9 @@ export const loadAuth = () => {
           type: actionTypes.LOADAUTH_SUCCESS,
           user: data.user
         });
-    }).catch(err => err); // auto catched in response interceptor
+    }).catch( err => {
+      dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 

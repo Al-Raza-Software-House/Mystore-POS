@@ -17,7 +17,9 @@ export const loadAdjustmentReasons = () => {
     const storeId = state.stores.selectedStoreId;
     axios.get('/api/adjustmentReasons', { params: { storeId } }).then( ({ data }) => {
       dispatch({ type: actionTypes.ADJUST_REASONS_LOADED, storeId, reasons: data });
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 

@@ -30,7 +30,9 @@ export const loadCategories = () => {
     const storeId = state.stores.selectedStoreId;
     axios.get('/api/categories', { params: { storeId } }).then( ({ data }) => {
       dispatch({ type: actionTypes.CATEGORIES_LOADED, storeId, categories: data });
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 

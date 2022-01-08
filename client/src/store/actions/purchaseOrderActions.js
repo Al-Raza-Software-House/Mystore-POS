@@ -30,7 +30,10 @@ export const loadPurchaseOrders = (recordsPerPage) => {
     axios.post('/api/purchaseOrders', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
       dispatch({ type: actionTypes.PURCHASE_ORDERS_LOADED, storeId, orders: data.orders, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(hideProgressBar());
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
   }
 }
 

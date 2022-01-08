@@ -75,7 +75,6 @@ function EditSupplierPayment(props) {
         setTxn(data);
       }
     }).catch(err => {
-      console.log(err);
       dispatch(hideProgressBar());
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
       history.push('/parties');

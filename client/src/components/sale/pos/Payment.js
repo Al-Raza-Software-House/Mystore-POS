@@ -114,7 +114,6 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
               inputProps={{ style: { textAlign: "right" } }}
               onFocus={(event) => {
                 event.currentTarget.select();
-                //console.log(event.);
               }}
               variant="outlined"
               margin="dense"
@@ -147,7 +146,6 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
                   inputProps={{ style: { textAlign: "right" } }}
                   onFocus={(event) => {
                     event.currentTarget.select();
-                    //console.log(event.);
                   }}
                   variant="outlined"
                   margin="dense"
@@ -196,7 +194,6 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
                   inputProps={{ style: { textAlign: "right" } }}
                   onFocus={(event) => {
                     event.currentTarget.select();
-                    //console.log(event.);
                   }}
                   variant="outlined"
                   margin="dense"

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { showError } from "./alertActions";
 import { hideProgressBar, showProgressBar } from "./progressActions"
 
 export const actionTypes = {
@@ -19,7 +20,7 @@ export const loadVideos = () => {
       dispatch({ type: actionTypes.VIDEOS_LOADED, videos: data });
     }).catch( err => {
        dispatch(hideProgressBar());
-      return err
+       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     } );
   }
 }
@@ -29,8 +30,7 @@ export const syncVideos = () => {
     axios.get('/api/help/videos').then( ({ data }) => {
       dispatch({ type: actionTypes.VIDEOS_LOADED, videos: data });
     }).catch( err => {
-       dispatch(hideProgressBar());
-      return err
+        dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     } );
   }
 }

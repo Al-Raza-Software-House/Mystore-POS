@@ -1,5 +1,5 @@
 import axios from "axios";
-import { showSuccess } from "./alertActions";
+import { showError, showSuccess } from "./alertActions";
 import { hideProgressBar, showProgressBar } from "./progressActions"
 
 export const actionTypes = {
@@ -24,7 +24,10 @@ export const loadStores = () => {
       if(state.stores.stores.length === 0)
         dispatch(hideProgressBar());
       dispatch({ type: actionTypes.STORES_LOADED, stores: data });
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 
@@ -42,7 +45,9 @@ export const loadSelectedStore = () => {
         if(data.users[i].userId === uid && data.users[i].userRole !== userRole) //user role changed
           dispatch(changeUserRole(data.users[i].userRole))
       }
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 
@@ -75,7 +80,10 @@ export const removeUser = (userId) => {
       dispatch( updateStore(storeId, data.store) );
       dispatch( storesStampChanged(storeId, data.now) );
       dispatch( showSuccess('User removed from store') );
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 
@@ -87,7 +95,10 @@ export const loadBillingHistory = (storeId) => {
       const store = state.stores.stores.find(item => item._id === state.stores.selectedStoreId);
       dispatch(hideProgressBar());
       dispatch( updateStore(storeId, { ...store, billingHistory: data  }) );
-    }).catch( err => err);
+    }).catch( err => {
+      dispatch( hideProgressBar() );
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 

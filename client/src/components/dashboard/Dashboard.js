@@ -109,8 +109,8 @@ function Dashboard({ storeId, loadStats, stats }){
               </Paper>
 
               <Paper className={classes.stats} elevation={5}>
-                <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ stats.sale.today.customers.toLocaleString() }</Box>
-                <span style={{ color: "#606060" }} >Customers</span>
+                <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ stats.sale.today.receipts.toLocaleString() }</Box>
+                <span style={{ color: "#606060" }} >Receipts</span>
               </Paper>
 
               <Paper className={classes.stats} elevation={5}>
@@ -129,8 +129,8 @@ function Dashboard({ storeId, loadStats, stats }){
               </Paper>
 
               <Paper className={classes.stats} elevation={5}>
-                <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ stats.sale.yesterday.customers.toLocaleString() }</Box>
-                <span style={{ color: "#606060" }} > Customers</span>
+                <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ stats.sale.yesterday.receipts.toLocaleString() }</Box>
+                <span style={{ color: "#606060" }} > Receipts</span>
               </Paper>
 
               <Paper className={classes.stats} elevation={5}>
@@ -202,7 +202,7 @@ function Dashboard({ storeId, loadStats, stats }){
                   <Legend />
                   <Line type="monotone" dataKey="totalSaleAmount" name="Sale" stroke="#8884d8" activeDot={{ r: 8 }} />
                   <Line type="monotone" dataKey="totalGrossProfit" name="Gross Profit" stroke="#2196f3" />
-                  <Line type="monotone" dataKey="totalCustomers" name="Customers" stroke="#82ca9d" />
+                  <Line type="monotone" dataKey="totalReceipts" name="Receipts" stroke="#82ca9d" />
                 </LineChart>
               </ResponsiveContainer>
             </Box>

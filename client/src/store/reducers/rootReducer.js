@@ -28,7 +28,7 @@ function storeageReducer(state = { loaded: false }, action) {
             return { ...state, loaded: true };
  
         case storage.SAVE:
-            console.log('Something has changed and written to disk!');
+           // console.log('Something has changed and written to disk!');
         break;
         default:
             return state;

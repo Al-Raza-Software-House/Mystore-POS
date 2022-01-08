@@ -34,7 +34,10 @@ export const loadItems = (recordsPerPage) => {
     axios.post('/api/items/search', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
       dispatch({ type: actionTypes.ITEMS_LOADED, storeId, items: data.items, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
-    }).catch( err => err );
+    }).catch( err => {
+       dispatch(hideProgressBar());
+       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
   }
 }
 
@@ -56,7 +59,7 @@ export const syncItems = (lastUpatedStamp) => {
 
     }catch(err)
     {
-
+       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     }
   }
 }

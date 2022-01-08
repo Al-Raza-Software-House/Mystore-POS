@@ -31,7 +31,10 @@ export const loadRtvs = (recordsPerPage) => {
     axios.post('/api/rtvs', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
       dispatch({ type: actionTypes.RTVS_LOADED, storeId, rtvs: data.rtvs, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
-    }).catch( err => err );
+    }).catch( err => {
+      dispatch(hideProgressBar());
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    } );
   }
 }
 

@@ -30,7 +30,7 @@ export const syncSuppliers = (lastUpatedStamp) => {
 
     }catch(err)
     {
-
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     }
   }
 }

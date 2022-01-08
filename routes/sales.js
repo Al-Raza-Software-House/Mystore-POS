@@ -144,7 +144,8 @@ router.post('/create', async (req, res) => {
         salePrice,
         discount,
         totalProfit: +totalProfit.toFixed(2),
-        batches
+        batches,
+        time: sale.saleDate
       }
       let dbSaleItem = new SaleItem(saleItem);
       await dbSaleItem.save();
@@ -510,7 +511,8 @@ router.post('/update', async (req, res) => {
         salePrice,
         discount,
         totalProfit: +totalProfit.toFixed(2),
-        batches
+        batches,
+        time: sale.saleDate
       }
       let dbSaleItem = new SaleItem(saleItem);
       await dbSaleItem.save();
