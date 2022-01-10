@@ -103,7 +103,7 @@ function ViewClosing(props) {
   };
   if(!closingId || !storeRecord)
   {
-    dispatch( showError("Record not found") );
+    //dispatch( showError("Record not found") );  //Do not show error as on delete, removing closing form redux triggers this error
     return <Redirect to="/sale/closings" />
   }
   if(!closing._id) return null;
