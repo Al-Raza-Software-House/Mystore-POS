@@ -79,7 +79,7 @@ function EditCustomerPayment(props) {
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
       history.push('/parties/customers');
     })
-  }, [customerId, txnId, dispatch, storeId, defaultBankId]);
+  }, [customerId, txnId, dispatch, storeId, defaultBankId, history]);
 
   const customer = useSelector( state =>  state.customers[storeId].find(item => item._id === customerId) );
 

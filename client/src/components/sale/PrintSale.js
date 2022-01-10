@@ -121,7 +121,7 @@ function PrintSale(props){
         setTimeout(() => {
           printReceipt();
           setOpen(false);
-        }, 100)
+        }, 300)
     }
     else
       setOpen(false);

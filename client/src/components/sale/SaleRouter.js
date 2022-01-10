@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { makeStyles, Paper, Box } from '@material-ui/core';
 import StyledTabs from '../library/StyledTabs';
 import { Route, Switch } from 'react-router-dom';
@@ -9,6 +9,7 @@ import PrintSale from './PrintSale';
 import Closings from './Closings';
 import ViewClosing from './ViewClosing';
 import PrintClosing from './PrintClosing';
+import { isSalesperson } from 'utils';
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -16,16 +17,24 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const menues = [
+let menues = [
   {to: '/sale', title: 'Sale & Return'},
   {to: '/sale/list', title: 'History'},
   {to: '/sale/closings', title: 'End of Day'}
 ]
 
-function SaleRouter(){
+function SaleRouter({ userRole }){
   const classes = useStyles();
   const [printSale, setPrintSale] = useState(null);
   const [printClosing, setPrintClosing] = useState(null);
+  const tabs = useMemo(() => {
+    if(isSalesperson(userRole))
+      return [
+          {to: '/sale', title: 'Sale & Return'},
+        {to: '/sale/list', title: 'History'},
+        ];
+    return menues;
+  }, [userRole]);
 
   return(
     <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
@@ -34,16 +43,19 @@ function SaleRouter(){
       <Paper className={classes.paper} square>
         <Box>
           <Box px={3} pt={0}>
-            <StyledTabs menues={menues} />
+            <StyledTabs menues={tabs} />
           </Box>
         </Box>
       </Paper>
       <Paper className={classes.paper} style={{flexGrow: 1}} variant="outlined" square>
         <Box px={3} pt={2} >
           <Switch>
-
-            <Route path="/sale/closings/view/:storeId/:closingId" render={props => <ViewClosing {...props} printClosing={setPrintClosing} />} />
-            <Route path="/sale/closings" render={props => <Closings {...props} printClosing={setPrintClosing} />} />
+            {
+              isSalesperson(userRole) ? null : <Route path="/sale/closings/view/:storeId/:closingId" render={props => <ViewClosing {...props} printClosing={setPrintClosing} />} />
+            }
+            {
+              isSalesperson(userRole) ? null : <Route path="/sale/closings" render={props => <Closings {...props} printClosing={setPrintClosing} />} />
+            }
 
             <Route path="/sale/view/:storeId/:saleId" render={props => <SaleAndReturn {...props} printSale={setPrintSale} />} />
             <Route path="/sale/list" render={props => <Sales {...props} printSale={setPrintSale} />} />
@@ -56,4 +68,10 @@ function SaleRouter(){
   )
 }
 
-export default connect(null, null)(SaleRouter);
+const mapStateToProps = (state) => {
+  return {
+   userRole: state.stores.userRole,
+  }
+}
+
+export default connect(mapStateToProps, null)(SaleRouter);

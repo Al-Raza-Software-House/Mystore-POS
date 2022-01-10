@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { showError } from './alertActions';
-import { hideProgressBar } from './progressActions';
+import { appVersionChanged } from './systemActions';
 
 export const actionTypes = {
   SIGNUP_SUCCESS: 'signUpSuccess',
@@ -19,14 +19,15 @@ export const actionTypes = {
 
 export const loadAuth = () => {
   return (dispatch, getState) => {
+    const state = getState();
     axios.get('/api/users/profile').then(({ data }) => {
-      if(data.systemVersion && localStorage && localStorage.getItem('systemV') !== data.systemVersion)
-        localStorage.removeItem('systemV');
       if(data.user)
         dispatch({
           type: actionTypes.LOADAUTH_SUCCESS,
           user: data.user
         });
+      if(data.appVersion !== state.system.appVersion)
+        dispatch( appVersionChanged(data.appVersion) );
     }).catch( err => {
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });

@@ -5,6 +5,7 @@ import { makeStyles, Card, CardActions, CardContent, Button, Typography } from '
 import { useHistory } from 'react-router-dom';
 import DeleteStore from './DeleteStore';
 import { userTypes } from '../../utils/constants';
+import { isSalesperson } from 'utils';
 
 const useStyles = makeStyles({
   root: {
@@ -34,7 +35,10 @@ function Store({ uid, store, selectStore }) {
   const role = store.users.find(item => item.userId === uid);
   const handleActionBtnClick = () => {
     selectStore(store._id, role.userRole);
-    history.push('/dashboard');
+    if(isSalesperson(role.userRole))
+      history.push('/sale');
+    else
+      history.push('/dashboard');
   }
   return (
     <Card className={classes.root} variant="outlined">

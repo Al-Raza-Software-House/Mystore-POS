@@ -161,6 +161,7 @@ export const loadTxns = (recordsPerPage) => {
       dispatch(hideProgressBar());
     }).catch( err => {
       dispatch( hideProgressBar() );
+      dispatch({ type: actionTypes.TRANSACTIONS_LOADED, storeId, txns: [], totalRecords: 0 });
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });
   }

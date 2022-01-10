@@ -34,6 +34,7 @@ export const loadGrns = (recordsPerPage) => {
       dispatch({ type: actionTypes.GRNS_LOADED, storeId, grns: data.grns, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => {
+      dispatch({ type: actionTypes.GRNS_LOADED, storeId, grns: [], totalRecords: 0 });
       dispatch( hideProgressBar() );
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });

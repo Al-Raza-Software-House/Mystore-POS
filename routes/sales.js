@@ -372,8 +372,6 @@ router.post('/create', async (req, res) => {
 });
 
 
-
-
 router.post('/update', async (req, res) => {
   try
   {
@@ -563,9 +561,6 @@ router.post('/update', async (req, res) => {
     return res.status(400).json({message: err.message});
   }
 });
-
-
-
 
 //remove stock txn, reverse batch txn, remove account txn, remove customer ledger txns, 
 const voidSale = async (sale, salesHeadId, now) => {
@@ -825,8 +820,6 @@ const unVoidSale = async (sale, salesHeadId, now) => {
   await sale.save();
 }
 
-
-
 router.post('/toggleVoid', async (req, res) => {
   try
   {
@@ -936,31 +929,5 @@ router.post('/', async (req, res) => {
   }
 });
 
-
-router.get('/', async (req, res) => {
-  try
-  {
-    if(!req.query.storeId) throw new Error("Store id is required");
-    if(!req.query.supplierId) throw new Error("supplierId id is required");
-    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
-    if(!store) throw new Error("invalid Request");
-    await store.updateLastVisited();
-
-    const conditions = {
-      storeId: req.query.storeId,
-      supplierId: req.query.supplierId
-    }
-    if(req.query.grnId)
-      conditions._id = req.query.grnId;
-    const grns = await GRN.find(conditions, null, { sort : { creationDate: -1 }  });
-    if(req.query.grnId)
-      res.json({ grn:  grns.length ? grns[0] : null });
-    else
-      res.json({ grns });
-  }catch(err)
-  {
-    return res.status(400).json({message: err.message});
-  }
-});
 
 module.exports = router;

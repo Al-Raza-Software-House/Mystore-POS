@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import theme from './config/MuiTheme';
 import { ThemeProvider } from '@material-ui/styles';
 import { configureAxios } from './config/axios'; //setup Axios interceptors
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 configureAxios(store);
 
@@ -18,3 +19,4 @@ const AppSetup = (
   </Provider>
 );
 ReactDOM.render(AppSetup, document.getElementById('root'));
+serviceWorkerRegistration.register();

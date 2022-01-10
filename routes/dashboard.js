@@ -19,8 +19,10 @@ router.get('/stats', async (req, res) => {
   try
   {
     if(!req.query.storeId) throw new Error("Store Id is required");
-    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
+    const store = await Store.isManager(req.query.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
+
+    const isOwner = await Store.isOwner(req.query.storeId, req.user._id);
 
     let todayStart = moment().startOf('day').toDate();
     let todayEnd = moment().endOf('day').toDate();
@@ -30,29 +32,50 @@ router.get('/stats', async (req, res) => {
 
     let stats = { 
       sale: {
-        today: {},
-        yesterday: {}
+        today: {
+          saleAmount: 0,
+          grossProfit: 0,
+          receipts: 0
+        },
+        yesterday: {
+          saleAmount: 0,
+          grossProfit: 0,
+          receipts: 0
+        }
       },
-      totals: {} 
+      totals: {},
+      dailySales: []
     }
     let aggregate = null;
-    //Todays sale stats
-    aggregate = await Sale.aggregate([
-      { $match: { storeId: store._id, saleDate: { $gte: todayStart, $lte: todayEnd } } },
-      { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
-    ]);
-    stats.sale.today.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
-    stats.sale.today.grossProfit = aggregate.length ? +(aggregate[0].totalGrossProfit).toFixed(2) : 0;
-    stats.sale.today.receipts = aggregate.length ? +(aggregate[0].totalReceipts).toFixed(2) : 0;
+    if(isOwner)
+    {
+      //Todays sale stats
+      aggregate = await Sale.aggregate([
+        { $match: { storeId: store._id, saleDate: { $gte: todayStart, $lte: todayEnd } } },
+        { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
+      ]);
+      stats.sale.today.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
+      stats.sale.today.grossProfit = aggregate.length ? +(aggregate[0].totalGrossProfit).toFixed(2) : 0;
+      stats.sale.today.receipts = aggregate.length ? +(aggregate[0].totalReceipts).toFixed(2) : 0;
 
-    //yesterday sale stats
-    aggregate = await Sale.aggregate([
-      { $match: { storeId: store._id, saleDate: { $gte: yesterdayStart, $lte: yesterdayEnd } } },
-      { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
-    ]);
-    stats.sale.yesterday.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
-    stats.sale.yesterday.grossProfit = aggregate.length ? +(aggregate[0].totalGrossProfit).toFixed(2) : 0;
-    stats.sale.yesterday.receipts = aggregate.length ? +(aggregate[0].totalReceipts).toFixed(2) : 0;
+      //yesterday sale stats
+      aggregate = await Sale.aggregate([
+        { $match: { storeId: store._id, saleDate: { $gte: yesterdayStart, $lte: yesterdayEnd } } },
+        { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
+      ]);
+      stats.sale.yesterday.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
+      stats.sale.yesterday.grossProfit = aggregate.length ? +(aggregate[0].totalGrossProfit).toFixed(2) : 0;
+      stats.sale.yesterday.receipts = aggregate.length ? +(aggregate[0].totalReceipts).toFixed(2) : 0;
+
+      let thirtyDaysBefore = moment().subtract(30, 'days').startOf('day').toDate();
+
+      aggregate = await Sale.aggregate([
+        { $match: { storeId: store._id, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
+        { $group: { _id: { $dayOfYear: {date: "$saleDate",timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
+        {$sort: {_id: 1}}
+      ]);
+      stats.dailySales = aggregate;
+    }
 
     stats.totals.categories = await Category.countDocuments({ storeId: store._id });
     stats.totals.items = await Item.countDocuments({ storeId: store._id, varientParentId: null, packParentId: null });
@@ -71,14 +94,6 @@ router.get('/stats', async (req, res) => {
     ]);
     stats.totals.payable = aggregate.length ? +(aggregate[0].totalBalance).toFixed(2) : 0;
 
-    let thirtyDaysBefore = moment().subtract(30, 'days').startOf('day').toDate();
-
-    aggregate = await Sale.aggregate([
-      { $match: { storeId: store._id, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
-      { $group: { _id: { $dayOfYear: {date: "$saleDate",timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
-      {$sort: {_id: 1}}
-    ]);
-    stats.dailySales = aggregate;
 
     await store.updateLastVisited();
 

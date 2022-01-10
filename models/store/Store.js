@@ -10,6 +10,10 @@ const storeUsersSchema = new mongoose.Schema({
   isCreator: {
     type: Boolean,
     default: false
+  },
+  record: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
   }
 });
 
@@ -79,7 +83,7 @@ const storeSchema = new mongoose.Schema({
   lastUpdated: Date, //when store record updatd, except from time stamps
 
   lastPayment: Date, //when was last transaction
-  expiryDate: Date, //when subscription expires
+  expiryDate: Date, //when license expires
   lastEndOfDay: Date, //Last day closed at
   
   users: [storeUsersSchema],
@@ -102,22 +106,22 @@ const storeSchema = new mongoose.Schema({
   }
 });
 
-storeSchema.virtual('users.record',{
-    ref: 'user',
-    localField: 'users.userId',
-    foreignField: '_id',
-    justOne: true
-});
+// storeSchema.virtual('record',{
+//     ref: 'user',
+//     localField: 'users.userId',
+//     foreignField: '_id',
+//     justOne: true
+// });
 
-storeSchema.set('toObject', { virtuals: true });
-storeSchema.set('toJSON', { virtuals: true });
+// storeSchema.set('toObject', { virtuals: true });
+// storeSchema.set('toJSON', { virtuals: true });
 
 storeSchema.statics.isOwner = function(storeId, userId) {
-  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, 'users.userId': userId, 'users.userRole': userRoles.USER_ROLE_OWNER});
+  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, users: { $elemMatch: {userId, userRole: userRoles.USER_ROLE_OWNER} }});
 };
 
 storeSchema.statics.isManager = function(storeId, userId) {
-  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, 'users.userId': userId, 'users.userRole': { $in: [userRoles.USER_ROLE_OWNER, userRoles.USER_ROLE_MANAGER] } });
+  return this.findOne({_id: storeId, status: storeStates.STORE_STATUS_ACTIVE, users: { $elemMatch: { userId, userRole: { $in: [userRoles.USER_ROLE_OWNER, userRoles.USER_ROLE_MANAGER] } } }  });
 };
 
 storeSchema.statics.isStoreUser = function(storeId, userId) {

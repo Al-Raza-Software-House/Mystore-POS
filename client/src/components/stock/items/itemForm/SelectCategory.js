@@ -152,7 +152,7 @@ const onSubmit = (values, dispatch, { storeId, formName }) => {
     if(response.data.category._id)
     {
       dispatch( createCategory(storeId, response.data.category, response.data.now, response.data.lastAction) );
-      dispatch( change(formName, 'categoryId', response.data._id) );
+      dispatch( change(formName, 'categoryId', response.data.category._id) );
       dispatch( showSuccess("New category created") );
     }
 

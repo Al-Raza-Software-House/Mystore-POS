@@ -10,6 +10,7 @@ import Content from './Content';
 import { connect } from 'react-redux';
 import Alert from '../library/Alert';
 import MasterData from './MasterData';
+import UpdateSoftware from './UpdateSoftware';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -91,6 +92,7 @@ function Template({ uid, progressBar, storeName }) {
         <Sidebar open={open} setOpen={setOpen} isLargeScreen={isLargeScreen}/>
         <Content />
         <MasterData />
+        <UpdateSoftware />
       </div>
     </Router>
   );

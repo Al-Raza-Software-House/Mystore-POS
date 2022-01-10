@@ -146,9 +146,9 @@ const onSubmit = (values, dispatch, { storeId, categoryId, propertyId, formName 
   return axios.post('/api/categories/addPropertyValue', {storeId, categoryId, propertyId, ...values}).then( response => {
     if(response.data.category._id)
     {
-      const values = response.data[propertyId].values;
+      const values = response.data.category[propertyId].values;
       dispatch( updateCategory(storeId, categoryId, response.data.category, response.data.now, response.data.lastAction) );
-      dispatch( change(formName, propertyId, values[values.length - 1]._id ) );
+      dispatch( change(formName, `categoryPropertyValues.${propertyId}`, values[values.length - 1]._id ) );
       dispatch( showSuccess("New property value added") );
     }
 

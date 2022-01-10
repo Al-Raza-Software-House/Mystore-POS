@@ -21,6 +21,12 @@ import { actionTypes as adjustmentReasonActions } from '../../store/actions/adju
 import { actionTypes as supplierActions } from '../../store/actions/supplierActions';
 import { actionTypes as customerActions } from '../../store/actions/customerActions';
 import { actionTypes as accountActions } from '../../store/actions/accountActions'; //banks and heads actions
+import { actionTypes as saleActions } from '../../store/actions/saleActions'; //banks and heads actions
+import { addNewClosing } from '../../store/actions/closingActions'; //banks and heads actions
+import { actionTypes as purchaseOrderActions } from '../../store/actions/purchaseOrderActions'; //banks and heads actions
+import { actionTypes as grnActions } from '../../store/actions/grnActions'; //banks and heads actions
+import { actionTypes as rtvActions } from '../../store/actions/rtvActions'; //banks and heads actions
+
 import { lastUpdatedStampsChanged, masterDataLoaded } from '../../store/actions/systemActions';
 
 const useStyles = makeStyles(theme => ({
@@ -140,14 +146,25 @@ const onSubmit = (values, dispatch, {  showProgressBar, hideProgressBar }) => {
     {
       dispatch( createStore(data.store) );
       //init redux store master data structure for current store
+      //stock
       dispatch({ type: itemActions.ITEMS_LOADED, storeId: data.store._id, items: [], totalRecords: 0 });
       dispatch({ type: categoryActions.CATEGORIES_LOADED, storeId: data.store._id, categories: [] });
       dispatch({ type: itemPropertiesActions.ITEM_PROPERTIES_LOADED, storeId: data.store._id, properties: data.itemProperties });
       dispatch({ type: adjustmentReasonActions.ADJUST_REASONS_LOADED, storeId: data.store._id, reasons: data.adjustmentReasons });
-
+      //sale
+      dispatch({ type: saleActions.SALES_LOADED, storeId: data.store._id, sales: [], totalRecords: 0 });
+      if(data.closing)
+        dispatch( addNewClosing(data.store._id, data.closing) );
+      //Purchase
+      dispatch({ type: purchaseOrderActions.PURCHASE_ORDERS_LOADED, storeId: data.store._id, orders: [], totalRecords: 0 });
+      dispatch({ type: grnActions.GRNS_LOADED, storeId: data.store._id, grns: [], totalRecords: 0 });
+      dispatch({ type: rtvActions.RTVS_LOADED, storeId: data.store._id, rtvs: [], totalRecords: 0 });
+      //parties
       dispatch({ type: supplierActions.SUPPLIERS_LOADED, storeId: data.store._id, suppliers: [] });
       dispatch({ type: customerActions.CUSTOMERS_LOADED, storeId: data.store._id, customers: [] });
 
+      //accounts
+      dispatch({ type: accountActions.TRANSACTIONS_LOADED, storeId: data.store._id, txns: [], totalRecords: 0 });
       dispatch({ type: accountActions.ACCOUNT_HEADS_LOADED, storeId: data.store._id, heads: data.accountHeads });
       dispatch({ type: accountActions.BANKS_LOADED, storeId: data.store._id, banks: data.banks });
 

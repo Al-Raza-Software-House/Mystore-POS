@@ -32,6 +32,7 @@ export const loadRtvs = (recordsPerPage) => {
       dispatch({ type: actionTypes.RTVS_LOADED, storeId, rtvs: data.rtvs, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => {
+      dispatch({ type: actionTypes.RTVS_LOADED, storeId, rtvs: [], totalRecords: 0 });
       dispatch(hideProgressBar());
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     } );

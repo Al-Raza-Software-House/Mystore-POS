@@ -79,7 +79,7 @@ function EditSupplierPayment(props) {
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
       history.push('/parties');
     })
-  }, [supplierId, txnId, dispatch, storeId, defaultBankId]);
+  }, [supplierId, txnId, dispatch, storeId, defaultBankId, history]);
 
   const supplier = useSelector( state =>  state.suppliers[storeId].find(item => item._id === supplierId) );
 

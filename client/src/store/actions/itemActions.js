@@ -35,9 +35,10 @@ export const loadItems = (recordsPerPage) => {
       dispatch({ type: actionTypes.ITEMS_LOADED, storeId, items: data.items, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => {
-       dispatch(hideProgressBar());
-       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
-    } );
+      dispatch({ type: actionTypes.ITEMS_LOADED, storeId, items: [], totalRecords: 0 });
+      dispatch(hideProgressBar());
+      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
+    });
   }
 }
 

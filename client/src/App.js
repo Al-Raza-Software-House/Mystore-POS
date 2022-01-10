@@ -3,6 +3,7 @@ import AppPreloader from './components/template/AppPreloader';
 import { connect } from 'react-redux';
 import { loadAuth } from './store/actions/authActions';
 import AppPublic from './AppPublic';
+import ErrorBoundary from 'components/library/ErrorBoundary';
 const Template = React.lazy(() => import('./components/template/Template'));
 
 function App({ isAuthLoaded, isStorageLoaded, loadAuth, uid }) {
@@ -17,9 +18,11 @@ function App({ isAuthLoaded, isStorageLoaded, loadAuth, uid }) {
   if(!uid) return <AppPublic />;
   if(uid)
     return (
-      <Suspense fallback={<AppPreloader message="Signing in..." />}>
-        <Template />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<AppPreloader message="Signing in..." />}>
+          <Template />
+        </Suspense>
+      </ErrorBoundary>
     )
   return <AppPreloader message="Something went wrong..." />
 }

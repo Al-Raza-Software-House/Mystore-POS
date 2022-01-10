@@ -23,6 +23,7 @@ function AppExpiredBlock({ store }){
   const classes = useStyles();
   const { pathname } = useLocation();
   const isExpired = useMemo(() => {
+    if(!store) return false;
     const now = moment();
     const expiry = moment(store.expiryDate);
     if(now.isAfter( expiry ))
@@ -42,10 +43,10 @@ function AppExpiredBlock({ store }){
     <div className={classes.overlay}>
       <Box mt={10}>
         <Typography align='center'>
-          Your subscription for <b>{ store.name }</b> has been expired on <span style={{fontSize: 22, fontWeight: 'bold'}}>{ moment(store.expiryDate).format('D MMMM, YYYY hh:mm A') }</span>
+          Your license for <b>{ store.name }</b> has been expired on <span style={{fontSize: 22, fontWeight: 'bold'}}>{ moment(store.expiryDate).format('D MMMM, YYYY hh:mm A') }</span>
           <br/>
           <br/>
-          <span>Please extend your subscription to keep using { process.env.REACT_APP_NAME }</span>
+          <span>Please extend your license to keep using { process.env.REACT_APP_NAME }</span>
         </Typography>
 
         <Box mt={4} textAlign="center">

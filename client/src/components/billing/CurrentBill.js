@@ -58,13 +58,13 @@ function CurrentBill(props){
   return(
     <>
     <Typography style={{fontSize: 18, color: isExpired ? 'red' : '#0d0d0d'}} align="center">
-      Your subscription for <b>{ store.name }</b> { isExpired ? 'has been expired' : 'will expire' } on <span style={{fontSize: 22, fontWeight: 'bold'}}>{ expiry.format('D MMMM, YYYY hh:mm A') }</span>
+      Your license for <b>{ store.name }</b> { isExpired ? 'has been expired' : 'will expire' } on <span style={{fontSize: 22, fontWeight: 'bold'}}>{ expiry.format('D MMMM, YYYY hh:mm A') }</span>
       {
         isExpired && 
         <>
         <br/>
         <br/>
-        <span>Please extend your subscription to keep using { process.env.REACT_APP_NAME }</span>
+        <span>Please extend your license to keep using { process.env.REACT_APP_NAME }</span>
         </>
       }
       {
@@ -72,13 +72,13 @@ function CurrentBill(props){
         <>
         <br/>
         <br/>
-        <span style={{ color: amber[700] }}> Your subscription is about to expire. Please extend subscription to keep using { process.env.REACT_APP_NAME } without interruption </span>
+        <span style={{ color: amber[700] }}> Your license is about to expire. Please extend license to keep using { process.env.REACT_APP_NAME } without interruption </span>
         </>
       }
     </Typography>
     { !submitSucceeded &&
       <Box mt={5} maxWidth={400} mx="auto" textAlign="center">
-        <Typography gutterBottom  variant="h5">Extend Your Subscription</Typography>
+        <Typography gutterBottom  variant="h5">Extend License</Typography>
         <form onSubmit={handleSubmit}>
           <Box mb={2}>
             <Field
@@ -148,7 +148,7 @@ function CurrentBill(props){
   )
 }
 
-const selector = formValueSelector('extendSubscription');
+const selector = formValueSelector('extendLicense');
 
 const mapStateToProps = state => {
   const store = state.stores.stores.find(item => item._id === state.stores.selectedStoreId);
@@ -195,7 +195,7 @@ const onSubmit = (values, dispatch, { store }) => {
 export default compose(
   connect(mapStateToProps, { loadSelectedStore, storesStampChanged }),
   reduxForm({
-    'form': 'extendSubscription',
+    'form': 'extendLicense',
     validate,
     onSubmit,
     initialValues: { months: 1 }

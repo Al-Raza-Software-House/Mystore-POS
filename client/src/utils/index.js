@@ -1,3 +1,4 @@
+import { userTypes } from "./constants";
 
 //Format multiValue autoComplete value coming from store
 export const automCompleteFormat = (storeValue) => {
@@ -36,4 +37,16 @@ export const allowOnlyNumber = (e) => {
       e.preventDefault();
       return false;
   }
+}
+
+export const isOwner = (role) => {
+  return role === userTypes.USER_ROLE_OWNER
+}
+
+export const isManager = (role) => {
+  return role === userTypes.USER_ROLE_MANAGER;
+}
+
+export const isSalesperson = (role) => {
+  return role === userTypes.USER_ROLE_SALESPERSON;
 }

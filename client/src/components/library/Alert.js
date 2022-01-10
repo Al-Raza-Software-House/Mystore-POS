@@ -51,7 +51,7 @@ const Alert = (props) => {
   let timer = useRef();
   useEffect(() => {
     if(variant)
-     timer.current = setTimeout(clearAlert, 3000);
+     timer.current = setTimeout(clearAlert, 4000);
     else if(timer.current){
       clearTimeout(timer.current);
       timer.current = null;

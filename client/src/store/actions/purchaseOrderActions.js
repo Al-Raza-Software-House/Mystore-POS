@@ -31,6 +31,7 @@ export const loadPurchaseOrders = (recordsPerPage) => {
       dispatch({ type: actionTypes.PURCHASE_ORDERS_LOADED, storeId, orders: data.orders, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => {
+      dispatch({ type: actionTypes.PURCHASE_ORDERS_LOADED, storeId, orders: [], totalRecords: 0 });
       dispatch(hideProgressBar());
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     } );

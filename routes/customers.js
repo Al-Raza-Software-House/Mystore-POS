@@ -15,7 +15,7 @@ router.post('/create', async (req, res) => {
   {
     if(!req.body.storeId) throw new Error("Store Id is required");
     if(!req.body.name) throw new Error("customer name is required");
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     if(req.body.mobile)
     {
@@ -67,7 +67,7 @@ router.post('/update', async (req, res) => {
     if(!req.body.storeId) throw new Error("Store Id is required");
     if(!req.body.customerId) throw new Error("customerId is required");
     if(!req.body.name) throw new Error("customer name is required");
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     if(req.body.mobile)
     {
@@ -126,7 +126,7 @@ router.post('/delete', async (req, res) => {
   {
     if(!req.body.storeId) throw new Error("Store Id is required");
     if(!req.body.customerId) throw new Error("customerId is required");
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     const lastAction = store.dataUpdated.deleteActivity;
     const txns = await CustomerLedger.countDocuments({ storeId: req.body.storeId, customerId: req.body.customerId });
@@ -154,7 +154,7 @@ router.get('/isMobileRegistered', async (req, res) => {
   {
     if(!req.query.storeId) throw new Error("store id is required");
     if(!req.query.mobile) throw new Error("mobile is required");
-    const store = await Store.isManager(req.query.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
     if(!store) throw new Error("invalid Request"); 
     let conditions = { storeId: req.query.storeId, mobile: req.query.mobile };
     if(req.query.customerId)
@@ -173,7 +173,7 @@ router.get('/isMobileRegistered', async (req, res) => {
 router.get('/', async (req, res) => {
   try{
     if(!req.query.storeId) throw new Error("Store Id is required");
-    const store = await Store.isManager(req.query.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
     if(!store) throw new Error("invalid Request"); 
     await store.updateLastVisited();
 
@@ -217,7 +217,7 @@ router.post('/receivePayment', async (req, res) => {
     if(!req.body.storeId) throw new Error("Store Id is required");
     if(!req.body.customerId) throw new Error("customerId is required");
     if(!req.body.amount) throw new Error("amount is required");
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     const customer = await Customer.findOne({ _id: req.body.customerId, storeId: req.body.storeId });
     if(!customer) throw new Error("invalid request");
@@ -302,7 +302,7 @@ router.post('/updatePayment', async (req, res) => {
     if(!req.body.txnId) throw new Error("txnId is required");
     if(!req.body.amount) throw new Error("amount is required");
 
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
 
     const customer = await Customer.findOne({ _id: req.body.customerId, storeId: req.body.storeId });
@@ -385,7 +385,7 @@ router.post('/ledger', async (req, res) => {
     if(!req.body.storeId) throw new Error("Store id is required");
     if(!req.body.customerId) throw new Error("customerId is required");
 
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     await store.updateLastVisited();
 
@@ -461,7 +461,7 @@ router.post('/deletePayment', async (req, res) => {
     if(!req.body.customerId) throw new Error("customerId is required");
     if(!req.body.txnId) throw new Error("txnId is required");
 
-    const store = await Store.isManager(req.body.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
 
     const lastAction = store.dataUpdated.customers;
@@ -524,7 +524,7 @@ router.get('/transaction', async (req, res) => {
     if(!req.query.customerId) throw new Error("customerId is required");
     if(!req.query.txnId) throw new Error("txnId is required");
 
-    const store = await Store.isManager(req.query.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
 
     const ledgerTxn = await CustomerLedger.findOne({ _id: req.query.txnId, customerId: req.query.customerId, storeId: req.query.storeId });

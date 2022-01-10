@@ -401,7 +401,7 @@ router.post('/search', async (req, res) => {
   {
     if(!req.body.storeId)
       throw new Error("Store id is required");
-    const store = await Store.isStoreUser(req.body.storeId, req.user._id);
+    const store = await Store.isManager(req.body.storeId, req.user._id);
     if(!store) throw new Error("invalid Request");
     await store.updateLastVisited();
 

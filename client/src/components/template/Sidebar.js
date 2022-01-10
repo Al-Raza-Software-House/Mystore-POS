@@ -4,16 +4,16 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography } from '@material-ui/core';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTachometerAlt, faLayerGroup, faShoppingCart, faShoppingBasket, faUserFriends, faMoneyBill, faChartLine, faCog, faStoreAlt, faQuestionCircle, faCreditCard, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTachometerAlt, faLayerGroup, faShoppingCart, faShoppingBasket, faUserFriends, faMoneyBill, faChartLine, faCog, faStoreAlt, faQuestionCircle, faCreditCard, faCircle, faDesktop } from '@fortawesome/free-solid-svg-icons';
 
 import { connect } from 'react-redux';
 import { Link, useLocation, Redirect } from 'react-router-dom';
-import { userTypes } from '../../utils/constants';
-import { sidebarSalesPerson as sidebarSalesPersonBlackList } from '../../config/routesBlackList';
 import moment from 'moment';
 import { amber } from '@material-ui/core/colors';
-import { syncData } from '../../store/actions/systemActions';
+import { syncData, stopPing, changeOnlineStatus } from '../../store/actions/systemActions';
 import { syncSale } from 'store/actions/saleActions';
+import { useMemo } from 'react';
+import { isSalesperson } from 'utils';
 
 const drawerWidth = 256;
 
@@ -110,14 +110,23 @@ const menues = [
   { to: '/help', title: "Help", icon: <FontAwesomeIcon icon={faQuestionCircle} /> },
 ]
 
+const salespersonMenu = [
+  { to: '/sale', title: "Sale", icon: <FontAwesomeIcon icon={faShoppingCart} /> },
+  { to: '/parties/customers', title: "Customers", icon: <FontAwesomeIcon icon={faUserFriends} /> },
+  { to: '/stores', title: "Stores", icon: <FontAwesomeIcon icon={faStoreAlt} /> },
+  { to: '/help', title: "Help", icon: <FontAwesomeIcon icon={faQuestionCircle} /> },
+]
 
 
-const publicPages = ['/signin', '/signup', '/reset-password', '/'];
 
-function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLargeScreen, syncData, syncSale, online, offlineSales }) {
+const publicPages = ['/signin', '/signup', '/reset-password', '/', '/super925'];
+
+function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLargeScreen, syncData, stopPing, syncSale, online, offlineSales, changeOnlineStatus }) {
   const classes = useStyles();
   const { pathname } = useLocation();
   const pingInterval = useRef();
+
+  //Ping every X seconds to server
   useEffect(() => {
     if(!selectedStoreId && pingInterval.current)
     {
@@ -126,6 +135,7 @@ function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLarge
     }
     else if(selectedStoreId && !pingInterval.current)
     {
+      stopPing();//clear ping flag, persited true for ping will not trigger ping
       pingInterval.current = setInterval(syncData, parseInt(process.env.REACT_APP_SERVER_PING_INTERVAL) * 1000);
     }
     return () => {
@@ -135,29 +145,56 @@ function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLarge
         pingInterval.current = null;
       }
     }
-  }, [selectedStoreId, syncData]);
+  }, [selectedStoreId, syncData, stopPing]);
+
+  useEffect(() => {
+    if(!selectedStoreId) changeOnlineStatus(true);
+  }, [selectedStoreId, changeOnlineStatus]);
 
   useEffect(() => {
     if(!online || !selectedStoreId) return;
     syncSale(selectedStoreId);
   }, [syncSale, online, selectedStoreId])
 
-  if(uid && publicPages.indexOf(pathname) !== -1) return <Redirect to="/dashboard" />
+  const expiryStatus = useMemo(() => {
+    let status = null;
+    if(store)
+    {
+      const now = moment();
+      const expiry = moment(store.expiryDate);
+      if(now.isAfter( expiry ))
+        status = 'expired';
+      else if( now.add(2, 'days').isAfter(expiry) )
+        status = 'aboutToExpire'
+    }
+    return status;
+  }, [store]);
+
+  const sideMenues = useMemo(() => {
+    let sideMenues = menues;
+    if(!selectedStoreId)
+      sideMenues = menues.filter(item => (['/stores', '/help'].indexOf(item.to) !== - 1));
+    else if(isSalesperson(userRole))
+      sideMenues = salespersonMenu;
+    return sideMenues;
+  }, [selectedStoreId, userRole]);
+
+  //user logged in but is one public page
+  if(uid && publicPages.indexOf(pathname) !== -1)
+  {
+    if(isSalesperson(userRole))
+      return <Redirect to="/sale" />
+    else
+      return <Redirect to="/dashboard" />
+  }
   
+  //store not selected but user on store selected paths
   if(!selectedStoreId && !pathname.startsWith('/help') && !pathname.startsWith('/stores') && !pathname.startsWith('/account-settings'))
     return <Redirect to="/stores" />
-  let sideMenues = selectedStoreId ? menues : menues.filter(item => (['/stores', '/help'].indexOf(item.to) !== - 1));
-  sideMenues = userRole === userTypes.USER_ROLE_SALESPERSON ? sideMenues.filter(item => sidebarSalesPersonBlackList.indexOf(item.to) === -1) : sideMenues;
-  let expiryStatus = null;
-  if(store)
-  {
-    const now = moment();
-    const expiry = moment(store.expiryDate);
-    if(now.isAfter( expiry ))
-      expiryStatus = 'expired';
-    else if( now.add(2, 'days').isAfter(expiry) )
-      expiryStatus = 'aboutToExpire'
-  }
+  if(isSalesperson(userRole) && !salespersonMenu.find(record => pathname.startsWith(record.to) ) )
+    return <Redirect to="/stores" />
+  //store not selected, show only stores, help menue in side bar
+
   return (
     <Drawer
       variant="permanent"
@@ -203,6 +240,15 @@ function Sidebar({ uid, selectedStoreId, store, userRole, open, setOpen, isLarge
                 [classes.drawerCloseText]: !open,
               })}> &nbsp; { online ? "Online" : "Offline" }</span>
         </Typography>
+        <Typography style={{ fontSize: 14 }} className={clsx({
+                [classes.drawerOpenText]: open,
+                [classes.drawerCloseText]: !open,
+              })}><FontAwesomeIcon icon={faDesktop} /> Version: <b>{process.env.REACT_APP_VERSION}</b></Typography>
+              
+        <Typography style={{ fontSize: 14 }} className={clsx({
+                [classes.drawerOpenText]: open,
+                [classes.drawerCloseText]: !open,
+              })}>Last Updated: <b>{ moment(process.env.REACT_APP_LAST_UPDATED_ON).format('DD MMM, YYYY') }</b></Typography>
       </Box>
     </Drawer>
   );
@@ -221,9 +267,10 @@ const mapStateToProps = (state) => {
    userRole: state.stores.userRole,
    store,
    online: state.system.online,
+   appVersion: state.system.appVersion,
    offlineSales
   }
 }
 
 
-export default connect(mapStateToProps, { syncData, syncSale})(Sidebar);
+export default connect(mapStateToProps, { syncData, stopPing,  syncSale, changeOnlineStatus})(Sidebar);

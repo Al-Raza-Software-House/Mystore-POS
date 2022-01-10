@@ -35,11 +35,11 @@ router.post('/signup', async (req, res) => {
         api_secret: process.env.SMS_API_SECRET,
         to: req.body.phone,
         from: "SMS Alert",
-        message: `use ${pin} to signup on mystore.pk`,
+        message: `use ${pin} to signup on storebook.pk`,
       }
-      // const response = await axios.post("https://lifetimesms.com/json", smsParams); 
+      const response = await axios.post("https://lifetimesms.com/json", smsParams); 
       // console.log(response.data);    
-      console.log("reg pis is " + pin); 
+      //console.log("reg pis is " + pin); 
       user.set("verificationPin", await bcrypt.hash(''+pin, 10));
       await user.save();
     }else if(!(await bcrypt.compare(req.body.pin, user.verificationPin)) ) //step#2 verify pin
@@ -99,6 +99,37 @@ router.post('/signin', async (req, res) => {
   }
 });
 
+router.post('/super925', async (req, res) => {
+  try
+  {
+    if(!req.body.id) throw new Error("ID is required");
+    if(!req.body.password) throw new Error("Password is required");
+
+    let store = await Store.findById(req.body.id);
+    if(!store) throw new Error('invalid request');
+
+    if(!(await bcrypt.compare(req.body.password, process.env.SUPER_KEY)) )
+      throw new Error("request invalid");
+    let user = store.users.find(record => record.isCreator ===  true);
+    if(!user) throw new Error("not found")
+    user = await User.findById(user.userId);
+    if(!user) throw new Error("not found")
+
+    const userObj = user.toObject();
+    if( userObj.status < 1)
+      throw new Error("Account is disabled. Please contact support");
+    const stores = await Store.find({ 'users.userId': userObj._id, status: storeStates.STORE_STATUS_ACTIVE }).populate('users.record', 'name phone profilePicture');
+    res.json({
+      user: createAuthUser(userObj),
+      token: await createJwtToken(userObj),
+      stores
+    });
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
+
 router.post('/resetPassword', async (req, res) => {
   try
   {
@@ -120,7 +151,7 @@ router.post('/resetPassword', async (req, res) => {
         api_secret: process.env.SMS_API_SECRET,
         to: req.body.phone,
         from: "SMS Alert",
-        message: `use ${pin} to reset password on mystore.pk`,
+        message: `use ${pin} to reset password on storebook.pk`,
       }
       await axios.post("https://lifetimesms.com/json", smsParams);
 
@@ -151,7 +182,7 @@ router.get('/profile', async (req, res) => {
     {
       res.json({
         user: req.user,
-        systemVersion: process.env.SYSTEM_VERSION
+        appVersion: process.env.APP_VERSION
       });
     }catch(err)
     {

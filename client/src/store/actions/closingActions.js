@@ -30,6 +30,7 @@ export const loadClosings = (recordsPerPage) => {
       dispatch({ type: actionTypes.CLOSINGS_LOADED, storeId, closings: data.closings, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => {
+      dispatch({ type: actionTypes.CLOSINGS_LOADED, storeId, closings: [], totalRecords: 0 });
       dispatch( hideProgressBar() );
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });

@@ -41,12 +41,13 @@ router.post('/delete', async (req, res) => {
     if(!req.body.id) throw new Error("Store id is required");
     if(!req.body.password) throw new Error("Password is required");
     
+    let store = await Store.isOwner(req.body.id, req.user._id);
+    if(!store) throw new Error("Invalid Request");
+          
     const user = await User.findById(req.user._id);
     if(user === null || !(await bcrypt.compare(req.body.password, user.password)) )
       throw new Error("Invalid Password");
 
-    if(!(await Store.isOwner(req.body.id, req.user._id) ))
-      throw new Error("Invalid Request");
     const now = moment().tz('Asia/Karachi').toDate();
     const record = {
       status: storeStates.STORE_STATUS_DELETED,
@@ -55,6 +56,7 @@ router.post('/delete', async (req, res) => {
       lastUpdated: now,
     }
     await Store.findByIdAndUpdate(req.body.id, record);
+    await store.logCollectionLastUpdated('stores');
     res.json({ success: true });
   }catch(err)
   {
@@ -92,7 +94,8 @@ router.post('/create', async (req, res) => {
       users: [{
         userId: mongoose.Types.ObjectId(req.user._id),
         userRole: userRoles.USER_ROLE_OWNER,
-        isCreator: true
+        isCreator: true,
+        record: mongoose.Types.ObjectId(req.user._id)
       }],
       registors:[{
         code: '001',
@@ -218,14 +221,15 @@ router.post('/create', async (req, res) => {
     let storeAccountHeads = await AccountHead.find({ storeId: newStore._id });
     newStore.set('accountHeadIds', accountHeadIds);
     await newStore.save();
-    await createNewClosingRecord(newStore._id, req.user._id, now, 0);
+    let closing = await createNewClosingRecord(newStore._id, req.user._id, now, 0);
     let store = await Store.findById(newStore._id).populate('users.record', 'name phone profilePicture');
     res.json({
       store,
       itemProperties: properties,
       adjustmentReasons: reasons,
       banks,
-      accountHeads: storeAccountHeads
+      accountHeads: storeAccountHeads,
+      closing
     });
   }catch(err)
   {
@@ -324,6 +328,9 @@ router.post('/adduser', async (req, res) => {
 
     if(!(await Store.isManager(req.body.id, req.user._id) ))
       throw new Error("Invalid Request");
+    let isOwner = await Store.isOwner(req.body.id, req.user._id);
+    if(!isOwner && Number(req.body.userRole) === userRoles.USER_ROLE_OWNER) throw new Error("invalid request"); //manager cannot add owner
+
     const now = moment().tz('Asia/Karachi').toDate();
     let store = null;
     let user = await User.findOne({ phone: req.body.phone, status: { $gte: 1 } });
@@ -334,7 +341,7 @@ router.post('/adduser', async (req, res) => {
     {
       store = await Store.findOne({ _id: req.body.id, 'users.userId' :  user._id });
       if(store === null) // if user not already added to the store
-        await Store.findByIdAndUpdate( req.body.id, { $push: { users: { userId: user._id, userRole: req.body.userRole } } } );
+        await Store.findByIdAndUpdate( req.body.id, { $push: { users: { userId: user._id, userRole: req.body.userRole, record: user._id } } } );
       
       store = await Store.findById(req.body.id).populate('users.record', 'name phone profilePicture');
       await store.updateLastUpdated();
@@ -359,6 +366,14 @@ router.post('/removeUser', async (req, res) => {
     if(!(await Store.isManager(req.body.storeId, req.user._id) ))
       throw new Error("Invalid Request");
     const now = moment().tz('Asia/Karachi').toDate();
+    let isOwner = await Store.isOwner(req.body.storeId, req.user._id);
+    if(!isOwner)
+    {
+      let isOwnerBeingRemoved = await Store.isOwner(req.body.storeId, req.body.userId);
+      if(isOwnerBeingRemoved) //manager cannot remove owner
+        throw new Error("invalid request");
+    }
+
     await Store.findByIdAndUpdate(req.body.storeId, { $pull: { users: {userId: req.body.userId} } });
     let store = await Store.findById(req.body.storeId).populate('users.record', 'name phone profilePicture');
     await store.updateLastUpdated();
@@ -382,6 +397,14 @@ router.post('/updateUser', async (req, res) => {
     
     if(!(await Store.isManager(req.body.storeId, req.user._id) ))
       throw new Error("Invalid Request");
+    let isOwner = await Store.isOwner(req.body.storeId, req.user._id);
+    if(!isOwner && Number(req.body.userRole) === userRoles.USER_ROLE_OWNER) throw new Error("invalid request"); //manager cannot add owner
+    if(!isOwner)
+    {
+      let isOwnerBeingUpdated = await Store.isOwner(req.body.storeId, req.body.userId);
+      if(isOwnerBeingUpdated) //manager cannot update owner
+        throw new Error("invalid request");
+    }
     const now = moment().tz('Asia/Karachi').toDate();
     await Store.updateOne({ _id: req.body.storeId, 'users.userId': req.body.userId }, { $set: { "users.$.userRole": req.body.userRole } });
     let store = await Store.findById(req.body.storeId).populate('users.record', 'name phone profilePicture');

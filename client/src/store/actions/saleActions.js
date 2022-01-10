@@ -51,6 +51,7 @@ export const loadSales = (recordsPerPage) => {
       dispatch({ type: actionTypes.SALES_LOADED, storeId, sales: data.sales, totalRecords: data.totalRecords });
       dispatch(hideProgressBar());
     }).catch( err => {
+      dispatch({ type: actionTypes.SALES_LOADED, storeId, sales: [], totalRecords: 0 });
       dispatch( hideProgressBar() );
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });

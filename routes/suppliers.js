@@ -139,7 +139,7 @@ router.post('/delete', async (req, res) => {
 router.get('/', async (req, res) => {
   try{
     if(!req.query.storeId) throw new Error("Store Id is required");
-    const store = await Store.isManager(req.query.storeId, req.user._id);
+    const store = await Store.isStoreUser(req.query.storeId, req.user._id);
     if(!store) throw new Error("invalid Request"); 
     await store.updateLastVisited();
 

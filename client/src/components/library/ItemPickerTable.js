@@ -6,9 +6,11 @@ import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import ItemImage from './ItemImage';
+import { isSalesperson } from 'utils';
 
 function ItemPickerTable(props){
   const { items, selectItem, removeItem, selectedItems } = props;
+  const userRole = useSelector(state => state.stores.userRole);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -41,13 +43,13 @@ function ItemPickerTable(props){
                 <TableCell>Item Code</TableCell>
                 <TableCell>Item Name</TableCell>
                 <TableCell align="center">Current Stock</TableCell>
-                <TableCell align="center">Cost Price</TableCell>
+                { isSalesperson(userRole) ? null : <TableCell align="center">Cost Price</TableCell> }
                 <TableCell align="center">Sale Price</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {
-                rows.map( (row) => (<Item key={row._id} item={row}  selectItem={selectItem} removeItem={removeItem} selectedItems={selectedItems} />) )
+                rows.map( (row) => (<Item key={row._id} item={row}  selectItem={selectItem} userRole={userRole} removeItem={removeItem} selectedItems={selectedItems} />) )
               }
             </TableBody>
           </Table>
@@ -83,7 +85,7 @@ const useStyles = makeStyles(them => ({
   }
 }));
 
-function Item({ item, selectItem, removeItem, selectedItems }){
+function Item({ item, selectItem, removeItem, selectedItems, userRole }){
   const classes = useStyles();
   const storeId = useSelector(state => state.stores.selectedStoreId);
   let allItems = useSelector(state => state.items[storeId].allItems );
@@ -126,7 +128,10 @@ function Item({ item, selectItem, removeItem, selectedItems }){
         { overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
         { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
       </TableCell>
-      <TableCell align="center">{ item.packParentId ?  +(item.packQuantity * item.costPrice).toFixed(2).toLocaleString() :  item.costPrice.toLocaleString('en-US') }</TableCell>
+      {
+        isSalesperson(userRole) ? null :
+        <TableCell align="center">{ item.packParentId ?  +(item.packQuantity * item.costPrice).toFixed(2).toLocaleString() :  item.costPrice.toLocaleString('en-US') }</TableCell>
+      }
       <TableCell align="center">{ item.packParentId ? item.packSalePrice.toLocaleString() : item.salePrice.toLocaleString('en-US') }</TableCell>
     </TableRow>
   </>

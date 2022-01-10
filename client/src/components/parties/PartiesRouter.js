@@ -17,7 +17,8 @@ import ReceiveCustomerPayment from './customers/ReceiveCustomerPayment';
 import EditCustomerPayment from './customers/EditCustomerPayment';
 import PrintSupplierTxn from './suppliers/PrintSupplierTxn';
 import PrintCustomerTxn from './customers/PrintCustomerTxn';
-
+import {isSalesperson} from '../../utils/index';
+import { useMemo } from 'react';
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -25,16 +26,20 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const menues = [
+let menues = [
   {to: '/parties', title: 'Suppliers'},
   {to: '/parties/customers', title: 'Customers'}
 ]
 
-function PartiesRouter(){
+function PartiesRouter({ userRole }){
   const classes = useStyles();
   const [printSupplierTxn, setPrintSupplierTxn] = useState(null);
   const [printCustomerTxn, setPrintCustomerTxn] = useState(null);
-
+  const tabs = useMemo(() => {
+    if(isSalesperson(userRole))
+      return [{to: '/parties/customers', title: 'Customers'}];
+    return menues;
+  }, [userRole]);
   return(
     <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
       <PrintSupplierTxn txn={printSupplierTxn} setTxn={setPrintSupplierTxn} />
@@ -42,7 +47,7 @@ function PartiesRouter(){
       <Paper className={classes.paper} square>
         <Box>
           <Box px={3} pt={0}>
-            <StyledTabs menues={menues} />
+            <StyledTabs menues={tabs} />
           </Box>
         </Box>
       </Paper>
@@ -69,4 +74,10 @@ function PartiesRouter(){
   )
 }
 
-export default connect(null, null)(PartiesRouter);
+const mapStateToProps = (state) => {
+  return {
+   userRole: state.stores.userRole,
+  }
+}
+
+export default connect(mapStateToProps, null)(PartiesRouter);

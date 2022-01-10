@@ -26,7 +26,6 @@ const authCheck = async (req, res, done) => {
     done();
   }catch(err)
   {
-    console.log(err.message);
     res.status(401).json({message: err.message}).end();
   }
 }
