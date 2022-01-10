@@ -5,7 +5,8 @@ import { connect } from 'react-redux';
 const useStyles = makeStyles(theme => ({
   root:{
     backgroundColor: '#fff',
-    boxShadow: "0px 1px 4px 1px rgba(0, 0, 0, 0.12)"
+    boxShadow: "0px 1px 4px 1px rgba(0, 0, 0, 0.12)",
+    color: "#606060"
   },
   logo: {
     flexGrow: 1
@@ -13,7 +14,7 @@ const useStyles = makeStyles(theme => ({
   toolbar:{
     display: "flex",
     justifyContent: 'space-between',
-    color: '#0d0d0d'
+    color: '#606060'
   },
   progressContainer:{
     height: '4px'
@@ -26,7 +27,7 @@ const PublicNavbar = ({progressBar}) => {
     <Box mb={{ xs: 2, sm : 1 }}>
       <AppBar position="static" className={classes.root}>
           <Toolbar className={classes.toolbar}>
-            <Typography style={{fontSize: '24px'}} component="h1">{process.env.REACT_APP_NAME}</Typography>
+            <Typography variant="h6" noWrap>{process.env.REACT_APP_NAME}</Typography>
           </Toolbar>
       </AppBar>
       <Box className={classes.progressContainer}>

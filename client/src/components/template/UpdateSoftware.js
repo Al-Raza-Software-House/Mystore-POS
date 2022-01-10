@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 const UpdateSoftware = ({ isAuthLoaded, appVersion }) => {
   
   return (
-    <Dialog open={isAuthLoaded && appVersion !== process.env.REACT_APP_VERSION} fullWidth={true}>
+    <Dialog open={isAuthLoaded && appVersion !== null && appVersion !== process.env.REACT_APP_VERSION} fullWidth={true}>
       <DialogContent >
         <Box textAlign="center" py={2}>
           <Typography align="center" variant="h6" style={{ marginBottom: 25 }}>Software updates are available... </Typography>
