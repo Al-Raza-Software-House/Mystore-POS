@@ -75,7 +75,7 @@ router.post('/delete', async (req, res) => {
     await Closing.deleteOne({ _id: req.body.closingId, storeId: req.body.storeId});
     previousClosing.endTime = null;
     previousClosing.status = closingStates.CLOSING_STATUS_OPEN;
-
+    await previousClosing.save();
     store.lastEndOfDay = previousClosing.startTime;
     await store.save();
     await store.updateLastActivity();

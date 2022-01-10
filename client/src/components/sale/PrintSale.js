@@ -120,8 +120,8 @@ function PrintSale(props){
       if(sale.printSalesReceipt)
         setTimeout(() => {
           printReceipt();
-          setOpen(false);
-        }, 300)
+          setTimeout(() => setOpen(false), 1000);
+        }, 500)
     }
     else
       setOpen(false);

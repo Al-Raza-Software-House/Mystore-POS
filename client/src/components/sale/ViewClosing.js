@@ -354,7 +354,7 @@ const onSubmit = (formData, dispatch, { match, printClosing }) => {
       return axios.post('/api/closings/delete', payload).then( ({ data }) => {
         dispatch(hideProgressBar());
         if(data.deletedClosing)
-          dispatch( deleteClosing(match.params.storeId, data.deleteClosing._id) );
+          dispatch( deleteClosing(match.params.storeId, data.deletedClosing._id) );
         if(data.openedClosing)
           dispatch( updateClosing( match.params.storeId, data.openedClosing._id, data.openedClosing) );
         if(data.lastEndOfDay)

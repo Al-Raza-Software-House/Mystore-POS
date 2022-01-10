@@ -51,7 +51,7 @@ router.get('/stats', async (req, res) => {
     {
       //Todays sale stats
       aggregate = await Sale.aggregate([
-        { $match: { storeId: store._id, saleDate: { $gte: todayStart, $lte: todayEnd } } },
+        { $match: { storeId: store._id, isVoided: false, saleDate: { $gte: todayStart, $lte: todayEnd } } },
         { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
       ]);
       stats.sale.today.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
@@ -60,7 +60,7 @@ router.get('/stats', async (req, res) => {
 
       //yesterday sale stats
       aggregate = await Sale.aggregate([
-        { $match: { storeId: store._id, saleDate: { $gte: yesterdayStart, $lte: yesterdayEnd } } },
+        { $match: { storeId: store._id, isVoided: false, saleDate: { $gte: yesterdayStart, $lte: yesterdayEnd } } },
         { $group: { _id: "$storeId", totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } }
       ]);
       stats.sale.yesterday.saleAmount = aggregate.length ? +(aggregate[0].totalSaleAmount).toFixed(2) : 0;
@@ -70,7 +70,7 @@ router.get('/stats', async (req, res) => {
       let thirtyDaysBefore = moment().subtract(30, 'days').startOf('day').toDate();
 
       aggregate = await Sale.aggregate([
-        { $match: { storeId: store._id, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
+        { $match: { storeId: store._id, isVoided: false, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
         { $group: { _id: { $dayOfYear: {date: "$saleDate",timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
         {$sort: {_id: 1}}
       ]);
