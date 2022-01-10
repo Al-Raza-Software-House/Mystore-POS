@@ -4,7 +4,8 @@ const moment = require("moment-timezone");
 const adjustmentReasonSchema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'store'
+    ref: 'store',
+    index: true
   },
   name:{
     type: String,

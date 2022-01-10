@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const stockTransactionsSchema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'store'
+    ref: 'store',
+    index: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,

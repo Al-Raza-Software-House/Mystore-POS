@@ -4,11 +4,13 @@ const moment = require("moment-timezone");
 const schema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'store'
+    ref: 'store',
+    index: true
   },
   saleId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'sale'
+    ref: 'sale',
+    index: true
   },
   itemId: { //can be unit or pack
     type: mongoose.Schema.Types.ObjectId,

@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const BillingTransactionSchema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'store' 
+    ref: 'store',
+    index: true
   },
   transactionId: String,
   monthsPaid: Number,

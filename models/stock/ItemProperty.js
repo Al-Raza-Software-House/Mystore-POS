@@ -4,7 +4,8 @@ const moment = require("moment-timezone");
 const itemPropertySchema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'store'
+    ref: 'store',
+    index: true
   },
   property1:{
     name: String,

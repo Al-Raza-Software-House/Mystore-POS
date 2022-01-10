@@ -5,6 +5,7 @@ const schema = new mongoose.Schema({
   storeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'store',
+    index: true
   },
   name: String,
   editAble: Boolean, //cannot be edit/deleted
