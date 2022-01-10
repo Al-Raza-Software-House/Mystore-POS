@@ -42,18 +42,7 @@ export const updateClosing = (storeId, closingId, closing) => {
 }
 
 export const deleteClosing = (storeId, closingId) => {
-  return (dispatch, getState) => {
-    dispatch(showProgressBar());
-    axios.post('/api/closings/delete', { storeId, closingId }).then( ({ data }) => {
-      dispatch(hideProgressBar());
-      dispatch( { type: actionTypes.CLOSING_DELETED, storeId, closingId } );
-      
-      dispatch( showSuccess('Closing deleted') );
-    }).catch( err => {
-      dispatch( hideProgressBar() );
-      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
-    } );
-  }
+  return { type: actionTypes.CLOSING_DELETED, storeId, closingId }
 }
 
 export const changeFilters = (storeId, filters) => {
