@@ -4,13 +4,14 @@ import { Box, AppBar, Toolbar, Typography, IconButton, useMediaQuery, LinearProg
 import { BrowserRouter as Router, Redirect } from 'react-router-dom';
 import AccountMenu from './AccountMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faSync } from '@fortawesome/free-solid-svg-icons';
 import Sidebar from './Sidebar';
 import Content from './Content';
 import { connect } from 'react-redux';
 import Alert from '../library/Alert';
 import MasterData from './MasterData';
 import UpdateSoftware from './UpdateSoftware';
+import { syncData } from 'store/actions/systemActions';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -41,7 +42,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-function Template({ uid, progressBar, storeName }) {
+function Template({ uid, progressBar, storeName, pinging, syncData }) {
   useEffect(() => {
      document.title = process.env.REACT_APP_NAME;
   }, []);
@@ -79,6 +80,16 @@ function Template({ uid, progressBar, storeName }) {
               </Typography>
             }
             <Box flexGrow={1} textAlign="right">
+              <IconButton
+                color="inherit"
+                aria-label="Sync Master Data"
+                onClick={syncData}
+                edge="start"
+                title="Sync Master Data"
+                className={classes.menuButton}
+              >
+                <FontAwesomeIcon icon={faSync} spin={pinging} size="xs" />
+              </IconButton>
               <AccountMenu />
             </Box>
           </Toolbar>
@@ -110,8 +121,9 @@ const mapStateToProps = (state) => {
   return {
    uid: state.auth.uid,
    progressBar: state.progressBar,
-   storeName: storeName 
+   storeName: storeName,
+   pinging: state.system.pinging
   }
 }
 
-export default connect(mapStateToProps)(Template);
+export default connect(mapStateToProps, { syncData })(Template);
