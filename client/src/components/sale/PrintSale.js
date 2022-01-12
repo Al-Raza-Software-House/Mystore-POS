@@ -69,7 +69,7 @@ function PrintSale(props){
 
      setTimeout(() => {
         mywindow.print();
-       // mywindow.close();
+        mywindow.close();
      }, 500)
 
       return true;
