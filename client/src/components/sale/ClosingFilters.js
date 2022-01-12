@@ -81,7 +81,7 @@ function ClosingFilters(props){
 
   return(
     <>
-    <Box width="100%" justifyContent="flex-end" alignItems="flex-start" display="flex">
+    <Box width="100%" justifyContent="flex-end" alignItems="flex-start" display="flex" pt={2}>
       <Box flexGrow={1} display="flex" justifyContent="flex-start" alignItems="center" flexWrap="wrap">
         <Box width={{ xs: '100%', md: '40%' }} mr={2} >
           <Field

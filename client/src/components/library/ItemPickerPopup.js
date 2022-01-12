@@ -122,7 +122,7 @@ const Filters = reduxForm({
     const classes = useStyles();
     return(
       <form>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap">
           <Box width={{ xs: "100%", md: "20%" }}>
             <Field
               component={TextInput}

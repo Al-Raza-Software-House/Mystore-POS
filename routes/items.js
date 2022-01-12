@@ -463,6 +463,7 @@ router.post('/search', async (req, res) => {
       costPrice: 1,
       salePrice: 1,
       currentStock: 1,
+      sizeId: 1,
       creationDate: 1,
       isServiceItem: 1
     }
@@ -688,6 +689,57 @@ router.post('/adjustStock', async (req, res) => {
     await store.logCollectionLastUpdated('items', now);
     res.json( {
       items: [...items, ...packings],
+      now,
+      lastAction
+    } );
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
+
+router.post('/adjustBatchStock', async (req, res) => {
+  try
+  {
+    ['storeId', 'itemId'].forEach(item => {
+      if(!req.body[item])
+        throw new Error(item + ' is required');
+    });
+    const store = await Store.isManager(req.body.storeId, req.user._id);
+    if(!store) throw new Error("invalid request");
+    const lastAction = store.dataUpdated.items;
+    let item = await Item.findOne({_id: req.body.itemId, storeId: req.body.storeId });
+    if(item.isServiceItem) throw new Error("This is a service item, batches cannot be added");
+    if(item.sizeId) throw new Error("This is variant item with color and size, batches cannot be added");
+    const now = moment().tz('Asia/Karachi').toDate();
+    let formBatches = req.body.batches ? req.body.batches : [];
+    let batches = [];
+      if(formBatches && formBatches.length !== 0)
+        formBatches.forEach(batch => {
+          if(!batch.batchNumber || !batch.batchExpiryDate || batch.batchStock === 0) return;
+          batches.push({
+            batchNumber: batch.batchNumber,
+            batchExpiryDate: moment(batch.batchExpiryDate).toDate(),
+            batchStock: +Number(batch.batchStock).toFixed(2)
+          })
+        });
+    item.set({
+      batches,
+      lastUpdated: now
+    })
+    await item.save();
+    await Item.updateMany({ packParentId : item._id }, {
+        batches,
+        lastUpdated: now
+      });
+
+    let packings = await Item.find({ packParentId : item._id });
+
+    await store.updateLastActivity();
+    await store.logCollectionLastUpdated('items', now);
+    res.json( {
+      item,
+      packings,
       now,
       lastAction
     } );

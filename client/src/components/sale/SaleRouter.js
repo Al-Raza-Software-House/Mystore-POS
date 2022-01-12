@@ -48,7 +48,7 @@ function SaleRouter({ userRole }){
         </Box>
       </Paper>
       <Paper className={classes.paper} style={{flexGrow: 1}} variant="outlined" square>
-        <Box px={3} pt={2} >
+        <Box px={3} >
           <Switch>
             {
               isSalesperson(userRole) ? null : <Route path="/sale/closings/view/:storeId/:closingId" render={props => <ViewClosing {...props} printClosing={setPrintClosing} />} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Box, ButtonBase, Paper, Typography } from '@material-ui/core';
+import { Box, ButtonBase, Paper, Typography, useMediaQuery } from '@material-ui/core';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxOpen } from '@fortawesome/free-solid-svg-icons';
@@ -44,9 +44,10 @@ const useStyles = makeStyles(theme => ({
 }))
 
 function Item({ item, selectItem, disabled }){
+  const isDesktop = useMediaQuery((theme) => theme.breakpoints.up('sm'), { noSsr: true });
   const classes = useStyles();
   return(
-    <ButtonBase style={{ boxSizing: "border-box", width: "32%", cursor: "pointer", marginBottom: "8px" }} onClick={() => selectItem(item)} disabled={disabled}>
+    <ButtonBase style={{ boxSizing: "border-box", width: isDesktop ? "32%" : "48%", cursor: "pointer", marginBottom: "8px" }} onClick={() => selectItem(item)} disabled={disabled}>
       <Paper style={{ width: "100%" }}  elevation={3} className={classes.root}>
         <Box p={1}>
           <Typography title={item.itemName} align="center" style={{ fontSize: 12, fontWeight: "bold", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}> {item.itemName}  </Typography>

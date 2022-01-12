@@ -28,7 +28,7 @@ function PrintClosing(props){
     var mywindow = window.open('', 'PRINT', 'height=600,width=800');
       mywindow.document.write('<html><head><title>Sale Receipt</title>');
       mywindow.document.write('</head><body >');
-      mywindow.document.write('<style type="text/css"> @media print { #table-container{ margin-bottom: 10mm; } }  </style>')
+      mywindow.document.write('<style type="text/css"> body{ margin: 0px }  @media print { #table-container{ margin-bottom: 10mm; } }  </style>')
       mywindow.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />');
       mywindow.document.write(document.getElementById("receipt-container").innerHTML);
       mywindow.document.write('</body></html>');
@@ -39,7 +39,7 @@ function PrintClosing(props){
      setTimeout(() => {
         mywindow.print();
         mywindow.close();
-     }, 200)
+     }, 500)
 
       return true;
   }, []);
@@ -61,7 +61,7 @@ function PrintClosing(props){
         !closing ?  null :
         <DialogContent>
           <Box id="receipt-container" style={{ backgroundColor: '#ececec', padding: '0px 10px' }} maxWidth="80mm" margin="auto">
-            <Box style={{ fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', padding: "16px 0px", maxWidth: "80mm" }}>
+            <Box style={{ fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', maxWidth: "80mm" }} py={2}>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>End Of Day Report</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 18, textAlign: "center" }}>{ store.name }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 12, textAlign: "center" }}>{ store.address }</Typography>

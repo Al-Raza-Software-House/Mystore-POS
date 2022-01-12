@@ -109,18 +109,18 @@ function ViewClosing(props) {
   if(!closing._id) return null;
     return(
       <>
-      <Box margin="auto" width="100%">
+      <Box margin="auto" width="100%" pt={2}>
         <form>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box width={{ xs: "100%", width: "31%" }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+          <Box width={{ xs: "100%", md: "31%" }} mb={1}>
             <Box width="160px" height="60px"  display="flex" justifyContent="center" fontSize="25px"  alignItems="center" style={ closing.status === closingStates.CLOSING_STATUS_OPEN ? { backgroundColor: "#2196f3", color: "#fff" } : { backgroundColor: "#6e6e6e", color: "#fff" } }>
               { closing.status === closingStates.CLOSING_STATUS_OPEN ? "OPEN" : "CLOSED" }
             </Box>
           </Box>
-          <Box width={{ xs: "100%", width: "31%" }}>
+          <Box width={{ xs: "100%", md: "31%" }} mb={1}>
             <Typography><b>Opening Time</b>: { moment(closing.startTime).format("DD MMM, YYYY") } &nbsp; &nbsp; { moment(closing.startTime).format("hh:mm A") }</Typography>
           </Box>
-          <Box width={{ xs: "100%", width: "31%" }}>
+          <Box width={{ xs: "100%", md: "31%" }} mb={1}>
             {
               closing.status === closingStates.CLOSING_STATUS_CLOSED ? 
               <Typography><b>Closing Time</b>: { moment(closing.endTime).format("DD MMM, YYYY") } &nbsp; &nbsp; { moment(closing.endTime).format("hh:mm A") }</Typography>
@@ -129,31 +129,31 @@ function ViewClosing(props) {
           </Box>
         </Box>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" border="2px solid #ececec" borderRight="none" height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" boxSizing="border-box" border="2px solid #ececec" borderRight={{ xs: "2px solid #ececec", md: "none" }} height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
             <Typography style={{ fontWeight: "bold", fontSize: 18 }}>Opening Cash</Typography>
             <Typography style={{ fontSize: 18 }}>{ closing.openingCash.toLocaleString() }</Typography>
           </Box>
 
-          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" border="2px solid #ececec" borderRight="none" height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
+          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" boxSizing="border-box" border="2px solid #ececec" borderRight={{ xs: "2px solid #ececec", md: "none" }} height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
             <Typography style={{ fontWeight: "bold", fontSize: 18, color: "green" }}>Total Inflow (+)</Typography>
             <Typography style={{ fontSize: 18 }}>{ closing.totalInflow.toLocaleString() }</Typography>
           </Box>
 
-          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" border="2px solid #ececec" borderRight="none" height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
+          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" boxSizing="border-box" border="2px solid #ececec" borderRight={{ xs: "2px solid #ececec", md: "none" }} height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
             <Typography style={{ fontWeight: "bold", fontSize: 18, color: "red" }}>Total Outflow (-)</Typography>
             <Typography style={{ fontSize: 18 }}>{ closing.totalOutflow.toLocaleString() }</Typography>
           </Box>
 
-          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" border="2px solid #ececec" height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
+          <Box width={{ xs: "100%", md: "25%" }} textAlign="center" boxSizing="border-box" border="2px solid #ececec" height="80px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
             <Typography style={{ fontWeight: "bold", fontSize: 18 }}>Expected Cash</Typography>
             <Typography style={{ fontSize: 18 }}>{ closing.expectedCash.toLocaleString() }</Typography>
           </Box>
         </Box>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mt={2} flexWrap="wrap">
           
-          <Box width={{ xs: "100%", md: "25%" }}>
+          <Box width={{ xs: "100%", md: "25%" }} mb={1}>
             <Typography style={{ fontWeight: "bold", fontSize: 18, color: "green" }} >Inflow Details</Typography>
             <table style={{ width: "100%" }}>
               <tbody>
@@ -211,7 +211,7 @@ function ViewClosing(props) {
 
         </Box>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" my={3} mb={2}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" my={3} mb={2} flexWrap="wrap">
           <Box width={{ xs: "100%", md: "33%" }}>
             <Field
               component={TextInput}

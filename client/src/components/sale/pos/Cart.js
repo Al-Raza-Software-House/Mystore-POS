@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
-import { Box, Button, Chip, Collapse, IconButton, InputAdornment, Typography } from '@material-ui/core';
+import { Box, Button, Chip, Collapse, IconButton, InputAdornment, Typography, useMediaQuery } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faChevronDown, faChevronUp, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faChevronDown, faChevronUp, faMinus, faPlus, faTrash, faTrashRestore } from '@fortawesome/free-solid-svg-icons';
 import { useMemo } from 'react';
 import { allowOnlyNumber } from 'utils';
 import { change, Field, FieldArray } from 'redux-form';
@@ -67,6 +67,7 @@ function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
 
 function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
   const dispatch = useDispatch();
+  const isDesktop = useMediaQuery((theme) => theme.breakpoints.up('sm'), { noSsr: true });
   const [open, setOpen] = useState(false);
   let quantity = isNaN(formItem.quantity) ? 0 : Number(formItem.quantity);
   let salePrice = isNaN(formItem.salePrice) ? 0 : Number(formItem.salePrice);
@@ -123,7 +124,7 @@ function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
               onKeyDown={allowOnlyNumber}
               inputProps={{ style: { textAlign: "center" } }}
               disabled={disabled}
-              InputProps={{
+              InputProps={!isDesktop ? {}: {
                   startAdornment:
                     <InputAdornment position="start">
                       <IconButton
@@ -153,8 +154,16 @@ function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
         <Box style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
           <Typography style={{ fontSize: 16, fontWeight: "bold" }}>{ (+((quantity * salePrice) - (quantity * discount)).toFixed(2)).toLocaleString() }</Typography>
         </Box>
-        <Box width="90px" textAlign="center">
-          <Button type="button" disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid} > { formItem.isVoided ? "unVoid" : "Void" } </Button>
+        <Box width={ isDesktop ?"90px" : "50px" } textAlign="center">
+          {
+            isDesktop ?
+            <Button type="button" disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid} > { formItem.isVoided ? "unVoid" : "Void" } </Button>
+            :
+            <IconButton disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid}>
+              <FontAwesomeIcon icon={ formItem.isVoided ? faTrashRestore : faTrash} />
+            </IconButton>
+
+          }
         </Box>
       </Box>
       <Collapse in={open} style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>

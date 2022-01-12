@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { loadStats } from 'store/actions/dashboardActions';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { isManager } from 'utils';
+import { closingStates } from 'utils/constants';
 
 const useStyles = makeStyles((theme) => ({
   quickLink:{
@@ -68,7 +69,8 @@ const quickLinks = [
   },
 ]
 
-function Dashboard({ storeId, loadStats, stats, userRole }){
+function Dashboard({ storeId, loadStats, stats, userRole, openedClosing }){
+  console.log(openedClosing);
   const classes = useStyles();
   useEffect(() => {
     if(!storeId) return;
@@ -83,7 +85,7 @@ function Dashboard({ storeId, loadStats, stats, userRole }){
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
             {
               quickLinks.map(record => (
-                <ButtonBase component={Link} to={record.to} key={record.to}>
+                <ButtonBase component={Link} to={record.to !== "/sale/closings" ? record.to : (openedClosing ? '/sale/closings/view/' + storeId + '/' + openedClosing._id : record.to)} key={record.to}>
                   <Paper className={classes.quickLink} elevation={5}>
                     <Box textAlign="center" mb={2}>
                       <FontAwesomeIcon icon={record.icon} size="2x" />
@@ -94,7 +96,25 @@ function Dashboard({ storeId, loadStats, stats, userRole }){
               ))
             }
           </Box>
-          : null
+          :
+          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+            <ButtonBase component={Link} to={openedClosing ? '/sale/closings/view/' + storeId + '/' + openedClosing._id : "/sale/closings"} >
+              <Paper className={classes.quickLink} elevation={5}>
+                <Box textAlign="center" mb={2}>
+                  <FontAwesomeIcon icon={faStoreSlash} size="2x" />
+                </Box>
+                <span style={{ color: "#606060" }} >Day Close</span>
+              </Paper>
+            </ButtonBase>
+            <ButtonBase component={Link} to="/accounts/transactions/new" >
+              <Paper className={classes.quickLink} elevation={5}>
+                <Box textAlign="center" mb={2}>
+                  <FontAwesomeIcon icon={faMoneyBillAlt} size="2x" />
+                </Box>
+                <span style={{ color: "#606060" }} >New TXN</span>
+              </Paper>
+            </ButtonBase>
+          </Box>
       }
       {
         !stats ? null :
@@ -226,10 +246,12 @@ function Dashboard({ storeId, loadStats, stats, userRole }){
 const mapStateToProps = (state) => {
   const storeId = state.stores.selectedStoreId;
   let stats = storeId && state.dashboard[storeId] && state.dashboard[storeId].stats ? state.dashboard[storeId].stats : null;
+  let openedClosing = state.closings[storeId] ? state.closings[storeId].records.find(record => record.status === closingStates.CLOSING_STATUS_OPEN) : null;
   return {
     storeId,
     stats,
     userRole: state.stores.userRole,
+    openedClosing
   }
 }
 

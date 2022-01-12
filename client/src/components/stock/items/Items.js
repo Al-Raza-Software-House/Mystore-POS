@@ -8,6 +8,7 @@ import ItemFilters from './ItemFilters';
 import { formValueSelector } from 'redux-form';
 import { Link } from 'react-router-dom';
 import AdjustStock from './AdjustStock';
+import AdjustBatchStock from './AdjustBatchStock';
 
 const formSelector = formValueSelector('itemListFilters');
 
@@ -157,12 +158,8 @@ function Item({ item, categoriesMap, storeId, deleteItem }){
       <TableCell align="right">
         
         
-        {
-          item.isServiceItem ? null :
-          <>
-            <AdjustStock storeId={storeId} itemId={item._id} />
-          </>
-        }
+        { item.isServiceItem ? null : <AdjustStock storeId={storeId} itemId={item._id} /> }
+        { item.isServiceItem || item.sizeId ? null : <AdjustBatchStock storeId={storeId} itemId={item._id} /> }
         <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id }  title="Edit Item">
           <FontAwesomeIcon icon={faPencilAlt} size="xs" />
         </IconButton>

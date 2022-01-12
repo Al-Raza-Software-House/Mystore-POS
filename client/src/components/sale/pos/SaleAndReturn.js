@@ -247,19 +247,24 @@ function SaleAndReturn(props){
       let {_id, quantity, salePrice, discount, isVoided, batches } = record;
       payload.items.push({_id, quantity, salePrice, discount, isVoided, batches });
     });
-    dispatch( showProgressBar() );
+    if(!printSalesReceipt)
+      dispatch( showProgressBar() );
     dispatch( addOfflineSale(storeId, payload) );
     dispatch( updateStore(storeId, { ...store, idsCursors: { ...store.idsCursors, saleCursor: store.idsCursors.saleCursor + 1 } }) ); //update store cursor
     if(payload.customerId && Number(payload.creditAmount) !== 0 && customer)
       dispatch( { type: customerTypes.CUSTOMER_UPDATED, storeId, customerId: payload.customerId, customer: { ...customer, currentBalance: customer.currentBalance + Number(payload.creditAmount) } } );
-
-    setTimeout(() => {
-      dispatch( hideProgressBar() );
-      dispatch( showSuccess("New sale added") );
+    if(!printSalesReceipt)
+    {
+      setTimeout(() => {
+        dispatch( hideProgressBar() );
+        dispatch( showSuccess("New sale added") );
+        resetSale();
+      }, 500);
+    }else
+    {
+      printSale({ ...payload, printSalesReceipt });
       resetSale();
-      if(printSalesReceipt)
-        printSale({ ...payload, printSalesReceipt })
-    }, 500);
+    }
     
   }, [items, resetSale, printSalesReceipt, printSale, customer]);
 
@@ -326,7 +331,7 @@ function SaleAndReturn(props){
   }
   return(
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" borderBottom="2px solid #ececec" pb={1} mb={1}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" pb={0} style={{ paddingTop: "2px" }} >
         <Box width={{ xs: '100%', md: '48%' }}>
           <Field
           component={DateTimeInput}
@@ -354,7 +359,7 @@ function SaleAndReturn(props){
           />
         </Box>
       </Box>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap">
         <Box width={{ xs: "100%", md: "48%" }}>
           <Box style={{ backgroundColor: "#f9f9f9" }} border="1px solid #ececec" borderRadius={5}>
             <Box  style={{ backgroundColor: "#fff" }} display="flex" justifyContent="space-between" borderBottom="1px solid #ececec" flexWrap="wrap" alignItems="center" px={2} py={0} >
