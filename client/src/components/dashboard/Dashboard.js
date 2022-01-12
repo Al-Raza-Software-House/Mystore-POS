@@ -70,7 +70,6 @@ const quickLinks = [
 ]
 
 function Dashboard({ storeId, loadStats, stats, userRole, openedClosing }){
-  console.log(openedClosing);
   const classes = useStyles();
   useEffect(() => {
     if(!storeId) return;
