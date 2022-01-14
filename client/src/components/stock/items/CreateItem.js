@@ -28,7 +28,7 @@ const formSelector = formValueSelector('createItem');
 
 function CreateItem(props){
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, storeId } = props;
-  const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock } = props;
+  const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock, itemCode, itemName } = props;
 
   
 
@@ -251,7 +251,7 @@ function CreateItem(props){
           <Box width="100%">
             <Panel id="packings" heading="Packings" expanded={false}>
               <Box width="100%">
-                <FieldArray name="packings" component={Packings} unitSalePrice={parseInt(salePrice)}/>
+                <FieldArray name="packings" component={Packings} unitSalePrice={Number(salePrice)} unitItemCode={itemCode} unitItemName={itemName}/>
               </Box>
             </Panel>
           </Box>
@@ -477,8 +477,25 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
   )
 }
 
-function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest } }){
+function Packings({ fields, unitSalePrice, unitItemName, unitItemCode, meta: { error, submitFailed, ...rest } }){
   const dispatch = useDispatch();
+  const packings = useSelector(state => formSelector(state, 'packings'));
+  useEffect(() => {
+    for(let index=0; index < fields.length; index++)
+    {
+      if(!packings[index].itemCode && unitItemCode)
+        dispatch(change('createItem', `packings[${index}].itemCode`, `${unitItemCode}-P${index + 1}`));
+      if(index === 0)
+      {
+        if(!packings[index].itemName && unitItemName)
+        dispatch(change('createItem', `packings[${index}].itemName`, unitItemName));
+      }else
+      {
+        if(!packings[index].itemName && packings[0].itemName)
+          dispatch(change('createItem', `packings[${index}].itemName`, packings[0].itemName));
+      }
+    }
+  }, [fields, packings, unitItemCode, unitItemName, dispatch]);
   return(
     <>
     <Box width="100%">
@@ -519,7 +536,8 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               name={`${pack}.packQuantity`}
               placeholder="Pack quantity..."
               onChange={(event, newvalue) => {
-                const packSalePrice = parseInt(newvalue) * (unitSalePrice ? unitSalePrice : 0);
+                let packSalePrice = Number(newvalue) * (unitSalePrice ? unitSalePrice : 0);
+                packSalePrice = +Number(packSalePrice).toFixed(2);
                 dispatch( change('createItem', `${pack}.packSalePrice`, packSalePrice) );
               }}
               fullWidth={true}
@@ -645,6 +663,8 @@ const mapStateToProps = state => {
     categoryId,
     category,
     variants: formSelector(state, 'variants'),
+    itemCode: formSelector(state, 'itemCode'),
+    itemName: formSelector(state, 'itemName'),
     costPrice: formSelector(state, 'costPrice'),
     salePrice: formSelector(state, 'salePrice'),
     minStock: formSelector(state, 'minStock'),
@@ -659,7 +679,7 @@ reduxForm({
   validate,
   onSubmit,
   asyncValidate,
-  initialValues: { costPrice: 0, salePrice: 0, expiryDate: null, packings: [{}], sizes: [], combinations: [] },
+  initialValues: { costPrice: 0, salePrice: 0, expiryDate: null, packings: [], sizes: [], combinations: [] },
   asyncBlurFields: ['itemCode', 'packings[].itemCode'],
   shouldAsyncValidate: (params) => {
     const { trigger, syncValidationPasses, initialized  } = params;

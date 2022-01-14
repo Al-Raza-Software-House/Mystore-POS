@@ -89,7 +89,7 @@ const areFiltersApplied = (filters) => {
 }
 
 function ItemFilters(props){
-  const { dispatch, pristine, dirty } = props;
+  const { dispatch, pristine, dirty, recordsPerPage } = props;
   const { storeId, moreFilters, setMoreFilters, categoryId, storeFilters } = props;
   const classes = useStyles();
   const filters = useSelector(state => getFormValues(formName)(state));
@@ -100,9 +100,9 @@ function ItemFilters(props){
     if(pageLoad.current) return;
     pageLoad.current = storeFilters;
     let filtersApplied = areFiltersApplied(storeFilters);
-      if(filtersApplied)
+      if(filtersApplied && !recordsPerPage)
         dispatch( changeFilters(storeId, defaultFilters) );
-  }, [dispatch, storeId, storeFilters]);
+  }, [dispatch, storeId, storeFilters, recordsPerPage]);
 
   //for reset button
   let filtersApplied = areFiltersApplied(storeFilters);

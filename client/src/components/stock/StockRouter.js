@@ -46,6 +46,7 @@ function StockRouter({ loadVideos }){
         <Box px={3} pt={2} >
           <Switch>
             <Route path="/stock/items/create" component={CreateItem} />
+            <Route path="/stock/items/edit/:storeId/:itemId/:rowsPerPage/:pageNumber" component={EditItem} />
             <Route path="/stock/items/edit/:storeId/:itemId" component={EditItem} />
 
             <Route path="/stock/categories/properties/:storeId/:categoryId" component={Properties} />
@@ -60,6 +61,7 @@ function StockRouter({ loadVideos }){
             <Route path="/stock/adjustmentReasons/edit/:storeId/:reasonId" component={EditAdjustmentReason} />
             <Route path="/stock/adjustmentReasons" component={AdjustmentReasons} />
 
+            <Route path="/stock/:recordsPerPage/:pageNumber" component={Items} />
             <Route path="/stock" component={Items} />
           </Switch>
         </Box>

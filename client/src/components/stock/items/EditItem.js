@@ -29,10 +29,10 @@ const formSelector = formValueSelector( formName );
 function EditItem(props){
   const { showProgressBar, hideProgressBar, showError } = props;
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid } = props;
-  const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock } = props;
+  const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock, itemCode, itemName } = props;
 
   const [itemLoaded, setItemLoaded] = useState(null);
-  const { storeId, itemId } = useParams();
+  const { storeId, itemId, rowsPerPage, pageNumber } = useParams();
   const history = useHistory();
 
   //load item from server on Component Mount
@@ -47,7 +47,7 @@ function EditItem(props){
       showError( err.response && err.response.data.message ? err.response.data.message: err.message );
       history.push('/stock');
     } );
-  }, []);
+  }, [dispatch, hideProgressBar, history, itemId, showError, showProgressBar, storeId]);
 
   const copyCostPrice = () => {
     variants.forEach((variant, index) => {
@@ -72,8 +72,13 @@ function EditItem(props){
 
   useEffect(() => {
     if(submitSucceeded)
-      history.push('/stock');
-  }, [submitSucceeded, history])
+    {
+      if(rowsPerPage)
+        history.push(`/stock/${rowsPerPage}/${pageNumber}`);
+      else
+        history.push('/stock');
+    }
+  }, [submitSucceeded, history, pageNumber, rowsPerPage])
 
   return(
     <>
@@ -288,7 +293,7 @@ function EditItem(props){
             <Box width="100%">
               <Panel id="packings" heading="Packings" expanded={false}>
                 <Box width="100%">
-                  <FieldArray name="packings" component={Packings} unitSalePrice={parseInt(salePrice)}/>
+                  <FieldArray name="packings" component={Packings} unitSalePrice={Number(salePrice)} unitItemCode={itemCode} unitItemName={itemName}/>
                 </Box>
               </Panel>
             </Box>
@@ -517,10 +522,25 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
 //Varient End
 
 //packing Start
-function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest } }){
+function Packings({ fields, unitSalePrice, unitItemName, unitItemCode, meta: { error, submitFailed, ...rest } }){
   const dispatch = useDispatch();
   const packings = useSelector(state => formSelector(state, 'packings'));
-  
+  useEffect(() => {
+    for(let index=0; index < fields.length; index++)
+    {
+      if(!packings[index].itemCode && unitItemCode)
+        dispatch(change(formName, `packings[${index}].itemCode`, `${unitItemCode}-P${index + 1}`));
+      if(index === 0)
+      {
+        if(!packings[index].itemName && unitItemName)
+        dispatch(change(formName, `packings[${index}].itemName`, unitItemName));
+      }else
+      {
+        if(!packings[index].itemName && packings[0].itemName)
+          dispatch(change(formName, `packings[${index}].itemName`, packings[0].itemName));
+      }
+    }
+  }, [fields, packings, unitItemCode, unitItemName, dispatch]);
   return(
     <>
     <Box width="100%">
@@ -562,7 +582,8 @@ function Packings({ fields, unitSalePrice, meta: { error, submitFailed, ...rest 
               name={`${pack}.packQuantity`}
               placeholder="Pack quantity..."
               onChange={(event, newvalue) => {
-                const packSalePrice = parseInt(newvalue) * (unitSalePrice ? unitSalePrice : 0);
+                let packSalePrice = Number(newvalue) * (unitSalePrice ? unitSalePrice : 0);
+                packSalePrice = +Number(packSalePrice).toFixed(2);
                 dispatch( change(formName, `${pack}.packSalePrice`, packSalePrice) );
               }}
               fullWidth={true}
@@ -696,6 +717,8 @@ const mapStateToProps = state => {
     categoryId,
     category,
     variants: formSelector(state, 'variants'),
+    itemCode: formSelector(state, 'itemCode'),
+    itemName: formSelector(state, 'itemName'),
     costPrice: formSelector(state, 'costPrice'),
     salePrice: formSelector(state, 'salePrice'),
     minStock: formSelector(state, 'minStock'),

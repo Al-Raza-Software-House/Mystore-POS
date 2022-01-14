@@ -6,7 +6,7 @@ import { connect, useSelector } from 'react-redux';
 import { loadItems, resetItems, deleteItem } from '../../../store/actions/itemActions';
 import ItemFilters from './ItemFilters';
 import { formValueSelector } from 'redux-form';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import AdjustStock from './AdjustStock';
 import AdjustBatchStock from './AdjustBatchStock';
 
@@ -44,13 +44,14 @@ const columns = [
 const filtersHeight = 172;
 
 function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItems, itemsLoaded, categoriesMap, loadItems, resetItems, deleteItem }) {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
+  const { recordsPerPage, pageNumber } = useParams();
+  const [page, setPage] = React.useState(pageNumber? parseInt(pageNumber) :  0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(recordsPerPage ? parseInt(recordsPerPage) : 25);
   const [moreFilters, setMoreFilters] = React.useState(false);
   const filterRef = React.useRef();
 
   React.useEffect(() => {
-    if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0
+    if(filterRef.current && filterRef.current !== filters && page !== 0)//filters changed, reset page to 0
       setPage(0);
     filterRef.current = filters;
     if(filteredItems.length === 0 && !loadingItems && !itemsLoaded)// on Page load or filters changed or reset button
@@ -89,7 +90,7 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
 
   return(
     <>
-    <ItemFilters {...{storeId, moreFilters, setMoreFilters, categoryId }} storeFilters={filters} />
+    <ItemFilters {...{storeId, moreFilters, setMoreFilters, categoryId, recordsPerPage }} storeFilters={filters} />
     {
       filteredItems.length ===0 && itemsLoaded && !loadingItems ?
       <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
@@ -114,7 +115,7 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map( (row) => (<Item key={row._id} item={row} categoriesMap={categoriesMap} storeId={storeId} deleteItem={deleteItem} />) )
+              {rows.map( (row) => (<Item key={row._id} item={row} categoriesMap={categoriesMap} storeId={storeId} deleteItem={deleteItem} rowsPerPage={rowsPerPage} page={page} />) )
               }
             </TableBody>
           </Table>
@@ -136,7 +137,7 @@ function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItem
 }
 
 
-function Item({ item, categoriesMap, storeId, deleteItem }){
+function Item({ item, categoriesMap, storeId, deleteItem, rowsPerPage, page }){
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -160,7 +161,7 @@ function Item({ item, categoriesMap, storeId, deleteItem }){
         
         { item.isServiceItem ? null : <AdjustStock storeId={storeId} itemId={item._id} /> }
         { item.isServiceItem || item.sizeId ? null : <AdjustBatchStock storeId={storeId} itemId={item._id} /> }
-        <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id }  title="Edit Item">
+        <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id + '/' + rowsPerPage + '/' + page }  title="Edit Item">
           <FontAwesomeIcon icon={faPencilAlt} size="xs" />
         </IconButton>
         <IconButton onClick={(event) => handleClick(event) } title="Delete Item">
