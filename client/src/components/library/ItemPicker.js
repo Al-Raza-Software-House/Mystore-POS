@@ -101,13 +101,11 @@ function ItemPicker(props) {
       filterOptions={(options, state) => {
         let query = state.inputValue.toLowerCase();
         if(query === "") return [];
-        return options.filter(item => {
-          if(item.itemName.toLowerCase().indexOf(query) !== -1) return true;
-          if(item.sizeId)
-            return (`${item.itemCode}-${item.sizeCode}-${item.combinationCode}`).toLowerCase().indexOf(query) !== -1;
-          else
-            return item.itemCode.toLowerCase().indexOf(query) !== -1;
-        })
+        let matches = options.filter(item => {
+          if(item.itemNameLC.indexOf(query) !== -1) return true;
+          return item.itemCodeLC.indexOf(query) !== -1;
+        });
+        return matches.slice(0, 10);
       }}
       />
       

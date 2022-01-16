@@ -19,6 +19,7 @@
     "compress.js": "^1.1.2",
     "fuzzysort": "^1.1.4",
     "lodash": "^4.17.21",
+    "match-sorter": "^6.3.1",
     "materialui-daterange-picker": "^1.1.92",
     "moment": "^2.29.1",
     "react": "^17.0.2",

@@ -9,6 +9,7 @@ const defaultStoreRecord = {
      };
 
 let storeRecord = null;
+let newItems = null;
 const itemReducer = (state = initState, action) => {
   switch(action.type)
   {
@@ -38,11 +39,12 @@ const itemReducer = (state = initState, action) => {
     
     case actionTypes.MASTER_ITEMS_LOADED:
      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
+     newItems = action.items.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
      return{
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         allItems: [...storeRecord.allItems, ...action.items], //append new items
+         allItems: [...storeRecord.allItems, ...newItems], //append new items
        }
      };
 
@@ -59,14 +61,15 @@ const itemReducer = (state = initState, action) => {
     case actionTypes.SYNC_ITEMS:
      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
       let masterItems = [...storeRecord.allItems];
-      action.items.reverse(); //keep the newly created items in of array, ,
-      for(let i=0; i<action.items.length; i++)
+      newItems = action.items.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
+      newItems.reverse(); //keep the newly created items in of array, ,
+      for(let i=0; i<newItems.length; i++)
       {
-        let itemIndex = masterItems.findIndex(item => item._id === action.items[i]._id);
+        let itemIndex = masterItems.findIndex(item => item._id === newItems[i]._id);
         if(itemIndex >= 0)
-          masterItems[itemIndex] = action.items[i]; //replace/update item
+          masterItems[itemIndex] = newItems[i]; //replace/update item
         else
-          masterItems = [action.items[i], ...masterItems]; //new item
+          masterItems = [newItems[i], ...masterItems]; //new item
       }
      return{
        ...state,
@@ -77,12 +80,16 @@ const itemReducer = (state = initState, action) => {
      }
 
     case actionTypes.ITEM_CREATED:
-     storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
+      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
+      let newItem = {...action.item, itemNameLC: action.item.itemName.toLowerCase(), itemCodeLC: (action.item.sizeId ? `${action.item.itemCode}-${action.item.sizeCode}-${action.item.combinationCode}` : action.item.itemCode ).toLowerCase()}
+      let newPackings = action.item.packings.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
+      let newVariants = action.item.variants.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
+      
      return{
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         allItems: [action.item, ...action.item.packings, ...action.item.variants, ...storeRecord.allItems],
+         allItems: [newItem, ...newPackings, ...newVariants, ...storeRecord.allItems],
          filteredItems: [action.item, ...storeRecord.filteredItems], //append new items
          filteredItemsCount: storeRecord.filteredItemsCount + 1
        }
@@ -104,6 +111,10 @@ const itemReducer = (state = initState, action) => {
       storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
       let newMasterItems = [...storeRecord.allItems];
       newMasterItems = newMasterItems.filter(item => action.deletedSubItems.indexOf(item._id) === -1 ); //remove deleted variants or packs first
+
+      action.item = {...action.item, itemNameLC: action.item.itemName.toLowerCase(), itemCodeLC: (action.item.sizeId ? `${action.item.itemCode}-${action.item.sizeCode}-${action.item.combinationCode}` : action.item.itemCode ).toLowerCase()}
+      action.item.packings = action.item.packings.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
+      action.item.variants = action.item.variants.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
       for(let i=0; i<action.item.packings.length; i++)
       {
         let packIndex = newMasterItems.findIndex(item => item._id === action.item.packings[i]._id);
