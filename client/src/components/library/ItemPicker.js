@@ -4,6 +4,7 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import { useSelector } from 'react-redux';
 import barcodeReader from '@wrurik/barcode-scanner';
 import ItemPickerPopup from './ItemPickerPopup';
+import { matchSorter } from 'match-sorter';
 
 
 const useStyles = makeStyles(theme => ({
@@ -98,15 +99,7 @@ function ItemPicker(props) {
       noOptionsText="No items found by this name or code"
       onChange={(event, selectedOption) => selectSuggestion( selectedOption ? selectedOption: null ) }
       getOptionSelected={(option, value) => option._id === value}
-      filterOptions={(options, state) => {
-        let query = state.inputValue.toLowerCase();
-        if(query === "") return [];
-        let matches = options.filter(item => {
-          if(item.itemNameLC.indexOf(query) !== -1) return true;
-          return item.itemCodeLC.indexOf(query) !== -1;
-        });
-        return matches.slice(0, 10);
-      }}
+      filterOptions={(options, { inputValue }) => matchSorter(options, inputValue, { keys: ["itemNameLC", 'itemCodeLC'] })}
       />
       
       <ItemPickerPopup {...{ disabled, supplierId, selectItem, removeItem, selectedItems, showServiceItems, popupOpen, setPopupOpen }} />
