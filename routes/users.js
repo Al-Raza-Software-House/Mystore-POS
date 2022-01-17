@@ -7,6 +7,7 @@ const moment = require('moment-timezone');
 const { authCheck } = require('../utils/middlewares');
 const { storeStates } = require('../utils/constants');
 const axios = require('axios');
+//const Item = require( '../models/stock/Item' );
 
 router.post('/signup', async (req, res) => {
   try
@@ -248,4 +249,57 @@ router.post('/settings', async (req, res) => {
   }
 });
 
+// router.get('/store', async(req, res) => {
+//   for(let i=0; i<2000; i++)
+//   {
+//     const now = moment().tz('Asia/Karachi').toDate();
+//     const defaultProperties = {
+//       property1: null,
+//       property2: null,
+//       property3: null,
+//       property4: null,
+//     }
+//     let record = {
+//       storeId: "61df0370563fbc1a4f7d8a27",
+//       categoryId: "61df31909ee911c7d0b0fed4",
+//       supplierId: null,
+//       itemCode: random(10 + Math.ceil(Math.random() * 20)),
+//       itemName: random(10 + Math.ceil(Math.random() * 20)),
+//       costPrice: 300,
+//       salePrice: 500,
+
+//       description: '',
+//       image: "",
+//       isServiceItem:false,
+//       isActive: true,
+//       minStock: 10,
+//       maxStock:  20,
+//       currentStock: 0,
+//       batches: [],
+//       varientParentId: null,
+//       packParentId: null,
+//       categoryPropertyValues: defaultProperties,
+//       itemPropertyValues: defaultProperties,
+//       expiryDate: null,
+//       creationDate: now,
+//       lastUpdated: now,
+//     }
+//     let item = new Item(record);
+//     await item.save();
+    
+//   }
+//   res.json({success: true})
+// });
+
+// function random(length) {
+//   const characters =
+//     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+//   let result = '';
+
+//   for (let i = 0; i < length; i += 1) {
+//     result += characters.charAt(Math.floor(Math.random() * characters.length));
+//   }
+
+//   return result;
+// }
 module.exports = router;

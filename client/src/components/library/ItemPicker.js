@@ -99,7 +99,7 @@ function ItemPicker(props) {
       noOptionsText="No items found by this name or code"
       onChange={(event, selectedOption) => selectSuggestion( selectedOption ? selectedOption: null ) }
       getOptionSelected={(option, value) => option._id === value}
-      filterOptions={(options, { inputValue }) => matchSorter(options, inputValue, { keys: ["itemNameLC", 'itemCodeLC'] })}
+      filterOptions={(options, { inputValue }) => matchSorter(options, inputValue, { keys: ["itemNameLC", 'itemCodeLC'] }).slice(0, 10)}
       />
       
       <ItemPickerPopup {...{ disabled, supplierId, selectItem, removeItem, selectedItems, showServiceItems, popupOpen, setPopupOpen }} />

@@ -65,11 +65,12 @@ const itemReducer = (state = initState, action) => {
       newItems.reverse(); //keep the newly created items in of array, ,
       for(let i=0; i<newItems.length; i++)
       {
-        let itemIndex = masterItems.findIndex(item => item._id === newItems[i]._id);
+        let record = newItems[i];
+        let itemIndex = masterItems.findIndex(item => item._id === record._id);
         if(itemIndex >= 0)
-          masterItems[itemIndex] = newItems[i]; //replace/update item
+          masterItems[itemIndex] = record; //replace/update item
         else
-          masterItems = [newItems[i], ...masterItems]; //new item
+          masterItems = [record, ...masterItems]; //new item
       }
      return{
        ...state,
