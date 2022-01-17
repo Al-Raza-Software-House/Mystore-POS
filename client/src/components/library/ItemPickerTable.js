@@ -13,7 +13,7 @@ function ItemPickerTable(props){
   const userRole = useSelector(state => state.stores.userRole);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  
   useEffect(() => {
     setPage(oldPage => oldPage > 0 ? 0 : oldPage);
   }, [items])
@@ -61,7 +61,7 @@ function ItemPickerTable(props){
             component="div"
             count={items.length}
             rowsPerPage={rowsPerPage}
-            page={items.length && items.length < (page+1)*rowsPerPage ? page : 0}
+            page={items.length ? page : 0}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
