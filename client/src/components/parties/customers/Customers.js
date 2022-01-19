@@ -12,7 +12,7 @@ import _ from "lodash";
 
 function Customers({ storeId, records, deleteCustomer }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [query, setQuery] = useState("");
   const [mobile, setMobile] = useState("");
   const [filteredRecords, setFilteredRecords] = useState([]);

@@ -10,7 +10,7 @@ import RtvFilters from './RtvFilters';
 
 function Rtvs({ storeId, suppliers, lastEndOfDay, records, filters, totalRecords, recordsLoaded, loadingRecords, loadRtvs, emptyRtvs, deleteRtv, printRtv }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
 
   useEffect(() => {

@@ -46,7 +46,7 @@ const filtersHeight = 172;
 function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItems, itemsLoaded, categoriesMap, loadItems, resetItems, deleteItem }) {
   const { recordsPerPage, pageNumber } = useParams();
   const [page, setPage] = React.useState(pageNumber? parseInt(pageNumber) :  0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(recordsPerPage ? parseInt(recordsPerPage) : 25);
+  const [rowsPerPage, setRowsPerPage] = React.useState(recordsPerPage ? parseInt(recordsPerPage) : 10);
   const [moreFilters, setMoreFilters] = React.useState(false);
   const filterRef = React.useRef();
 

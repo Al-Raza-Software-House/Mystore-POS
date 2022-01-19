@@ -12,7 +12,7 @@ import TransactionsFilters from './TransactionsFilters';
 const filtersHeight = 72.5;
 function AccountTransactions({ storeId, heads, banks, lastEndOfDay, records, filters, totalRecords, recordsLoaded, loadingRecords, loadTxns, emptyTxns, deleteTxn }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [moreFilters, setMoreFilters] = useState(false);
   const filterRef = useRef();
 

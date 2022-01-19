@@ -24,7 +24,7 @@ function SupplierLedger({ lastEndOfDay, banks, loadingRecords, dispatch, printTx
   const [records, setRecords] = useState([]);
   const [recordsLoaded, setRecordsLoaded] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     setPage(0);

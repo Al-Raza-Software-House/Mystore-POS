@@ -11,7 +11,7 @@ import PurchaseOrdersFilters from './PurchaseOrdersFilters';
 
 function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder, printPo }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
 
   useEffect(() => {

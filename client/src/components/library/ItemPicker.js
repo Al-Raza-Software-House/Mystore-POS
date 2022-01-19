@@ -43,9 +43,9 @@ function ItemPicker(props) {
     let removeListener = barcodeReader.onScan((itemCode) => {
       let records = items.filter(item => {
         if(item.sizeId)
-          return `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` === itemCode
+          return `${item.itemCode}-${item.sizeCode}-${item.combinationCode}`.toLowerCase().indexOf(itemCode.toLowerCase()) !== -1;
         else
-          return item.itemCode === itemCode
+          return item.itemCode.toLowerCase().indexOf(itemCode) !== -1;
       });
       if(records.length === 1)
       {

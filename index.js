@@ -38,7 +38,9 @@ if(process.env.NODE_ENV === 'production') {
   })
 }
 
-//app.use((req, res, next) => setTimeout(next, 1000));
+if(process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => setTimeout(next, 500));
+}
 app.use(express.static( path.join(__dirname, '/client/build') ));
 //Dasboard
 app.use('/api/dashboard', require('./routes/dashboard'));
