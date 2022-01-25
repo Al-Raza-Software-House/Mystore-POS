@@ -30,7 +30,7 @@ function SelectCategoryProperty(props) {
         dispatch( change(formName, `categoryPropertyValues.${propertyId}`, null ) );
       lastCategory.current = categoryId;
   }, [categoryId, dispatch, formName, propertyId]);
-
+  if(!category) return null;
   return(
     <>
     <Box display="flex">
