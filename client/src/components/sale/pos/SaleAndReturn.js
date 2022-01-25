@@ -84,9 +84,12 @@ function SaleAndReturn(props){
     ));
   }, [dispatch, defaultBankId, userId, location.pathname, history]);
 
+  const pageInitialized = useRef();
   //init form on page load
   useEffect(() => {
-    if(!sale) return resetSale();
+    if(pageInitialized.current) return; //run only once at page load
+    pageInitialized.current = true;
+    if(!sale) return resetSale(); // BUG => 2nd device adding new items, updates master items lists, reset sale here
 
     let formItems = {};
     sale.items.forEach(item => {

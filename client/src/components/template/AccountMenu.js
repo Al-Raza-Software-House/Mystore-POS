@@ -57,4 +57,4 @@ const AccountMenu = ({ logOut }) => {
   );
 }
 
-export default  connect(null, {logOut})(AccountMenu);
+export default  React.memo(connect(null, {logOut})(AccountMenu));

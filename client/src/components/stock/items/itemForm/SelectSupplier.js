@@ -12,7 +12,7 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import { createSupplier } from '../../../../store/actions/supplierActions';
 
 function SelectSupplier(props) {
-  const { storeId, formName, suppliers, disabled=false, addNewRecord=true } = props;
+  const { storeId, formName, suppliers, disabled=false, showError=true, addNewRecord=true } = props;
   return(
     <>
     <Box display="flex">
@@ -27,6 +27,7 @@ function SelectSupplier(props) {
         fullWidth={true}
         style={{ flexGrow: 1 }}
         disabled={disabled}
+        showError={showError}
         addNewRecord={addNewRecord}
       />
       { addNewRecord && <AddSupplierForm disabled={disabled} storeId={storeId} formName={formName} /> }

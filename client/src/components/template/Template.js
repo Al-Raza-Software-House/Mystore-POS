@@ -50,7 +50,11 @@ function Template({ uid, progressBar, storeName, pinging, syncData }) {
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('sm'), { noSsr: true });
   const [open, setOpen] = useState(isLargeScreen);
-  const toggleDrawer = () =>  setOpen(open => (!open)) 
+  const toggleDrawer = () =>  setOpen(open => (!open))
+  //sync data on app load
+  useEffect(() => {
+    syncData()//
+  },  [syncData]);
   if(!uid) return <Redirect to="/signin" />
   return (
     <Router>

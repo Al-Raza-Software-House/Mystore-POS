@@ -12,7 +12,7 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import { updateItemProperties } from '../../../../store/actions/itemPropertiesActions';
 
 function SelectItemProperty(props) {
-  const { formName, propertyId, disabled=false, addNewRecord=true } = props;
+  const { formName, propertyId, disabled=false, showError=true, addNewRecord=true } = props;
   const { storeId, itemProperties } = useSelector(state => {
     let storeId = state.stores.selectedStoreId;
     return {
@@ -34,6 +34,7 @@ function SelectItemProperty(props) {
         fullWidth={true}
         style={{ flexGrow: 1 }}
         disabled={disabled}
+        showError={showError}
         addNewRecord={addNewRecord}
       />
       { addNewRecord && <AddItemPropertyForm disabled={disabled} storeId={storeId} propertyId={propertyId} propertyName={itemProperties[propertyId].name} formName={formName} /> }

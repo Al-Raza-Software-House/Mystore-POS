@@ -7,7 +7,7 @@ const engine = createEngine('my-store');
 const storageMiddleware = storage.createMiddleware(engine);
 const store = createStore(rootReducer, 
   window.__REDUX_DEVTOOLS_EXTENSION__  && process.env.NODE_ENV !== 'production' ?
-  compose(   applyMiddleware(thunk), applyMiddleware(storageMiddleware), window.__REDUX_DEVTOOLS_EXTENSION__({trace: true, traceLimit: 25}) ) : 
+  compose(   applyMiddleware(thunk), applyMiddleware(storageMiddleware), window.__REDUX_DEVTOOLS_EXTENSION__({trace: false, traceLimit: 25}) ) : 
   compose(applyMiddleware(thunk), applyMiddleware(storageMiddleware))
 );
 

@@ -1,42 +1,15 @@
 import { actionTypes } from '../actions/itemActions';
 const initState = {}
 const defaultStoreRecord = { 
-       allItems: [], //master data
-       filters: {},
-       filteredItems: [],
-       filteredItemsCount: 0,
-       itemsLoaded: false
-     };
+    allItems: [], //master data
+    filters: {},
+};
 
 let storeRecord = null;
 let newItems = null;
 const itemReducer = (state = initState, action) => {
   switch(action.type)
-  {
-    case actionTypes.ITEMS_LOADED:
-     storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
-     return{
-       ...state,
-       [action.storeId]: {
-         ...storeRecord,
-         filteredItems: [...storeRecord.filteredItems, ...action.items], //append new items
-         filteredItemsCount: action.totalRecords,
-         itemsLoaded: true
-       }
-     };
-
-    case actionTypes.EMPTY_ITEMS:
-     storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
-     return{
-       ...state,
-       [action.storeId]: {
-         ...storeRecord,
-         filteredItems: [], //append new items
-         filteredItemsCount: 0,
-         itemsLoaded: false
-       }
-     }
-    
+  { 
     case actionTypes.MASTER_ITEMS_LOADED:
      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
      newItems = action.items.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))
@@ -90,9 +63,7 @@ const itemReducer = (state = initState, action) => {
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         allItems: [newItem, ...newPackings, ...newVariants, ...storeRecord.allItems],
-         filteredItems: [action.item, ...storeRecord.filteredItems], //append new items
-         filteredItemsCount: storeRecord.filteredItemsCount + 1
+         allItems: [newItem, ...newPackings, ...newVariants, ...storeRecord.allItems]
        }
      };
 
@@ -103,8 +74,6 @@ const itemReducer = (state = initState, action) => {
        [action.storeId]: {
          ...storeRecord,
          allItems: storeRecord.allItems.filter(record => record._id !== action.itemId && record.packParentId !== action.itemId && record.varientParentId !== action.itemId ), //remove item, all it's packings and variants
-         filteredItems: storeRecord.filteredItems.filter(record => record._id !== action.itemId), //append new items
-         filteredItemsCount: storeRecord.filteredItemsCount - 1
        }
      };
 
@@ -141,8 +110,7 @@ const itemReducer = (state = initState, action) => {
         ...state,
         [action.storeId]: {
           ...storeRecord,
-          allItems: newMasterItems,
-          filteredItems: storeRecord.filteredItems.map(record => record._id === action.itemId ? action.item : record), //append new items
+          allItems: newMasterItems
         }
       };
     case actionTypes.ITEM_SIZE_NAME_UPDATED:
@@ -171,10 +139,7 @@ const itemReducer = (state = initState, action) => {
        ...state,
        [action.storeId]: {
          ...storeRecord,
-         filters: action.filters,
-         filteredItems: [], //append new items
-         filteredItemsCount: 0,
-         itemsLoaded: false
+         filters: action.filters
        }
      }
 

@@ -12,7 +12,7 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import { updateCategory } from '../../../../store/actions/categoryActions';
 
 function SelectCategoryProperty(props) {
-  const { formName, categoryId, propertyId, disabled=false, addNewRecord=true } = props;
+  const { formName, categoryId, propertyId, disabled=false, showError=true, addNewRecord=true } = props;
   const { storeId, category } = useSelector(state => {
     let storeId = state.stores.selectedStoreId;
     const categories = state.categories[storeId] ? state.categories[storeId] : [];
@@ -45,6 +45,7 @@ function SelectCategoryProperty(props) {
         fullWidth={true}
         style={{ flexGrow: 1 }}
         disabled={disabled}
+        showError={showError}
         addNewRecord={addNewRecord}
       />
       { addNewRecord && <AddCategoryPropertyForm disabled={disabled} storeId={storeId} categoryId={categoryId} propertyId={propertyId} propertyName={category[propertyId].name} formName={formName} /> }

@@ -1,17 +1,18 @@
-import React, { useEffect, useRef } from 'react';
-import { Box, Button, makeStyles, Typography, Collapse } from '@material-ui/core';
+import React, { useEffect, useMemo } from 'react';
+import { Box, Button, makeStyles, Typography, Collapse, TextField } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faPlus, faSearch, faSync, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faPlus, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { changeFilters } from '../../../store/actions/itemActions';
 import SelectCategory from './itemForm/SelectCategory';
 import SelectSupplier from './itemForm/SelectSupplier';
 import SelectCategoryProperty from './itemForm/SelectCategoryProperty';
 import SelectItemProperty from './itemForm/SelectItemProperty';
-import { Field, reduxForm, getFormValues, initialize } from 'redux-form';
-import TextInput from '../../library/form/TextInput';
+import { Field, reduxForm, initialize, getFormValues } from 'redux-form';
 import SelectInput from '../../library/form/SelectInput';
 import { useSelector } from 'react-redux';
+import { useRef } from 'react';
+import _ from "lodash";
 
 const formName = 'itemListFilters';
 
@@ -36,7 +37,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const itemTypes = [
-  {id: 0, title: "Select item type"},
+  {id: 0, title: "Item type"},
   {id: 1, title: "Low stock items"},
   {id: 2, title: "Over stock items"},
   {id: 3, title: "Service items"},
@@ -45,8 +46,7 @@ const itemTypes = [
 ]
 
 const defaultFilters = {
-  itemCode: "",
-  itemName: "",
+  itemCodeName: "",
   categoryId: null,
   supplierId: null,
   itemType: 0,
@@ -89,81 +89,45 @@ const areFiltersApplied = (filters) => {
 }
 
 function ItemFilters(props){
-  const { dispatch, pristine, dirty, recordsPerPage } = props;
-  const { storeId, moreFilters, setMoreFilters, categoryId, storeFilters } = props;
+  const { dispatch } = props;
+  const { storeId, moreFilters, setMoreFilters, categoryId } = props;
   const classes = useStyles();
-  const filters = useSelector(state => getFormValues(formName)(state));
-  const pageLoad = useRef();
+  const formFilters = useSelector(state => getFormValues(formName)(state));
 
-  //Run only at page load, if filtersWereApplied before, clearfilters and reload items
   useEffect(() => {
-    if(pageLoad.current) return;
-    pageLoad.current = storeFilters;
-    let filtersApplied = areFiltersApplied(storeFilters);
-      if(filtersApplied && !recordsPerPage)
-        dispatch( changeFilters(storeId, defaultFilters) );
-  }, [dispatch, storeId, storeFilters, recordsPerPage]);
+    dispatch( changeFilters(storeId, formFilters) );
+  }, [formFilters, storeId, dispatch])
 
   //for reset button
-  let filtersApplied = areFiltersApplied(storeFilters);
+  let filtersApplied = useMemo(() => areFiltersApplied(formFilters), [formFilters]);
 
   const resetFilters = () => {
     dispatch( initialize(formName, defaultFilters) );
-    dispatch( changeFilters(storeId, defaultFilters) );
-  }
-
-  const searchItems = () => {
-    dispatch( initialize(formName, filters) );
-    dispatch( changeFilters(storeId, filters) );
   }
 
   return(
     <>
-    <Box width="100%" justifyContent="flex-end" alignItems="flex-start" display="flex">
+    <Box width="100%" justifyContent="flex-end" alignItems="flex-start" display="flex" mb={0}>
       <Box flexGrow={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
-        <Box width={{ xs: '100%', md: '31%' }} >
+        <Box width={{ xs: '100%', md: '25%' }} >
           <Field
-              component={TextInput}
-              label="Item Code"
-              name="itemCode"
-              placeholder="Enter item code..."
+              component={SearchInput}
+              label="Search"
+              name="itemCodeName"
+              placeholder="Search by item name or code..."
               fullWidth={true}
               variant="outlined"
               margin="dense"
+              showError={false}
             />
         </Box>
-        <Box width={{ xs: '100%', md: '31%' }} >
-          <Field
-            component={TextInput}
-            label="Item Name"
-            name="itemName"
-            placeholder="Enter item name..."
-            fullWidth={true}
-            variant="outlined"
-            margin="dense"
-          />
+        <Box width={{ xs: '100%', md: '20%' }} >
+          <SelectCategory formName={formName} addNewRecord={false} showError={false}/>
         </Box>
-        <Box width={{ xs: '100%', md: '31%' }} alignSelf="flex-start" pt={1} display="flex" >
-          <Box>
-            <Button title="Search Items" disabled={pristine || !dirty} onClick={searchItems} startIcon={ <FontAwesomeIcon icon={faSearch} /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
-            <Button title={ filtersApplied ? "Reset Filters" : "Refresh" }  onClick={resetFilters} startIcon={ <FontAwesomeIcon icon={filtersApplied ? faUndo : faSync}  /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
-          </Box>
-          <Button color="primary" onClick={() => setMoreFilters(!moreFilters) } endIcon={ moreFilters ? <FontAwesomeIcon icon={faChevronUp} /> : <FontAwesomeIcon icon={faChevronDown} /> }>{ moreFilters ? "Less" : "More" }</Button>
+        <Box width={{ xs: '100%', md: '20%' }}>
+          <SelectSupplier formName={formName} addNewRecord={false} showError={false}/>
         </Box>
-      </Box>
-      <Box pt={1} minWidth="160px" display="flex" justifyContent="center">
-        <Button startIcon={ <FontAwesomeIcon icon={faPlus} /> } variant="contained" color="primary" disableElevation component={Link} to="/stock/items/create" >New Item</Button>
-      </Box>
-    </Box>
-    <Collapse in={moreFilters} style={{width: '100%'}}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
-        <Box width={{ xs: '100%', md: '31%' }} >
-          <SelectCategory formName={formName} addNewRecord={false}/>
-        </Box>
-        <Box width={{ xs: '100%', md: '31%' }} >
-          <SelectSupplier formName={formName} addNewRecord={false}/>
-        </Box>
-        <Box width={{ xs: '100%', md: '31%' }} >
+        <Box width={{ xs: '100%', md: '16%' }}>
           <Field
             component={SelectInput}
             options={itemTypes}
@@ -173,40 +137,54 @@ function ItemFilters(props){
             variant="outlined"
             margin="dense"
             fullWidth={true}
+            showError={false}
           />
         </Box>
+        <Box minWidth="125px" alignSelf="flex-start" pt={1} display="flex" >
+            <Button title="Show More Filters"  onClick={() => setMoreFilters(!moreFilters) } startIcon={ moreFilters ? <FontAwesomeIcon icon={faChevronUp} /> : <FontAwesomeIcon icon={faChevronDown} /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
+            {
+              filtersApplied ? 
+              <Button title="Reset Filters"  onClick={resetFilters} startIcon={ <FontAwesomeIcon icon={faUndo}  /> } classes={{ root: classes.searchBtn, startIcon: classes.startIcon }} variant="outlined" color="primary" disableElevation ></Button>
+              : null
+            }
+        </Box>
       </Box>
+      <Box pt={1} minWidth="86px" display="flex" justifyContent="center">
+        <Button startIcon={ <FontAwesomeIcon icon={faPlus} /> } variant="contained" color="primary" disableElevation component={Link} to="/stock/items/create" >New</Button>
+      </Box>
+    </Box>
+    <Collapse in={moreFilters} style={{width: '100%'}}>
       <Typography className={classes.heading}>Item Properties</Typography>
-      <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%">
+      <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%" mb={1}>
         <Box width={{ xs: '100%', md: '24%' }} >
-          <SelectItemProperty formName={formName} propertyId="property1" addNewRecord={false} />
+          <SelectItemProperty formName={formName} propertyId="property1" addNewRecord={false} showError={false} />
         </Box>
         <Box width={{ xs: '100%', md: '24%' }} >
-          <SelectItemProperty formName={formName} propertyId="property2" addNewRecord={false} />
+          <SelectItemProperty formName={formName} propertyId="property2" addNewRecord={false} showError={false} />
         </Box>
         <Box width={{ xs: '100%', md: '24%' }}>
-          <SelectItemProperty formName={formName} propertyId="property3" addNewRecord={false} />
+          <SelectItemProperty formName={formName} propertyId="property3" addNewRecord={false} showError={false} />
         </Box>
         <Box width={{ xs: '100%', md: '24%' }}>
-          <SelectItemProperty formName={formName} propertyId="property4" addNewRecord={false} />
+          <SelectItemProperty formName={formName} propertyId="property4" addNewRecord={false} showError={false} />
         </Box>  
       </Box>
       {
         !categoryId ? null :
         <>
         <Typography className={classes.heading}>Category Properties</Typography>
-        <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%">
+        <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%" mb={1}>
           <Box width={{ xs: '100%', md: '24%' }} >
-            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property1" addNewRecord={false} />
+            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property1" addNewRecord={false} showError={false} />
           </Box>
           <Box width={{ xs: '100%', md: '24%' }} >
-            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property2" addNewRecord={false} />
+            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property2" addNewRecord={false} showError={false}/>
           </Box>
           <Box width={{ xs: '100%', md: '24%' }} >
-            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property3" addNewRecord={false} />
+            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property3" addNewRecord={false} showError={false} />
           </Box>
           <Box width={{ xs: '100%', md: '24%' }} >
-            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property4" addNewRecord={false} />
+            <SelectCategoryProperty formName={formName} categoryId={categoryId} propertyId="property4" addNewRecord={false} showError={false}/>
           </Box>
         </Box>
         </>
@@ -216,7 +194,33 @@ function ItemFilters(props){
   )
 }
 
+const SearchInput = ({
+  label, addNewRecord=false, showError=true, ignoreTouch=false,
+  input: { onChange, value,  ...restInput },
+  ...custom
+}) => {
+  const handleQueryChange = _.debounce((event) => {
+    onChange(event.target.value);
+  }, 300);
+  const inputRef = useRef();
+  useEffect(() => {
+    inputRef.current.value = value;
+  }, [value]);
+  
+  return (
+    <Box width="100%">
+      <TextField 
+        label={label}
+        inputRef={inputRef}
+        onChange={handleQueryChange}
+        {...restInput}
+        {...custom}
+      />
+    </Box>
+  );
+}
+
+
 export default reduxForm({
-  form: formName,
-  initialValues: defaultFilters
+  form: formName
 })(ItemFilters);

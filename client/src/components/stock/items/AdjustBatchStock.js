@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faCalendarAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconButton, CircularProgress, FormHelperText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box } from '@material-ui/core';
-import { connect } from 'react-redux';
-import { showError, showSuccess } from '../../../store/actions/alertActions';
+import { showSuccess } from '../../../store/actions/alertActions';
 import { updateItem } from '../../../store/actions/itemActions';
 import axios from 'axios';
 import { Field, FieldArray, initialize, reduxForm, SubmissionError } from 'redux-form';
-import { compose } from 'redux';
 import TextInput from '../../library/form/TextInput';
-import { useCallback } from 'react';
 import DateInput from 'components/library/form/DateInput';
 import { allowOnlyPostiveNumber } from 'utils';
 
@@ -17,36 +14,33 @@ const formName = "adjustBatchStock";
 
 function AdjustBatchStock(props){
   const [open, setOpen] = useState(false);
-  const { showError, dispatch, item  } = props;
-  const { error, invalid, pristine, submitting, submitSucceeded, handleSubmit } = props;
+  const { dispatch, item  } = props;
+  const { error, invalid, pristine, submitting, submitSucceeded, handleSubmit, setItem } = props;
+  
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setItem(null);
+  }, [setItem]);
+
   useEffect(() => {
     if(submitSucceeded)
     {
       handleClose();
     }
-  }, [submitSucceeded])
+  }, [submitSucceeded, handleClose])
 
-  const handleClickOpen = useCallback(() => {
+  useEffect(() => {
     if(item)
     {
       setOpen(true); 
       dispatch( initialize(formName, { itemId: item._id, batches: item.batches.length ? item.batches : [{ batchNumber: "", batchExpiryDate: null, batchStock: 0 }], currentStock: item.currentStock }) );
-    }else
-    {
-      showError("Item Not found");
     }
-  }, [item, dispatch, showError])
+  }, [item, dispatch])
 
-  const handleClose = () => {
-    setOpen(false);
-  };
 
 
   return (
     <>
-      <IconButton onClick={(event) => handleClickOpen(event) } title="Adjust Batch Stock">
-        <FontAwesomeIcon icon={faCalendarAlt} size="xs" />
-      </IconButton>
       {
         !item ? null :
         <Dialog fullWidth={true} maxWidth="sm" onClose={handleClose} aria-labelledby="customized-dialog-title" open={open}>
@@ -201,20 +195,8 @@ const validate = (values, props) => {
   return errors;
 }
 
-const mapStateToProps = (state, props) => {
-  const storeId = state.stores.selectedStoreId;
-  const allItems = state.items[storeId] ? state.items[storeId].allItems : [];
-  const item = allItems.find(item => item._id === props.itemId)
-  return{
-    item
-  }
-}
-
-export default compose(
-  connect(mapStateToProps, { showError }),
-  reduxForm({
+export default reduxForm({
     'form': formName,
     validate,
     onSubmit
-  })
-)(AdjustBatchStock);
+  })(AdjustBatchStock);

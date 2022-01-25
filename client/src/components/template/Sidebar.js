@@ -273,4 +273,4 @@ const mapStateToProps = (state) => {
 }
 
 
-export default connect(mapStateToProps, { syncData, stopPing,  syncSale, changeOnlineStatus})(Sidebar);
+export default React.memo(connect(mapStateToProps, { syncData, stopPing,  syncSale, changeOnlineStatus})(Sidebar));

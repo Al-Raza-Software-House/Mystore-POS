@@ -39,7 +39,7 @@ if(process.env.NODE_ENV === 'production') {
 }
 
 if(process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => setTimeout(next, 500));
+  app.use((req, res, next) => setTimeout(next, 1000));
 }
 app.use(express.static( path.join(__dirname, '/client/build') ));
 //Dasboard

@@ -12,6 +12,8 @@ import { compose } from 'redux';
 import TextInput from '../../library/form/TextInput';
 import { useSelector } from 'react-redux';
 import SelectInput from '../../library/form/SelectInput';
+import { useCallback } from 'react';
+import { useMemo } from 'react';
 
 const formName = "adjustStock";
 const formSelector = formValueSelector( formName );
@@ -19,16 +21,25 @@ const formSelector = formValueSelector( formName );
 function AdjustStock(props){
   const [open, setOpen] = useState(false);
   const [variants, setVariants] = useState(null);
-  const { storeId, itemId, showProgressBar, hideProgressBar, showError, dispatch, reasons  } = props;
+  const { storeId, itemId, showProgressBar, hideProgressBar, showError, dispatch, setItemId  } = props;
   const { error, invalid, pristine, submitting, submitSucceeded, handleSubmit } = props;
   const values = useSelector(state => formSelector(state, 'variants'));
+  const storeReasons = useSelector(state => state.adjustmentReasons[storeId] ? state.adjustmentReasons[storeId] : []);
+  const reasons = useMemo(() => {
+    return storeReasons.map(record => ({ id: record._id, title: record.name }));
+  }, [storeReasons])
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setItemId(null);
+  }, [setItemId]);
+  
   useEffect(() => {
     if(submitSucceeded)
     {
       handleClose();
       setVariants(null); //reload the item from server to show updated current stock
     }
-  }, [submitSucceeded])
+  }, [submitSucceeded, handleClose])
 
   let anyvalidQuantity = false;
   if(values && values.length)
@@ -41,13 +52,8 @@ function AdjustStock(props){
       }
   }
 
-  const handleClickOpen = () => {
-    if(variants)
-    {
-      setOpen(true); 
-      dispatch( initialize(formName, { variants }) );
-      return;
-    }
+  const loadItem = useCallback(() => {
+    if(!itemId) return;
     showProgressBar();
     axios.get('/api/items/load', { params: { storeId, itemId } } ).then( ({ data }) => {
       hideProgressBar();
@@ -64,11 +70,13 @@ function AdjustStock(props){
       hideProgressBar();
       showError( err.response && err.response.data.message ? err.response.data.message: err.message );
       handleClose();
-    } );
-  };
-  const handleClose = () => {
-    setOpen(false);
-  };
+    });
+  }, [storeId, itemId, showProgressBar, hideProgressBar, dispatch, showError, reasons, handleClose]);
+
+  useEffect(() => {
+    if(!itemId) return;
+    loadItem();
+  }, [itemId, loadItem]);
 
   const toggleQuantiy = (index) => {
     if(Number(values[index].adjustmentQuantity) === 0) return;
@@ -77,9 +85,6 @@ function AdjustStock(props){
 
   return (
     <>
-      <IconButton onClick={(event) => handleClickOpen(event) } title="Adjust Stock">
-        <FontAwesomeIcon icon={faArrowsAltV} size="xs" />
-      </IconButton>
       {
         variants === null ? null :
         <Dialog fullWidth={true} maxWidth="md" onClose={handleClose} aria-labelledby="customized-dialog-title" open={open}>
@@ -239,17 +244,10 @@ const validate = (values, props) => {
   return {  }
 }
 
-const mapStateToProps = state => {
-  const storeId = state.stores.selectedStoreId;
-  const records = state.adjustmentReasons[storeId] ? state.adjustmentReasons[storeId] : [];
-  const reasons = records.map(record => ({ id: record._id, title: record.name }));
-  return{
-    reasons,
-  }
-}
+
 
 export default compose(
-  connect(mapStateToProps, { showProgressBar, hideProgressBar, showSuccess, showError }),
+  connect(null, { showProgressBar, hideProgressBar, showSuccess, showError }),
   reduxForm({
     'form': formName,
     validate,

@@ -147,7 +147,7 @@ const onSubmit = (values, dispatch, {  showProgressBar, hideProgressBar }) => {
       dispatch( createStore(data.store) );
       //init redux store master data structure for current store
       //stock
-      dispatch({ type: itemActions.ITEMS_LOADED, storeId: data.store._id, items: [], totalRecords: 0 });
+      dispatch({ type: itemActions.MASTER_ITEMS_LOADED, storeId: data.store._id, items: [], totalRecords: 0 });
       dispatch({ type: categoryActions.CATEGORIES_LOADED, storeId: data.store._id, categories: [] });
       dispatch({ type: itemPropertiesActions.ITEM_PROPERTIES_LOADED, storeId: data.store._id, properties: data.itemProperties });
       dispatch({ type: adjustmentReasonActions.ADJUST_REASONS_LOADED, storeId: data.store._id, reasons: data.adjustmentReasons });

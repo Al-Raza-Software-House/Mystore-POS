@@ -1,179 +1,365 @@
-import React, { useMemo, useState } from 'react';
-import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Typography, Popover, IconButton } from '@material-ui/core';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TablePagination, Typography, Popover, IconButton, makeStyles } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsAltV, faCalendarAlt, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { connect, useSelector } from 'react-redux';
-import { loadItems, resetItems, deleteItem } from '../../../store/actions/itemActions';
+import { deleteItem } from '../../../store/actions/itemActions';
 import ItemFilters from './ItemFilters';
 import { formValueSelector } from 'redux-form';
 import { Link, useParams } from 'react-router-dom';
 import AdjustStock from './AdjustStock';
 import AdjustBatchStock from './AdjustBatchStock';
+import { matchSorter } from 'match-sorter';
+import { useEffect } from 'react';
+import Pagination from '@material-ui/lab/Pagination';
+import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList as List } from "react-window";
+import clsx from "clsx";
 
 const formSelector = formValueSelector('itemListFilters');
 
+const ROW_HEIGHT = 43;
+
 const columns = [
-  { id: 'itemCode', label: 'Code', minWidth: 110,  },
-  { id: 'itemName', label: 'Name', minWidth: 200 },
+  { id: 'itemCode', label: 'Code', width: 110,  },
+  { id: 'itemName', label: 'Name' },
   {
     id: 'categoryId',
     label: 'Category',
-    minWidth: 100,
     align: 'left'
   },
   {
     id: 'costPrice',
     label: 'Cost Price',
-    minWidth: 70,
+    width: 85,
     align: 'center',
   },
   {
     id: 'salePrice',
     label: 'Sale Price',
-    minWidth: 70,
+    width: 85,
     align: 'center',
   },
   {
     id: 'actions',
     label: 'Actions',
-    minWidth: 170,
+    width: 205,
     align: 'right'
   }
 ];
 
-const filtersHeight = 172;
+const useStyles = makeStyles((theme) => ({
+  root: {
+    display: "block",
+    flex: 1
+  },
+  table: {
+    height: "100%",
+    width: "100%"
+  },
+  list: {},
+  thead: {},
+  tbody: {
+    width: "100%"
+  },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
+    boxSizing: "border-box",
+    minWidth: "100%",
+    width: "100%"
+  },
+  headerRow: {},
+  cell: {
+    display: "inline-flex",
+    alignItems: "center",
+    overflow: "hidden",
+    flexGrow: 0,
+    flexShrink: 0
+  },
+  expandingCell: {
+    flex: 1
+  },
+  column: {}
+}));
 
-function Items({storeId, filters, filteredItems, filteredItemsCount, loadingItems, itemsLoaded, categoriesMap, loadItems, resetItems, deleteItem }) {
-  const { recordsPerPage, pageNumber } = useParams();
-  const [page, setPage] = React.useState(pageNumber? parseInt(pageNumber) :  0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(recordsPerPage ? parseInt(recordsPerPage) : 10);
-  const [moreFilters, setMoreFilters] = React.useState(false);
+const filtersHeight = 83;
+
+const itemKey = (index, data) => data.items[index]._id+index;
+
+function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
+  const classes = useStyles();
+  const { recordsPerPage, pageNumber } = useParams(); // while coming back from Edit item
+  const [page, setPage] = useState(pageNumber? parseInt(pageNumber) :  1);
+  const [rowsPerPage, setRowsPerPage] = useState(recordsPerPage ? parseInt(recordsPerPage) : 10);
+  const [moreFilters, setMoreFilters] = useState(false);
+  const [deleteAnchorEl, setDeleteAnchorEl] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null); //item selected for delete
+  const [adjustStockItemId, setAdjustStockItemId] = useState(null); //item selected for Adjust stock
+  const [adjustBatchStockItem, setAdjustBatchStockItem] = useState(null); //item selected for Adjust stock
   const filterRef = React.useRef();
+  const listRef = React.useRef();
 
   React.useEffect(() => {
-    if(filterRef.current && filterRef.current !== filters && page !== 0)//filters changed, reset page to 0
-      setPage(0);
-    filterRef.current = filters;
-    if(filteredItems.length === 0 && !loadingItems && !itemsLoaded)// on Page load or filters changed or reset button
-      loadItems(rowsPerPage); 
-}, [filters, filteredItems.length, loadingItems, itemsLoaded, loadItems, page, rowsPerPage]);
+      if(filterRef.current && filterRef.current !== filters && page !== 1)//filters changed, reset page to 0
+        setPage(1);
+      if(filterRef.current && filterRef.current !== filters)
+        listRef.current && listRef.current.scrollToItem(0);
+      filterRef.current = filters;
+  }, [filters, page]);
+
+  const parentItems = useMemo(() => {
+    return allItems.filter(item => item.packParentId === null && item.varientParentId === null);
+  }, [allItems]);
+
+
+  const filteredItems = useMemo(() => {
+    let items = parentItems;
+    if(!filters) return items;
+    if(filters.categoryId)
+      items = items.filter(item => item.categoryId === filters.categoryId);
+    if(filters.supplierId)
+      items = items.filter(item => item.supplierId === filters.supplierId);
+    if(parseInt(filters.itemType))
+    {
+      switch(parseInt(filters.itemType))
+      {
+        case 1:
+          items = items.filter(item => item.currentStock < item.minStock );
+          break;
+        case 2:
+          items = items.filter(item => item.currentStock > item.maxStock );
+          break;
+        case 3:
+          items = items.filter(item => item.isServiceItem );
+          break;
+        case 4:
+          items = items.filter(item => item.isActive );          
+          break;
+        case 5:
+          items = items.filter(item => !item.isActive );   
+          break;
+        default:
+          break;
+      }
+    }
+    if(filters.itemCodeName)
+    {
+      items = matchSorter(items, filters.itemCodeName, { keys: ["itemNameLC", 'itemCodeLC'] })
+    }
+    if(filters.itemPropertyValues)
+    {
+      if(filters.itemPropertyValues.property1) items = items.filter(item => item.itemPropertyValues.property1 === filters.itemPropertyValues.property1);
+      if(filters.itemPropertyValues.property2) items = items.filter(item => item.itemPropertyValues.property2 === filters.itemPropertyValues.property2);
+      if(filters.itemPropertyValues.property3) items = items.filter(item => item.itemPropertyValues.property3 === filters.itemPropertyValues.property3);
+      if(filters.itemPropertyValues.property4) items = items.filter(item => item.itemPropertyValues.property4 === filters.itemPropertyValues.property4);
+    }
+    if(filters.categoryId && filters.categoryPropertyValues)
+    {
+      if(filters.categoryPropertyValues.property1) items = items.filter(item => item.categoryPropertyValues.property1 === filters.categoryPropertyValues.property1);
+      if(filters.categoryPropertyValues.property2) items = items.filter(item => item.categoryPropertyValues.property2 === filters.categoryPropertyValues.property2);
+      if(filters.categoryPropertyValues.property3) items = items.filter(item => item.categoryPropertyValues.property3 === filters.categoryPropertyValues.property3);
+      if(filters.categoryPropertyValues.property4) items = items.filter(item => item.categoryPropertyValues.property4 === filters.categoryPropertyValues.property4);
+    }
+    return items;
+  }, [parentItems, filters])
+
+  const promptDelete = useCallback((event, item) => {
+    setSelectedItem(item);
+    setDeleteAnchorEl(event.currentTarget);
+  }, []);
+
+  const deleteRecord = useCallback(() => {
+    deleteItem(storeId, selectedItem._id);
+    setDeleteAnchorEl(null);
+  }, [deleteItem, storeId, selectedItem]);
 
   //adjust the height of Table if filters are expanded/collapsed
   const categoryId = useSelector(state => formSelector(state, 'categoryId'));
-  let moreFiltersHeight = moreFilters ? filtersHeight : 0;
-  if(moreFilters && categoryId)
-    moreFiltersHeight += 98;
+  const moreFiltersHeight = useMemo(() => {
+    let height = moreFilters ? filtersHeight : 0;
+    if(moreFilters && categoryId)
+      height += 85;
+    return height;
+  }, [moreFilters, categoryId])
 
   const handleChangePage = (event, newPage) => { 
     setPage(newPage);
-    let records = filteredItems.slice(newPage * rowsPerPage, newPage * rowsPerPage + rowsPerPage);
-    if( records.length < rowsPerPage && filteredItems.length < filteredItemsCount )//next page records are 0 or less than rows per page but server has more rows, 
-      loadItems(rowsPerPage);
+    listRef.current && listRef.current.scrollToItem(0);
    };
 
   const handleChangeRowsPerPage = (event) => {
-    let newValue = +event.target.value;
     setRowsPerPage(+event.target.value);
-    setPage(0);
-    if( filteredItems.length < newValue && filteredItems.length < filteredItemsCount ) //there are more rows on server and current rows are less then recordsPerPage
-    {
-      loadItems(newValue);
-    }
+    setPage(1);
+    listRef.current && listRef.current.scrollToItem(0);
   };
 
+  const totalPages = useMemo(() => Math.ceil( filteredItems.length / rowsPerPage ), [filteredItems, rowsPerPage]);
   //get only page  rows, use Memo to prevent unneccary render of rows
   const rows = useMemo(() => {
-    return filteredItems.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    return filteredItems.slice((page - 1) * rowsPerPage, (page - 1) * rowsPerPage + rowsPerPage);
   }, [page, rowsPerPage, filteredItems]);
 
-  
+  const itemData = useMemo(() => {
+    return{
+      items: rows,
+      classes,
+      categoriesMap,
+      promptDelete,
+      setAdjustStockItemId,
+      setAdjustBatchStockItem,
+      rowsPerPage,
+      page
+    }
+  }, [rows, classes, categoriesMap, promptDelete, rowsPerPage, page]);
+
+  const [showFilters, setShowFilters] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setShowFilters(true), 5);
+  }, [])
 
   return(
-    <>
-    <ItemFilters {...{storeId, moreFilters, setMoreFilters, categoryId, recordsPerPage }} storeFilters={filters} />
+    <Box mt={-2}>
+    { !showFilters ? <Box height="52px"></Box> : <ItemFilters {...{storeId, moreFilters, setMoreFilters, categoryId }} initialValues={filters} />  }
     {
-      filteredItems.length ===0 && itemsLoaded && !loadingItems ?
+      filteredItems.length ===0 ?
       <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
         <Typography gutterBottom>No items found</Typography>
-        <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => resetItems(storeId)} color="primary" disableElevation  >Refresh</Button>
+        <Typography gutterBottom>Reset filters to load all items</Typography>
       </Box>
       :
       <Box width="100%">
-        <TableContainer style={{ maxHeight: 'calc(100vh - '+ (256 + moreFiltersHeight ) +'px)' }}>
-          <Table stickyHeader aria-label="sticky table" size="small">
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
+        <Box style={{ height: 'calc(100vh - '+ (211 + moreFiltersHeight ) +'px)' }} className={classes.root}>
+          <Table className={classes.table} component="div">
+            <TableHead component="div" className={classes.thead}>
+              <TableRow component="div" className={clsx(classes.row, classes.headerRow)}>
+                {
+                  columns.map((column) => (
                   <TableCell
+                    component="div"
+                    variant="head"
                     key={column.id}
                     align={column.align}
-                    style={{ minWidth: column.minWidth }}
+                    className={clsx(
+                      classes.cell,
+                      classes.column,
+                      !column.width && classes.expandingCell
+                    )}
+                    style={{
+                      flexBasis: column.width || false,
+                      height: ROW_HEIGHT
+                    }}
+                    scope="col"
                   >
                     {column.label}
                   </TableCell>
-                ))}
+                ))
+                }
               </TableRow>
             </TableHead>
-            <TableBody>
-              {rows.map( (row) => (<Item key={row._id} item={row} categoriesMap={categoriesMap} storeId={storeId} deleteItem={deleteItem} rowsPerPage={rowsPerPage} page={page} />) )
-              }
+            <TableBody component="div" className={classes.tbody}>
+              <AutoSizer>
+                {({ height, width }) => (
+                  <List
+                    className={classes.list}
+                    height={height}
+                    width={width}
+                    itemCount={rows.length}
+                    itemSize={ROW_HEIGHT}
+                    itemKey={itemKey}
+                    itemData={itemData}
+                    ref={listRef}
+                  >
+                    {Row}
+                  </List>
+                )}
+              </AutoSizer>
             </TableBody>
           </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50, 100, 250, 500]}
-          component="div"
-          count={filteredItemsCount}
-          rowsPerPage={rowsPerPage}
-          page={filteredItemsCount ? page : 0}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+        </Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50, 100, 250, 500]}
+            component="div"
+            count={filteredItems.length}
+            rowsPerPage={rowsPerPage}
+            page={filteredItems.length ? page - 1 : 0}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            backIconButtonProps={{
+              style: { display: "none" }
+            }}
+            nextIconButtonProps={{
+              style: { display: "none" }
+            }}
+            
+            style={{ height: "45px", overflow: "hidden" }}
+          />
+          <Box>
+            <Pagination count={totalPages} page={page}  onChange={handleChangePage} variant="outlined" color="primary" shape="round"/>
+          </Box>
+        </Box>
       </Box>
       
     }
-    </>
+    <DeletePopOver {...{deleteRecord, deleteAnchorEl, setDeleteAnchorEl }} item={selectedItem} />
+    <AdjustStock storeId={storeId} itemId={adjustStockItemId} setItemId={setAdjustStockItemId} />
+    <AdjustBatchStock storeId={storeId} item={adjustBatchStockItem} setItem={setAdjustBatchStockItem} />
+    </Box>
   )
 }
 
 
-function Item({ item, categoriesMap, storeId, deleteItem, rowsPerPage, page }){
-  const [anchorEl, setAnchorEl] = useState(null);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+const Row = ({ index, style, data: { items, classes, categoriesMap, promptDelete, setAdjustStockItemId, setAdjustBatchStockItem, rowsPerPage,page } }) => {
+  const item = items[index];
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  const open = Boolean(anchorEl);
-  const id = open ? 'simple-popover' : undefined;
-  return(
-    <>
-    <TableRow hover role="checkbox" tabIndex={-1} >
-      <TableCell>{ item.itemCode }</TableCell>
-      <TableCell>{ item.itemName }</TableCell>
-      <TableCell>{ categoriesMap[item.categoryId] ? categoriesMap[item.categoryId] : "" }</TableCell>
-      <TableCell align="center">{ item.costPrice.toLocaleString('en-US') }</TableCell>
-      <TableCell align="center">{ item.salePrice.toLocaleString('en-US') }</TableCell>
-      <TableCell align="right">
-        
-        
-        { item.isServiceItem ? null : <AdjustStock storeId={storeId} itemId={item._id} /> }
-        { item.isServiceItem || item.sizeId ? null : <AdjustBatchStock storeId={storeId} itemId={item._id} /> }
-        <IconButton component={Link} to={ '/stock/items/edit/' + storeId + '/' + item._id + '/' + rowsPerPage + '/' + page }  title="Edit Item">
+  return (
+    <TableRow component="div" className={classes.row} style={style}>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 110, height: ROW_HEIGHT }}>{ item.itemCode }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell, classes.expandingCell  )} style={{ height: ROW_HEIGHT }}>{ item.itemName }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell, classes.expandingCell  )} style={{ height: ROW_HEIGHT }}>{ categoriesMap[item.categoryId] ? categoriesMap[item.categoryId] : "" }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 85, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.costPrice.toLocaleString('en-US') }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 85, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.salePrice.toLocaleString('en-US') }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 205, height: ROW_HEIGHT, display: "block"}} align="right">
+        { 
+          item.isServiceItem ? null : 
+          <IconButton onClick={(event) => setAdjustStockItemId(item._id) } title="Adjust Stock">
+            <FontAwesomeIcon icon={faArrowsAltV} size="xs" />
+          </IconButton>
+        }
+        { item.isServiceItem || item.sizeId ? null : 
+
+          <IconButton onClick={(event) => setAdjustBatchStockItem(item) } title="Adjust Batch Stock">
+            <FontAwesomeIcon icon={faCalendarAlt} size="xs" />
+          </IconButton>
+        }
+        <IconButton component={Link} to={ '/stock/items/edit/' + item.storeId + '/' + item._id + '/' + rowsPerPage + '/' + page }  title="Edit Item">
           <FontAwesomeIcon icon={faPencilAlt} size="xs" />
         </IconButton>
-        <IconButton onClick={(event) => handleClick(event) } title="Delete Item">
+        <IconButton onClick={(event) => promptDelete(event, item) } title="Delete Item">
           <FontAwesomeIcon icon={faTrash} size="xs" />
         </IconButton>
 
       </TableCell>
     </TableRow>
-    <Popover 
+  );
+};
+
+const DeletePopOver = React.memo(
+  function ({ deleteAnchorEl, setDeleteAnchorEl, item, deleteRecord }){    
+    const handleClose = () => {
+      setDeleteAnchorEl(null);
+    };
+    const open = Boolean(deleteAnchorEl);
+    const id = open ? 'simple-popover' : undefined;
+    if(!item) return null;
+    return(
+      <Popover 
         id={id}
         open={open}
-        anchorEl={anchorEl}
+        anchorEl={deleteAnchorEl}
         onClose={handleClose}
         anchorOrigin={{
           vertical: 'bottom',
@@ -187,23 +373,20 @@ function Item({ item, categoriesMap, storeId, deleteItem, rowsPerPage, page }){
         <Box py={2} px={4} textAlign="center">
           <Typography gutterBottom>All variants/packings(if any) of this item will also be deleted.</Typography>
           <Typography gutterBottom>Do you want to delete <b>{item.itemName}</b> item from store?</Typography>
-          <Button disableElevation variant="contained" color="primary"  onClick={() => deleteItem(storeId, item._id)}>
+          <Button disableElevation variant="contained" color="primary"  onClick={deleteRecord}>
             Delete Item
           </Button>
         </Box>
       </Popover>
-  </>
-  )
-}
+    )
+  }
+)
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
   const storeRecord = state.items[storeId] ? state.items[storeId] : { 
     allItems: [], //master data
     filters: {},
-    filteredItems: [],
-    filteredItemsCount: 0,
-    itemsLoaded: false
   };
   const categories = state.categories[storeId] ? state.categories[storeId] : [];
   const categoriesMap = {};
@@ -212,13 +395,9 @@ const mapStateToProps = state => {
   })
   return{
     storeId,
-    filters: storeRecord.filters,
-    filteredItems: storeRecord.filteredItems,
-    filteredItemsCount: storeRecord.filteredItemsCount,
-    itemsLoaded: storeRecord.itemsLoaded,
+    ...storeRecord,
     categoriesMap,
-    loadingItems: state.progressBar.loading
   }
 }
 
-export default connect(mapStateToProps, { loadItems, resetItems, deleteItem })(Items);
+export default connect(mapStateToProps, { deleteItem })(Items);

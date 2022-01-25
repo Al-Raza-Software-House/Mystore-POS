@@ -84,7 +84,7 @@ function EditItem(props){
     <>
     <Box width="100%" justifyContent="space-between" display="flex">
       <Typography gutterBottom variant="h6" style={{ flexGrow: 1 }} align="center">Update Item</Typography>
-      <Button disableElevation color="primary" startIcon={<FontAwesomeIcon icon={faLongArrowAltLeft} />} component={Link} to="/stock">
+      <Button disableElevation color="primary" startIcon={<FontAwesomeIcon icon={faLongArrowAltLeft} />} component={Link} to={rowsPerPage ? `/stock/${rowsPerPage}/${pageNumber}` : "/stock"}>
         Items
       </Button>
     </Box>

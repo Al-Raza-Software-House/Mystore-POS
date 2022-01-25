@@ -18,6 +18,8 @@ export const loadStats = () => {
       if(data.stats.dailySales)
         data.stats.dailySales = data.stats.dailySales.map(record => ({
           ...record,
+          totalSaleAmount: +Number(record.totalSaleAmount).toFixed(2),
+          totalGrossProfit: +Number(record.totalGrossProfit).toFixed(2),
           saleDate: moment(record.saleDate).format('DD MMM')
         }));
       dispatch({ type: actionTypes.DASH_STATS_LOADED, storeId, stats: data.stats });

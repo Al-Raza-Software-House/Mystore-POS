@@ -79,4 +79,4 @@ const mapStateToProps = (state) => {
   }
 }
 
-export default connect(mapStateToProps)(Content);
+export default React.memo(connect(mapStateToProps)(Content));

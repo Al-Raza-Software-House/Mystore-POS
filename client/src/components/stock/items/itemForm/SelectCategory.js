@@ -14,7 +14,11 @@ import { showSuccess } from '../../../../store/actions/alertActions';
 import { createCategory } from '../../../../store/actions/categoryActions';
 
 function SelectCategory(props) {
-  const { storeId, formName, categories, addNewRecord=true, disabled=false } = props;
+  const { storeId, formName, categories, addNewRecord=true, showError=true, disabled=false } = props;
+  const [showAddBtn, setShowAddBtn] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setShowAddBtn(true), 5);
+  }, [])
   return(
     <>
     <Box display="flex">
@@ -29,9 +33,10 @@ function SelectCategory(props) {
         fullWidth={true}
         style={{ flexGrow: 1 }}
         addNewRecord={addNewRecord}
+        showError={showError}
         disabled={disabled}
       />
-      { addNewRecord && <AddCategoryForm storeId={storeId} formName={formName} /> }
+      { addNewRecord && showAddBtn && <AddCategoryForm storeId={storeId} formName={formName} /> }
     </Box>
     
     </>

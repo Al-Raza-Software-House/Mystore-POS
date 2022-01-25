@@ -198,7 +198,7 @@ function PrintSale(props){
                       sale.items.map(item => item.isVoided ? null :
                       (
                         <tr key={item._id}>
-                          <td style={{...cellStyle, textAlign: "left"}} >
+                          <td style={{...cellStyle, textAlign: "left", wordBreak: "break-word"}} >
                             {
                               store.receiptSettings.printItemCode ? 
                               <>
@@ -218,8 +218,8 @@ function PrintSale(props){
                     }
                     <tr>
                       <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} colSpan="2"> <b>Total</b> </td>
-                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}}>{ stats.totalQuantity }</td>
-                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}}>{ stats.totalAmount }</td>
+                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}}>{ (+stats.totalQuantity.toFixed(2)).toLocaleString() }</td>
+                      <td style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}}>{ (+stats.totalAmount.toFixed(2)).toLocaleString() }</td>
                     </tr>
                   </tbody>
                 </table>

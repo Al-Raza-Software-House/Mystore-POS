@@ -3,7 +3,6 @@ import { showError, showSuccess } from './alertActions';
 import { hideProgressBar, showProgressBar } from "./progressActions"
 
 export const actionTypes = {
-  ITEMS_LOADED: 'itemsLoaded', //search/filter items
   ITEM_CREATED: 'itemCreated',
   ITEM_UPDATED: 'itemUpdated',
   ITEM_DELETED: 'itemDeleted',
@@ -20,27 +19,6 @@ export const actionTypes = {
 }
 
 
-export const loadItems = (recordsPerPage) => {
-  return (dispatch, getState) => {
-    const state = getState();
-    const storeId = state.stores.selectedStoreId;
-    let filters = {};
-    let skip = 0;
-    if(state.items[storeId] && state.items[storeId].filters)
-      filters = state.items[storeId].filters;
-    if(state.items[storeId] && state.items[storeId].filteredItems)
-      skip = state.items[storeId].filteredItems.length;
-    dispatch(showProgressBar());
-    axios.post('/api/items/search', { storeId, ...filters, skip, recordsPerPage} ).then( ({ data }) => {
-      dispatch({ type: actionTypes.ITEMS_LOADED, storeId, items: data.items, totalRecords: data.totalRecords });
-      dispatch(hideProgressBar());
-    }).catch( err => {
-      dispatch({ type: actionTypes.ITEMS_LOADED, storeId, items: [], totalRecords: 0 });
-      dispatch(hideProgressBar());
-      dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
-    });
-  }
-}
 
 //sync items in background
 export const syncItems = (lastUpatedStamp) => {
@@ -62,13 +40,6 @@ export const syncItems = (lastUpatedStamp) => {
     {
        dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     }
-  }
-}
-
-export const resetItems = (storeId) => {
-  return {
-    type: actionTypes.EMPTY_ITEMS,
-    storeId
   }
 }
 

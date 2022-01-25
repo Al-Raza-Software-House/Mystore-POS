@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faLongArrowAltLeft, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
@@ -29,7 +29,10 @@ const formSelector = formValueSelector('createItem');
 function CreateItem(props){
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, storeId } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock, itemCode, itemName } = props;
-
+  const [showProps, setProps] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setProps(true), 5);
+  }, []);
   
 
   const copyCostPrice = () => {
@@ -267,50 +270,51 @@ function CreateItem(props){
           </Box>
         }
         
-        
-
-        <Box width="100%">
-          <Panel id="category-properties" heading="Category Properties" expanded={false}>
-            {
-              !categoryId ? null :
-              <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%">
-                <Box width={{ xs: '100%', md: '24%' }} >
-                  <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property1" />
-                </Box>
-                <Box width={{ xs: '100%', md: '24%' }} >
-                  <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property2" />
-                </Box>
-                <Box width={{ xs: '100%', md: '24%' }} >
-                  <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property3" />
-                </Box>
-                <Box width={{ xs: '100%', md: '24%' }} >
-                  <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property4" />
-                </Box>
-              </Box>
-            }
-          </Panel>
-        </Box>
-
-        <Box width="100%">
-          <Panel id="item-properties" heading="Item Properties" expanded={false}>
-            <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%">
-              <Box width={{ xs: '100%', md: '24%' }} >
-                <SelectItemProperty formName="createItem" propertyId="property1" disabled={!categoryId} />
-              </Box>
-              <Box width={{ xs: '100%', md: '24%' }} >
-                <SelectItemProperty formName="createItem" propertyId="property2" disabled={!categoryId} />
-              </Box>
-              <Box width={{ xs: '100%', md: '24%' }}>
-                <SelectItemProperty formName="createItem" propertyId="property3" disabled={!categoryId} />
-              </Box>
-              <Box width={{ xs: '100%', md: '24%' }}>
-                <SelectItemProperty formName="createItem" propertyId="property4" disabled={!categoryId} />
-              </Box>  
+        {
+          !showProps ? null : 
+          <>
+            <Box width="100%">
+              <Panel id="category-properties" heading="Category Properties" expanded={false}>
+                {
+                  !categoryId ? null :
+                  <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%">
+                    <Box width={{ xs: '100%', md: '24%' }} >
+                      <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property1" />
+                    </Box>
+                    <Box width={{ xs: '100%', md: '24%' }} >
+                      <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property2" />
+                    </Box>
+                    <Box width={{ xs: '100%', md: '24%' }} >
+                      <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property3" />
+                    </Box>
+                    <Box width={{ xs: '100%', md: '24%' }} >
+                      <SelectCategoryProperty formName="createItem" categoryId={categoryId} propertyId="property4" />
+                    </Box>
+                  </Box>
+                }
+              </Panel>
             </Box>
-          </Panel>
-        </Box>
 
-
+            <Box width="100%">
+              <Panel id="item-properties" heading="Item Properties" expanded={false}>
+                <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" width="100%">
+                  <Box width={{ xs: '100%', md: '24%' }} >
+                    <SelectItemProperty formName="createItem" propertyId="property1" disabled={!categoryId} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: '24%' }} >
+                    <SelectItemProperty formName="createItem" propertyId="property2" disabled={!categoryId} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: '24%' }}>
+                    <SelectItemProperty formName="createItem" propertyId="property3" disabled={!categoryId} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: '24%' }}>
+                    <SelectItemProperty formName="createItem" propertyId="property4" disabled={!categoryId} />
+                  </Box>  
+                </Box> 
+              </Panel>
+            </Box>
+          </>
+        }
         
 
       </Box>

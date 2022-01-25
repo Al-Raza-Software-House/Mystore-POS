@@ -11,7 +11,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const AutoComplete = ({
-  label, placeholder, options, getOptionLabel, addNewRecord,
+  label, placeholder, options, getOptionLabel, addNewRecord, showError=true,
   input: {value, onChange, ...rest},
   meta: { touched, invalid, error },
   ...custom
@@ -50,12 +50,16 @@ const AutoComplete = ({
         }}
         value={value ? value : null}
       />
-      <FormHelperText error={ invalid }>
-        {
-          error ? <span>{ error }</span> : <span>&nbsp;</span>
-        }
-        
-      </FormHelperText>
+      {
+        showError ? 
+        <FormHelperText error={ invalid }>
+          {
+            error ? <span>{ error }</span> : <span>&nbsp;</span>
+          }
+          
+        </FormHelperText>
+        : null
+      }
     </Box>
   );
 }
