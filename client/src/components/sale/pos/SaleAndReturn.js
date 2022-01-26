@@ -84,9 +84,7 @@ function SaleAndReturn(props){
   //reset form to init values
   const resetSale = useCallback(() => {
     if(location.pathname !== '/sale')
-    {
-      return history.push('/sale');
-    }
+      history.push('/sale');
     setItems([]);
     setTimeout(() => {
       dispatch(initialize(formName, {
