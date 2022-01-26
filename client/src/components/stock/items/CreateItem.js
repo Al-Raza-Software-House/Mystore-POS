@@ -29,9 +29,10 @@ const formSelector = formValueSelector('createItem');
 function CreateItem(props){
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, storeId } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock, itemCode, itemName } = props;
-  const [showProps, setProps] = useState(false);
+  const [showProps, setShowProps] = useState(false);
   useEffect(() => {
-    setTimeout(() => setProps(true), 5);
+    const timer = setTimeout(() => setShowProps(true), 5);
+    return () => timer && clearTimeout(timer);
   }, []);
   
 

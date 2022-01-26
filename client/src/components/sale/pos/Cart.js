@@ -4,10 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxOpen, faChevronDown, faChevronUp, faMinus, faPlus, faTrash, faTrashRestore } from '@fortawesome/free-solid-svg-icons';
 import { useMemo } from 'react';
 import { allowOnlyNumber } from 'utils';
-import { change, Field, FieldArray } from 'redux-form';
+import { change, Field, FieldArray, formValueSelector } from 'redux-form';
 import TextInput from 'components/library/form/TextInput';
 import { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useState } from 'react';
 import SaleBatches from './SaleBatches';
 import ReturnBatches from './ReturnBatches';
@@ -54,7 +54,7 @@ function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
       <Box width="100%" height="369px" id="cart-container"  borderRadius={5} style={{ boxSizing: "border-box", overflowY: "auto" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
         {
           items.map(item => (
-            <Item item={item} formItem={formItems[item._id]} key={item._id} formName={formName} allowNegativeInventory={allowNegativeInventory} disabled={disabled} />
+            <Item item={item} key={item._id} formName={formName} allowNegativeInventory={allowNegativeInventory} disabled={disabled} />
           ))
         }
       </Box>
@@ -65,21 +65,17 @@ function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
 
 
 
-function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
+const Item = React.memo(
+  ({ item, formName, allowNegativeInventory, disabled }) => {
   const dispatch = useDispatch();
   const isDesktop = useMediaQuery((theme) => theme.breakpoints.up('sm'), { noSsr: true });
   const [open, setOpen] = useState(false);
+  const formItem = useSelector(state => formValueSelector(formName)(state, `items[${item._id}]`));
   let quantity = isNaN(formItem.quantity) ? 0 : Number(formItem.quantity);
   let salePrice = isNaN(formItem.salePrice) ? 0 : Number(formItem.salePrice);
   let discount = isNaN(formItem.discount) ? 0 : Number(formItem.discount);
   let originalPrice = Number(item.packParentId ? item.packSalePrice : item.salePrice);
-  const decreaseQuantity = useCallback(() => {
-    dispatch( change(formName, `items[${item._id}].quantity`, quantity - 1) );
-  }, [quantity, dispatch, item._id, formName]);
-
-  const increaseQuantity = useCallback(() => {
-    dispatch( change(formName, `items[${item._id}].quantity`, quantity + 1) );
-  }, [quantity, dispatch, item._id, formName]);
+  
   const toggleVoid = useCallback(() => {
     dispatch( change(formName, `items[${item._id}].isVoided`, !Boolean(formItem.isVoided)) )
   }, [dispatch, item._id, formItem.isVoided, formName])
@@ -110,44 +106,7 @@ function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
             </IconButton>
           </Box>
           <Box px={1} maxWidth="185px" style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
-            <Field
-              component={TextInput}
-              label="Quantity"
-              name={`items[${item._id}].quantity`}
-              placeholder="Qty..."
-              fullWidth={true}
-              variant="outlined"
-              margin="dense"
-              type="text"
-              showError={allowNegativeInventory ? false:  true}
-              ignoreTouch={allowNegativeInventory ? false:  true}
-              onKeyDown={allowOnlyNumber}
-              inputProps={{ style: { textAlign: "center" } }}
-              disabled={disabled}
-              InputProps={!isDesktop ? {}: {
-                  startAdornment:
-                    <InputAdornment position="start">
-                      <IconButton
-                        onClick={decreaseQuantity}
-                        onMouseDown={(event) => event.preventDefault()}
-                        disabled={disabled}
-                      >
-                        { <FontAwesomeIcon icon={ faMinus } size="xs" /> }
-                      </IconButton>
-                    </InputAdornment>,
-                  endAdornment:
-                    <InputAdornment position="start">
-                      <IconButton
-                        onClick={increaseQuantity}
-                        onMouseDown={(event) => event.preventDefault()}
-                        disabled={disabled}
-                      >
-                        { <FontAwesomeIcon icon={ faPlus } size="xs" /> }
-                      </IconButton>
-                    </InputAdornment>
-                  }
-                }
-            />
+            <QuantityInput itemId={item._id} disabled={disabled} allowNegativeInventory={allowNegativeInventory} formName={formName} isDesktop={isDesktop} />
           </Box>
         </Box>
         
@@ -167,51 +126,113 @@ function Item({ item, formItem, formName, allowNegativeInventory, disabled }){
         </Box>
       </Box>
       <Collapse in={open} style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box px={1} width={{ xs: "100%", md: "48%" }}>
-            <Field
-              component={TextInput}
-              label="Sale Price"
-              name={`items[${item._id}].salePrice`}
-              placeholder="Qty..."
-              fullWidth={true}
-              variant="outlined"
-              margin="dense"
-              type="text"
-              showError={false}
-              onKeyDown={allowOnlyNumber}
-              disabled={disabled}
-            />
-          </Box>
-          <Box px={1} width={{ xs: "100%", md: "48%" }}>
-            <Field
-              component={TextInput}
-              label="Discount"
-              name={`items[${item._id}].discount`}
-              placeholder="Qty..."
-              fullWidth={true}
-              variant="outlined"
-              margin="dense"
-              type="text"
-              showError={false}
-              onKeyDown={allowOnlyNumber}
-              disabled={disabled}
-            />
-          </Box>
-        </Box>
-        <Box px={1}>
-          { 
-            item.sizeName ? null :
-            (
-               quantity > 0 ? <FieldArray name={`items[${item._id}].batches`} component={SaleBatches} {...{batches: item.batches}} disabled={disabled} />  : 
-               (quantity < 0 ? <FieldArray name={`items[${item._id}].batches`} component={ReturnBatches} disabled={disabled} /> : null)
-              
-            )
-          }
-        </Box>
+        { 
+          !open ? null : 
+          <>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box px={1} width={{ xs: "100%", md: "48%" }}>
+                <Field
+                  component={TextInput}
+                  label="Sale Price"
+                  name={`items[${item._id}].salePrice`}
+                  placeholder="Qty..."
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  type="text"
+                  showError={false}
+                  onKeyDown={allowOnlyNumber}
+                  disabled={disabled}
+                />
+              </Box>
+              <Box px={1} width={{ xs: "100%", md: "48%" }}>
+                <Field
+                  component={TextInput}
+                  label="Discount"
+                  name={`items[${item._id}].discount`}
+                  placeholder="Qty..."
+                  fullWidth={true}
+                  variant="outlined"
+                  margin="dense"
+                  type="text"
+                  showError={false}
+                  onKeyDown={allowOnlyNumber}
+                  disabled={disabled}
+                />
+              </Box>
+            </Box>
+            <Box px={1}>
+              { 
+                item.sizeName ? null :
+                (
+                  quantity > 0 ? <FieldArray name={`items[${item._id}].batches`} component={SaleBatches} {...{batches: item.batches}} disabled={disabled} />  : 
+                  (quantity < 0 ? <FieldArray name={`items[${item._id}].batches`} component={ReturnBatches} disabled={disabled} /> : null)
+                  
+                )
+              }
+            </Box> 
+          </>
+        }
       </Collapse>
     </Box>
   )
 }
+)
+
+const  QuantityInput = React.memo(
+  ({ itemId, allowNegativeInventory, disabled, formName, isDesktop }) => {
+  const dispatch = useDispatch();
+  const quantity = useSelector(state => formValueSelector(formName)(state, `items[${itemId}].quantity`));
+  const decreaseQuantity = useCallback(() => {
+    dispatch( change(formName, `items[${itemId}].quantity`, (Number(quantity) ? Number(quantity) : 0)  - 1) );
+  }, [quantity, dispatch, itemId, formName]);
+
+  const increaseQuantity = useCallback(() => {
+    dispatch( change(formName, `items[${itemId}].quantity`, (Number(quantity) ? Number(quantity) : 0) + 1) );
+  }, [quantity, dispatch, itemId, formName]);
+
+  return(
+    <Field
+      component={TextInput}
+      label="Quantity"
+      name={`items[${itemId}].quantity`}
+      placeholder="Qty..."
+      fullWidth={true}
+      variant="outlined"
+      margin="dense"
+      type="text"
+      showError={allowNegativeInventory ? false:  true}
+      ignoreTouch={allowNegativeInventory ? false:  true}
+      onKeyDown={allowOnlyNumber}
+      inputProps={{ style: { textAlign: "center" } }}
+      disabled={disabled}
+      InputProps={!isDesktop ? {}: {
+          startAdornment:
+            <InputAdornment position="start">
+              <IconButton
+                onClick={decreaseQuantity}
+                onMouseDown={(event) => event.preventDefault()}
+                disabled={disabled}
+              >
+                { <FontAwesomeIcon icon={ faMinus } size="xs" /> }
+              </IconButton>
+            </InputAdornment>,
+          endAdornment:
+            <InputAdornment position="start">
+              <IconButton
+                onClick={increaseQuantity}
+                onMouseDown={(event) => event.preventDefault()}
+                disabled={disabled}
+              >
+                { <FontAwesomeIcon icon={ faPlus } size="xs" /> }
+              </IconButton>
+            </InputAdornment>
+          }
+        }
+    />
+  )
+  
+}
+) 
 
 export default Cart;

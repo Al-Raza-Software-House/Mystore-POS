@@ -51,14 +51,32 @@ const mergeItemBatchesWithSaleBatches = (itemBatches, saleBatches, packQuantity)
   return newBatches;
 }
 
+const addNewSaleItem = (item) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    let formItems = formValueSelector(formName)(state, "items");
+    if(!formItems)
+      formItems = {};
+    if(formItems[item._id])
+    {
+      dispatch( change(formName, `items[${item._id}].quantity`, Number(formItems[item._id].quantity) + 1));
+    }else
+    {
+      let { _id, salePrice, packParentId, packQuantity, currentStock, packSalePrice, batches, isServiceItem } = item;
+      dispatch( change(formName, `items[${_id}]`, {_id, quantity: 1, salePrice: packParentId ? packSalePrice : salePrice, discount: 0, packParentId, currentStock, packQuantity, isServiceItem, isVoided: false, batches:[{ batchNumber: 0, batchExpiryDate: null, batchQuantity: 0 }], sourceBatches: batches }));
+    }
+  }
+}
+
 function SaleAndReturn(props){
   const { storeId, store, userId, lastEndOfDay, dispatch, defaultBankId, pristine, submitting, invalid, dirty, error, handleSubmit, banks, printSalesReceipt, printSale, online } = props;
-  const allItems = useSelector(state => state.items[storeId].allItems );
+  const storeItems = useSelector(state => state.items[storeId].allItems );
+  const allItems = useMemo(() => storeItems.filter(item => item.isActive), [storeItems]);
   const { saleId } = useParams();
   const sale = useSelector(state => saleId ? state.sales[storeId].records.find(record => record._id === saleId) : null);
   
-  const refreshTimeInterval = useRef();
-  const [items, setItems] = useState([]);
+  const refreshTimeInterval = useRef(); //keep refreshing sale time if page Idle
+  const [items, setItems] = useState([]); //items in the cart
   const location = useLocation();
   const history = useHistory();
 
@@ -70,18 +88,20 @@ function SaleAndReturn(props){
       return history.push('/sale');
     }
     setItems([]);
-    dispatch(initialize(formName, {
-      saleDate: moment().toDate(),
-      userId,
-      quantity: 1,
-      adjustment: 0,
-      cashPaid: 0,
-      bankAmount: 0,
-      creditAmount: 0,
-      bankId: defaultBankId,
-      items: {}
-    }
-    ));
+    setTimeout(() => {
+      dispatch(initialize(formName, {
+        saleDate: moment().toDate(),
+        userId,
+        quantity: 1,
+        adjustment: 0,
+        cashPaid: 0,
+        bankAmount: 0,
+        creditAmount: 0,
+        bankId: defaultBankId,
+        items: {}
+      }
+      ));
+    }, 100)
   }, [dispatch, defaultBankId, userId, location.pathname, history]);
 
   const pageInitialized = useRef();
@@ -183,21 +203,9 @@ function SaleAndReturn(props){
   
   //pass to item Picker
   const selectItem = useCallback((item) => {
-    let isExist = items.find(record => record._id === item._id);
-    if(isExist)
-    {
-      dispatch( change(formName, `items[${item._id}].quantity`, Number(formItems[item._id].quantity) + 1));
-    }else
-    {
-      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, salePrice, packParentId, packQuantity, currentStock, packSalePrice, batches, isServiceItem } = item;
-      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, salePrice, packParentId, packQuantity, packSalePrice, quantity: 1, batches };
-      dispatch( change(formName, `items[${_id}]`, {_id, quantity: 1, salePrice: packParentId ? packSalePrice : salePrice, discount: 0, packParentId, currentStock, packQuantity, isServiceItem, isVoided: false, batches:[{ batchNumber: 0, batchExpiryDate: null, batchQuantity: 0 }], sourceBatches: batches }));
-      setItems([
-        ...items,
-        newItem,
-      ]);
-    }
-  }, [items, formItems, dispatch]);
+    dispatch( addNewSaleItem(item) );
+    setItems(oldItems => oldItems.find(record => record._id === item._id ) ? oldItems : [...oldItems, Object.assign({}, item)]);
+  }, [dispatch]);
 
   //Pass to item Picker, or delete item from list
   const removeItem = useCallback((item) => {

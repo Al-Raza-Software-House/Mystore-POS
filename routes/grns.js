@@ -97,7 +97,7 @@ router.post('/create', async (req, res) => {
 
       record.items.push({
         _id: item._id,
-        costPrice,
+        costPrice: isNaN(costPrice) ? 0 : costPrice,
         salePrice: isNaN(item.salePrice) ? 0 : Number(item.salePrice),
         packSalePrice: isNaN(item.packSalePrice) ? 0 : Number(item.packSalePrice),
         adjustment: isNaN(item.adjustment) ? 0 : Number(item.adjustment),
@@ -173,7 +173,7 @@ router.post('/create', async (req, res) => {
         let totalQuantity = currentStock + newQuantity;
         costPrice = +(totalWeightedValue /  totalQuantity).toFixed(2);
       }
-
+      costPrice = isNaN(costPrice) ? 0: costPrice;
       let itemUpdate = {
         currentStock: currentStock + newQuantity,
         costPrice, //new cost Price
@@ -477,7 +477,7 @@ router.post('/update', async (req, res) => {
         let totalQuantity = currentStock; //current stock already includes new quantity
         unitCostPrice = +(totalWeightedValue /  totalQuantity).toFixed(2);
       }
-
+      unitCostPrice = isNaN(unitCostPrice) ? 0 : unitCostPrice;
       let itemUpdate = {
         currentStock,
         costPrice: unitCostPrice, //new cost Price

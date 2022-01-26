@@ -96,7 +96,7 @@ function EditPurchaseOrder(props) {
         selectedItems.push(newItem);
       }
     });
-    setItems(selectedItems);
+    setTimeout(() => setItems(selectedItems), 15);
   }, [order, allItems, dispatch]);
 
   const [items, setItems] = useState([]);

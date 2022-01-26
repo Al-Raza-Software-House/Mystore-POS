@@ -36,11 +36,11 @@ function ItemPickerTable(props){
     {
       items.length > 0 ?
       <Box width="100%" maxHeight="100%">
-        <TableContainer >
+        <TableContainer style={{ height: 'calc(80vh - 112px)' }} >
           <Table stickyHeader aria-label="sticky table" size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Item Code</TableCell>
+                <TableCell style={{ width: 110 }}>Item Code</TableCell>
                 <TableCell>Item Name</TableCell>
                 <TableCell align="center">Current Stock</TableCell>
                 { isSalesperson(userRole) ? null : <TableCell align="center">Cost Price</TableCell> }

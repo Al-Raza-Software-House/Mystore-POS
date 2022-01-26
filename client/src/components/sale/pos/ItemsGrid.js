@@ -67,4 +67,4 @@ function Item({ item, selectItem, disabled }){
   )
 }
 
-export default ItemsGrid;
+export default React.memo(ItemsGrid);

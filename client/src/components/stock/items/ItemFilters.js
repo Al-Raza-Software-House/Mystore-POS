@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Box, Button, makeStyles, Typography, Collapse, TextField } from '@material-ui/core';
+import { Box, Button, makeStyles, Typography, Collapse } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronUp, faPlus, faUndo } from '@fortawesome/free-solid-svg-icons';
@@ -11,8 +11,7 @@ import SelectItemProperty from './itemForm/SelectItemProperty';
 import { Field, reduxForm, initialize, getFormValues } from 'redux-form';
 import SelectInput from '../../library/form/SelectInput';
 import { useSelector } from 'react-redux';
-import { useRef } from 'react';
-import _ from "lodash";
+import SearchInput from 'components/library/form/SearchInput';
 
 const formName = 'itemListFilters';
 
@@ -192,32 +191,6 @@ function ItemFilters(props){
     </Collapse>
     </>
   )
-}
-
-const SearchInput = ({
-  label, addNewRecord=false, showError=true, ignoreTouch=false,
-  input: { onChange, value,  ...restInput },
-  ...custom
-}) => {
-  const handleQueryChange = _.debounce((event) => {
-    onChange(event.target.value);
-  }, 300);
-  const inputRef = useRef();
-  useEffect(() => {
-    inputRef.current.value = value;
-  }, [value]);
-  
-  return (
-    <Box width="100%">
-      <TextField 
-        label={label}
-        inputRef={inputRef}
-        onChange={handleQueryChange}
-        {...restInput}
-        {...custom}
-      />
-    </Box>
-  );
 }
 
 

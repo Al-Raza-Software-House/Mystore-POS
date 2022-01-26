@@ -130,7 +130,7 @@ function CreateGrn(props) {
       dispatch( change(formName, `items[${_id}]`, {_id, costPrice: record.costPrice, salePrice, packSalePrice, quantity: record.quantity, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));
       newItems.push(newItem);
     }
-    setItems(newItems);
+    setTimeout(() => setItems(newItems), 20);
   }, [poId, dispatch, purchaseOrders, allItems])
 
   //pass to item Picker

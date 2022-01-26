@@ -217,7 +217,8 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
 
   const [showFilters, setShowFilters] = useState(false);
   useEffect(() => {
-    setTimeout(() => setShowFilters(true), 5);
+    const timer = setTimeout(() => setShowFilters(true), 5);
+    return () => timer && clearTimeout(timer);
   }, [])
 
   return(

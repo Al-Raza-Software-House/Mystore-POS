@@ -126,7 +126,7 @@ function EditGrn(props) {
         selectedItems.push(newItem);
       }
     });
-    setItems(selectedItems);
+    setTimeout(() => setItems(selectedItems), 10);
     if(!grn.poId) return;
     axios.get('/api/purchaseOrders/', { params: { storeId, supplierId: grn.supplierId, poId: grn.poId } }).then(({ data }) => {
       if(data.order._id)

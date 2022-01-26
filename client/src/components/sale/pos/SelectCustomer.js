@@ -2,10 +2,10 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Button, makeStyles, Dialog, DialogContent, DialogActions, Typography, TextField } from '@material-ui/core';
-import { connect } from 'react-redux';
 import { change, initialize } from 'redux-form';
 import CreateCustomer from '../../parties/customers/CreateCustomer';
 import Autocomplete from '@material-ui/lab/Autocomplete';
+import { useSelector } from 'react-redux';
 
 const useStylesTop = makeStyles(theme => ({
   inputNoBorder:{
@@ -24,7 +24,9 @@ const useStylesTop = makeStyles(theme => ({
 
 function SelectCustomer(props) {
   const classes = useStylesTop();
-  const { storeId, formName, customers, disabled=false, addNewRecord=true, dispatch, input: {value, onChange} } = props;
+  const { formName, disabled=false, addNewRecord=true, dispatch, input: {value, onChange} } = props;
+  const storeId = useSelector(state => state.stores.selectedStoreId);
+  const customers = useSelector(state => state.customers[state.stores.selectedStoreId] ? state.customers[state.stores.selectedStoreId] : []);
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   useEffect(() => {
@@ -82,14 +84,8 @@ function SelectCustomer(props) {
   )
 }
 
-const mapStateToProps = state => {
-  return {
-    storeId: state.stores.selectedStoreId,
-    customers: state.customers[state.stores.selectedStoreId] ? state.customers[state.stores.selectedStoreId] : []
-  }
-}
 
-export default connect(mapStateToProps)(SelectCustomer);
+export default React.memo(SelectCustomer);
 
 function SuggestedCustomer(customer, state){
   return(
