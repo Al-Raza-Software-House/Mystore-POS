@@ -7,6 +7,8 @@ import TextInput from '../../library/form/TextInput';
 import { Field } from 'redux-form';
 import DateInput from '../../library/form/DateInput';
 
+const dateFormat = "DD-MM-YYYY";
+
 function GrnBatches({ fields, supplierId, beforeLastEndOfDay,  meta }){
   const { error } = meta;
   return(
@@ -31,7 +33,7 @@ function GrnBatches({ fields, supplierId, beforeLastEndOfDay,  meta }){
         <Box width={{ xs: '100%', md: '30%' }}>
           <Field
             component={DateInput}
-            dateFormat="DD MMM, YYYY"
+            dateFormat={dateFormat}
             label="Expiry Date."
             name={`${batch}.batchExpiryDate`}
             placeholder="Expiry Date..."
@@ -40,6 +42,9 @@ function GrnBatches({ fields, supplierId, beforeLastEndOfDay,  meta }){
             margin="dense"
             type="text"
             disabled={!supplierId || beforeLastEndOfDay}
+            openTo="year"
+            views={["year", "month", "date"]}
+            autoOk={true}
           />
         </Box>
         <Box width={{ xs: '100%', md: '25%' }}>

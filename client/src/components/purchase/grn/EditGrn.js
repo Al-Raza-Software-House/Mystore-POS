@@ -54,6 +54,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const formName = "editGrn";
+const batchDateFormat = "DD-MM-YYYY";
 
 function EditGrn(props) {
   const history = useHistory();
@@ -91,7 +92,7 @@ function EditGrn(props) {
     grn.items.forEach(item => {
       item.batches.forEach( (batch, index) => {
         if(item.batches[index].batchExpiryDate)
-          item.batches[index].batchExpiryDate = moment( item.batches[index].batchExpiryDate ).toDate();
+          item.batches[index].batchExpiryDate = moment( item.batches[index].batchExpiryDate).format(batchDateFormat);
       })
       if(item.batches.length === 0)
        item.batches.push({
@@ -244,7 +245,7 @@ function EditGrn(props) {
       let record = formData.items[item._id];
       record.batches.forEach((batch, index) => {
         if(batch.batchExpiryDate)
-          record.batches[index].batchExpiryDate = moment(batch.batchExpiryDate, "DD MMM, YYYY").toDate();
+          record.batches[index].batchExpiryDate = moment(batch.batchExpiryDate, batchDateFormat).toDate();
       });
       payload.items.push(record);
     });

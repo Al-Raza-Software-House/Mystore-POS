@@ -37,6 +37,7 @@ const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_BANK, title: "Bank" },
 ]
 
+const batchDateFormat = "DD-MM-YYYY";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -253,7 +254,7 @@ function CreateGrn(props) {
       let record = formData.items[item._id];
       record.batches.forEach((batch, index) => {
         if(batch.batchExpiryDate)
-          record.batches[index].batchExpiryDate = moment(batch.batchExpiryDate, "DD MMM, YYYY").toDate();
+          record.batches[index].batchExpiryDate = moment(batch.batchExpiryDate, batchDateFormat).toDate();
       });
       payload.items.push(record);
     });

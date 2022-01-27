@@ -27,6 +27,7 @@ import axios from 'axios';
 import { emptyTxns } from 'store/actions/accountActions';
 
 const formName = "saleAndReturn";
+const batchDateFormat = "DD-MM-YYYY";
 
 const mergeItemBatchesWithSaleBatches = (itemBatches, saleBatches, packQuantity) => {
   let newBatches = Array.isArray(itemBatches) ? [...itemBatches] : [];
@@ -118,7 +119,7 @@ function SaleAndReturn(props){
           batches.push({
             batchNumber: batch.batchNumber,
             batchQuantity: batch.batchQuantity,
-            batchExpiryDate: batch.batchExpiryDate
+            batchExpiryDate: moment(batch.batchExpiryDate).format(batchDateFormat)
           })
         else
         batches.push({
@@ -254,6 +255,8 @@ function SaleAndReturn(props){
       let record = formData.items[item._id];
       if(!record) return;
       let {_id, quantity, salePrice, discount, isVoided, batches } = record;
+      if(Number(quantity) < 0 && batches.length)
+        batches = batches.map(batch => ({ ...batch, batchExpiryDate: moment(batch.batchExpiryDate, batchDateFormat).toDate() }));
       payload.items.push({_id, quantity, salePrice, discount, isVoided, batches });
     });
     if(!printSalesReceipt)
@@ -310,6 +313,8 @@ function SaleAndReturn(props){
       let record = formValues.items[item._id];
       if(!record) return;
       let {_id, quantity, salePrice, discount, isVoided, batches } = record;
+      if(Number(quantity) < 0 && batches.length)
+        batches = batches.map(batch => ({ ...batch, batchExpiryDate: moment(batch.batchExpiryDate, batchDateFormat).toDate() }));
       payload.items.push({_id, quantity, salePrice, discount, isVoided, batches });
     });
 

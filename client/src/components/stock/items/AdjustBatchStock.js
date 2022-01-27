@@ -9,8 +9,10 @@ import { Field, FieldArray, initialize, reduxForm, SubmissionError } from 'redux
 import TextInput from '../../library/form/TextInput';
 import DateInput from 'components/library/form/DateInput';
 import { allowOnlyPostiveNumber } from 'utils';
+import moment from 'moment';
 
 const formName = "adjustBatchStock";
+const dateFormat = "DD-MM-YYYY";
 
 function AdjustBatchStock(props){
   const [open, setOpen] = useState(false);
@@ -32,8 +34,9 @@ function AdjustBatchStock(props){
   useEffect(() => {
     if(item)
     {
-      setOpen(true); 
-      dispatch( initialize(formName, { itemId: item._id, batches: item.batches.length ? item.batches : [{ batchNumber: "", batchExpiryDate: null, batchStock: 0 }], currentStock: item.currentStock }) );
+      setOpen(true);
+      const batches = item.batches.length ? item.batches.map(batch => ({ ...batch,  batchExpiryDate: moment(batch.batchExpiryDate).format(dateFormat)})) : [{ batchNumber: "", batchExpiryDate: null, batchStock: 0 }];
+      dispatch( initialize(formName, { itemId: item._id, batches, currentStock: item.currentStock }) );
     }
   }, [item, dispatch])
 
@@ -109,11 +112,14 @@ function ItemBatches({ fields, meta }){
         <Box width={{ xs: '100%', md: '30%' }}>
           <Field
             component={DateInput}
-            dateFormat="DD MMM, YYYY"
+            openTo="year"
+            views={["year", "month", "date"]}
+            dateFormat={dateFormat}
             label="Expiry Date."
             name={`${batch}.batchExpiryDate`}
             placeholder="Expiry Date..."
             fullWidth={true}
+            autoOk={true}
             inputVariant="outlined"
             margin="dense"
             type="text"
@@ -158,7 +164,9 @@ function ItemBatches({ fields, meta }){
 }
 
 const onSubmit = (values, dispatch, { storeId, itemId }) => {
-  return axios.post('/api/items/adjustBatchStock', {storeId, itemId, ...values }).then( response => {
+  let payload = {...values};
+  payload.batches = values.batches.map(batch => ({ ...batch,  batchExpiryDate: moment(batch.batchExpiryDate, dateFormat).toDate() }));
+  return axios.post('/api/items/adjustBatchStock', {storeId, itemId, ...payload }).then( response => {
     if(response.data.item._id)
     {
       response.data.item.variants = [];
