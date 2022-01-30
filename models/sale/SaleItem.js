@@ -33,7 +33,9 @@ const schema = new mongoose.Schema({
   quantity: Number,
   costPrice: Number,
   salePrice: Number,
-  discount: Number,
+  discountType: Number, // 1=> percentage, 2=> rupees
+  discountValue: Number, // can be percent or rupee depending on above
+  discount: Number, // always in rupees
   
   batches: [{
     batchNumber: String,

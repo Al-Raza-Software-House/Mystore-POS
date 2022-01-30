@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
 import { Box, Button, Chip, Collapse, IconButton, InputAdornment, Typography, useMediaQuery } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faChevronDown, faChevronUp, faMinus, faPlus, faTrash, faTrashRestore } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faChevronDown, faChevronUp, faMinus, faPercent, faPlus, faTrash, faTrashRestore } from '@fortawesome/free-solid-svg-icons';
 import { useMemo } from 'react';
-import { allowOnlyNumber } from 'utils';
+import { allowOnlyNumber, allowOnlyPostiveNumber } from 'utils';
 import { change, Field, FieldArray, formValueSelector } from 'redux-form';
 import TextInput from 'components/library/form/TextInput';
 import { useCallback } from 'react';
@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useState } from 'react';
 import SaleBatches from './SaleBatches';
 import ReturnBatches from './ReturnBatches';
+import SelectInput from 'components/library/form/SelectInput';
 
 function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
   const totals = useMemo(() => {
@@ -43,15 +44,14 @@ function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
     container.scrollTop = container.scrollHeight;
   }, [items.length]);
   return(
-    <>
-    <Box  border="1px solid #ececec" borderRadius={5}>
+    <Box  border="1px solid #ececec" borderRadius={5} flexGrow={1} display="flex" flexDirection="column" >
       <Box height="53px" display="flex" justifyContent="space-between" borderBottom="1px solid #ececec" flexWrap="wrap" alignItems="center" px={2} py={0} >
         <Typography>Items: <Chip size="small" component="span" label={ totals.totalItems } /> </Typography>
         <Typography>Qty: <Chip size="small" component="span" label={ totals.totalQuantity } /></Typography>
         <Typography>Total: <Chip size="small" component="span" label={ totals.totalAmount } /></Typography>
         <Typography>Discount: <Chip size="small" component="span" label={ totals.totalDiscount } /></Typography>
       </Box>
-      <Box width="100%" height="369px" id="cart-container"  borderRadius={5} style={{ boxSizing: "border-box", overflowY: "auto" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
+      <Box width="100%" id="cart-container"  borderRadius={5} style={{ boxSizing: "border-box", overflowY: "auto", height: "calc(100vh - 320px)" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
         {
           items.map(item => (
             <Item item={item} key={item._id} formName={formName} allowNegativeInventory={allowNegativeInventory} disabled={disabled} />
@@ -59,7 +59,6 @@ function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
         }
       </Box>
     </Box>
-    </>
   )
 }
 
@@ -111,7 +110,11 @@ const Item = React.memo(
         </Box>
         
         <Box style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
-          <Typography style={{ fontSize: 16, fontWeight: "bold" }}>{ (+((quantity * salePrice) - (quantity * discount)).toFixed(2)).toLocaleString() }</Typography>
+          <Typography style={{ fontSize: 16, fontWeight: "bold" }}>
+            { (+((quantity * salePrice) - (quantity * discount)).toFixed(2)).toLocaleString() }
+            { discount !== 0 ? <span style={{ color: 'green'}}> &nbsp; &nbsp; <FontAwesomeIcon title="Discount Applied" icon={faPercent}  /> </span>: null }
+          </Typography>
+          
         </Box>
         <Box width={ isDesktop ?"90px" : "50px" } textAlign="center">
           {
@@ -129,8 +132,8 @@ const Item = React.memo(
         { 
           !open ? null : 
           <>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box px={1} width={{ xs: "100%", md: "48%" }}>
+            <Box >
+              <Box px={1}>
                 <Field
                   component={TextInput}
                   label="Sale Price"
@@ -145,21 +148,9 @@ const Item = React.memo(
                   disabled={disabled}
                 />
               </Box>
-              <Box px={1} width={{ xs: "100%", md: "48%" }}>
-                <Field
-                  component={TextInput}
-                  label="Discount"
-                  name={`items[${item._id}].discount`}
-                  placeholder="Qty..."
-                  fullWidth={true}
-                  variant="outlined"
-                  margin="dense"
-                  type="text"
-                  showError={false}
-                  onKeyDown={allowOnlyNumber}
-                  disabled={disabled}
-                />
-              </Box>
+            </Box>
+            <Box px={1}>
+              <DiscountInput itemId={item._id} disabled={disabled} formName={formName} />
             </Box>
             <Box px={1}>
               { 
@@ -234,5 +225,80 @@ const  QuantityInput = React.memo(
   
 }
 ) 
+
+const discountTypes = [
+  {id: 1, title: 'Percent Discount'},
+  {id: 2, title: 'Rupee Discount'}
+]
+
+const DiscountInput = React.memo(
+  ({ itemId, disabled, formName }) => {
+  const dispatch = useDispatch();
+  const salePrice = useSelector(state => formValueSelector(formName)(state, `items[${itemId}].salePrice`));
+  const discountType = useSelector(state => formValueSelector(formName)(state, `items[${itemId}].discountType`));
+  const discountValue = useSelector(state => formValueSelector(formName)(state, `items[${itemId}].discountValue`));
+  useEffect(() => {
+    if(parseInt(discountType) === 1) //percent discount
+    {
+      let percentDiscount = Number(discountValue) / 100;
+      dispatch( change(formName, `items[${itemId}].discount`, +Number(salePrice * percentDiscount).toFixed(2)) );
+    }else if(parseInt(discountType) === 2)
+    {
+      dispatch( change(formName, `items[${itemId}].discount`, +Number(discountValue).toFixed(2)) );
+    }
+  }, [discountType, discountValue, salePrice, dispatch, formName, itemId]);
+
+  return(
+    <Box display="flex" justifyContent="space-between">
+      <Box pt={1}>
+        <Field
+          component={SelectInput}
+          options={discountTypes}
+          name={`items[${itemId}].discountType`}
+          fullWidth={true}
+          variant="outlined"
+          margin="dense"
+          type="text"
+          showError={false}
+          disabled={disabled}
+        />
+      </Box>
+      <Box width="120px">
+        <Field
+          component={TextInput}
+          label="Discount"
+          name={`items[${itemId}].discountValue`}
+          placeholder="Discount..."
+          fullWidth={true}
+          variant="outlined"
+          margin="dense"
+          type="text"
+          readOnly={true}
+          showError={false}
+          onKeyDown={allowOnlyPostiveNumber}
+          disabled={disabled}
+        />
+      </Box>
+      <Box width="120px">
+        <Field
+          component={TextInput}
+          label="Discount (Rs)"
+          name={`items[${itemId}].discount`}
+          placeholder="Discount..."
+          fullWidth={true}
+          variant="outlined"
+          margin="dense"
+          type="text"
+          readOnly={true}
+          showError={false}
+          onKeyDown={allowOnlyNumber}
+          disabled={true}
+        />
+      </Box>
+    </Box>
+  )
+  
+}
+)
 
 export default Cart;

@@ -20,18 +20,18 @@ function ItemsGrid({ selectItem, disabled }){
   }, [page, items]);
 
   return(
-    <>
-    <Box width="100%" height="320px" px={2} py={1} borderRadius={5} style={{ boxSizing: "border-box" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
-      {
-        rows.map(item => (
-          <Item item={item} key={item._id} selectItem={selectItem} disabled={disabled} />
-        ))
-      }
+    <Box display="flex" flexDirection="column" flexGrow={1}>
+      <Box flexGrow={1} width="100%" height="320px" px={2} py={1} borderRadius={5} style={{ boxSizing: "border-box" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
+        {
+          rows.map(item => (
+            <Item item={item} key={item._id} selectItem={selectItem} disabled={disabled} />
+          ))
+        }
+      </Box>
+      <Box textAlign="center" display="flex" justifyContent="center" alignItems="center" py={1} style={{ backgroundColor: "#fff" }} borderTop="1px solid #ececec">
+        <Pagination count={totalPages} page={page}  onChange={(event, value) => setPage(value)} variant="outlined" color="primary" shape="round"/>
+      </Box>
     </Box>
-    <Box textAlign="center" display="flex" justifyContent="center" alignItems="center" py={1} style={{ backgroundColor: "#fff" }} borderTop="1px solid #ececec">
-      <Pagination count={totalPages} page={page}  onChange={(event, value) => setPage(value)} variant="outlined" color="primary" shape="round"/>
-    </Box>
-    </>
   )
 }
 

@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react'
-import { Box, Button, IconButton, InputAdornment, Typography, FormHelperText } from '@material-ui/core';
+import { Box, Button, IconButton, InputAdornment, Typography, FormHelperText, Fab } from '@material-ui/core';
 import ItemPicker from '../../library/ItemPicker';
 import { useState } from 'react';
 import { useCallback } from 'react';
@@ -15,7 +15,7 @@ import SelectCustomer from './SelectCustomer';
 import ItemsGrid from './ItemsGrid';
 import Cart from './Cart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMinus, faMoneyBillWaveAlt, faPlus, faPrint, faTimes, faTrash, faTrashRestore } from '@fortawesome/free-solid-svg-icons';
+import { faMinus, faMoneyBillWaveAlt, faPlus, faPrint, faTimes, faTrash, faTrashRestore, faPercent } from '@fortawesome/free-solid-svg-icons';
 import { showError, showSuccess } from 'store/actions/alertActions';
 import { addOfflineSale, updateSale } from 'store/actions/saleActions';
 import Payment from './Payment';
@@ -25,6 +25,7 @@ import { actionTypes as customerTypes, updateCustomer } from 'store/actions/cust
 import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { emptyTxns } from 'store/actions/accountActions';
+import { useDispatch } from 'react-redux';
 
 const formName = "saleAndReturn";
 const batchDateFormat = "DD-MM-YYYY";
@@ -64,7 +65,7 @@ const addNewSaleItem = (item) => {
     }else
     {
       let { _id, salePrice, packParentId, packQuantity, currentStock, packSalePrice, batches, isServiceItem } = item;
-      dispatch( change(formName, `items[${_id}]`, {_id, quantity: 1, salePrice: packParentId ? packSalePrice : salePrice, discount: 0, packParentId, currentStock, packQuantity, isServiceItem, isVoided: false, batches:[{ batchNumber: 0, batchExpiryDate: null, batchQuantity: 0 }], sourceBatches: batches }));
+      dispatch( change(formName, `items[${_id}]`, {_id, quantity: 1, salePrice: packParentId ? packSalePrice : salePrice, discountType: 1, discountValue: 0, discount: 0, packParentId, currentStock, packQuantity, isServiceItem, isVoided: false, batches:[{ batchNumber: 0, batchExpiryDate: null, batchQuantity: 0 }], sourceBatches: batches }));
     }
   }
 }
@@ -134,7 +135,7 @@ function SaleAndReturn(props){
          batchExpiryDate: null,
          batchQuantity: 0
        });
-      formItems[item._id] = {...item, batches};
+      formItems[item._id] = {...item, batches, discountType: item.discountType ? item.discountType : 2, discountValue: item.discountValue ? item.discountValue : item.discount};
     })
     
     let selectedItems = [];
@@ -195,10 +196,6 @@ function SaleAndReturn(props){
 
   //plus/minus adjustment
   const adjustment = useSelector(state => formValueSelector(formName)(state, 'adjustment'));
-  const toggleAdjustment = useCallback(() => {
-    if(Number(adjustment) === 0) return;
-    dispatch( change(formName, `adjustment`, -1 * Number(adjustment) ) );
-  }, [adjustment, dispatch]);
   
   //pass to item Picker
   const selectItem = useCallback((item) => {
@@ -211,7 +208,7 @@ function SaleAndReturn(props){
     
   }, []);
 
-  const totalAmount = useMemo(() => {
+  const totalAmountWithoutAdjustment = useMemo(() => {
     let totalAmount = 0;
     items.forEach(record => {
       let item = formItems[record._id];
@@ -224,9 +221,14 @@ function SaleAndReturn(props){
       totalAmount += salePrice * quantity;
       totalAmount -= discount;
     });
+    return +totalAmount.toFixed(2);
+  }, [formItems, items]);
+
+  const totalAmount = useMemo(() => {
+    let totalAmount = totalAmountWithoutAdjustment;
     totalAmount = totalAmount + ( isNaN(adjustment) ? 0 :  Number(adjustment) );
     return +totalAmount.toFixed(2);
-  }, [formItems, items, adjustment]);
+  }, [totalAmountWithoutAdjustment, adjustment]);
 
   const totalQuantity = useMemo(() => {
     let total = 0;
@@ -254,10 +256,10 @@ function SaleAndReturn(props){
     items.forEach(item => {
       let record = formData.items[item._id];
       if(!record) return;
-      let {_id, quantity, salePrice, discount, isVoided, batches } = record;
+      let {_id, quantity, salePrice, discount, discountType, discountValue, isVoided, batches } = record;
       if(Number(quantity) < 0 && batches.length)
         batches = batches.map(batch => ({ ...batch, batchExpiryDate: moment(batch.batchExpiryDate, batchDateFormat).toDate() }));
-      payload.items.push({_id, quantity, salePrice, discount, isVoided, batches });
+      payload.items.push({_id, quantity, salePrice, discount, discountType, discountValue, isVoided, batches });
     });
     if(!printSalesReceipt)
       dispatch( showProgressBar() );
@@ -312,10 +314,10 @@ function SaleAndReturn(props){
     items.forEach(item => {
       let record = formValues.items[item._id];
       if(!record) return;
-      let {_id, quantity, salePrice, discount, isVoided, batches } = record;
+      let {_id, quantity, salePrice, discount, discountType, discountValue, isVoided, batches } = record;
       if(Number(quantity) < 0 && batches.length)
         batches = batches.map(batch => ({ ...batch, batchExpiryDate: moment(batch.batchExpiryDate, batchDateFormat).toDate() }));
-      payload.items.push({_id, quantity, salePrice, discount, isVoided, batches });
+      payload.items.push({_id, quantity, salePrice, discount, discountType, discountValue, isVoided, batches });
     });
 
     dispatch(showProgressBar());
@@ -373,9 +375,9 @@ function SaleAndReturn(props){
           />
         </Box>
       </Box>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap">
-        <Box width={{ xs: "100%", md: "48%" }}>
-          <Box style={{ backgroundColor: "#f9f9f9" }} border="1px solid #ececec" borderRadius={5}>
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" style={{ height:  'calc(100vh - 170px)' }}>
+        <Box width={{ xs: "100%", md: "48%" }} display="flex" flexDirection="column" height="100%">
+          <Box style={{ backgroundColor: "#f9f9f9" }} border="1px solid #ececec" borderRadius={5} flexGrow={1} display="flex" flexDirection="column">
             <Box  style={{ backgroundColor: "#fff" }} display="flex" justifyContent="space-between" borderBottom="1px solid #ececec" flexWrap="wrap" alignItems="center" px={2} py={0} >
               <Box style={{ width: '70px' }}>
                 <Field
@@ -397,7 +399,7 @@ function SaleAndReturn(props){
                 <ItemPicker disabled={disableEdit} {...{selectItem, removeItem, selectedItems: items, showServiceItems: true, autoFocus: true}} />
               </Box>
             </Box>
-            <ItemsGrid disabled={disableEdit} selectItem={selectItem}  />
+            <ItemsGrid disabled={disableEdit} selectItem={selectItem} style={{ flexGrow: 1 }} />
           </Box>
           <Box>
             <Field
@@ -415,7 +417,7 @@ function SaleAndReturn(props){
               showError={false}
             />
           </Box>
-          <Box>
+          <Box >
             {
               sale && lastEndOfDay && moment(sale.saleDate) <= moment(lastEndOfDay) ?
               <Typography component="div" style={{ color: '#7c7c7c', fontSize: 12 }}>Cannot update this sale because it is dated before Last end of Day: { moment(lastEndOfDay).format("DD MMM, YYYY, hh:mm A") }</Typography>
@@ -435,41 +437,20 @@ function SaleAndReturn(props){
             }
           </Box>
         </Box>
-        <Box width={{ xs: "100%", md: "48%" }}>
+        <Box width={{ xs: "100%", md: "48%" }} display="flex" flexDirection="column" height="100%">
 
           <Cart items={items} formItems={formItems} formName={formName} allowNegativeInventory={store.configuration.allowNegativeInventory} sale={sale} disabled={disableEdit} />
           
-          <Box display="flex" justifyContent="space-between">
+          <Box display="flex" justifyContent="space-between" mb={2}>
             <Box width={{xs: "100%", md: "45%"}}>
-              <Field
-                component={TextInput}
-                label="Adjustment"
-                name="adjustment"
-                fullWidth={true}
-                variant="outlined"
-                margin="dense"
-                type="text"
-                showError={false}
-                onKeyDown={allowOnlyNumber}
-                addNewRecord={true}
-                inputProps={{ style:{ textAlign: "right" } }}
-                disabled={disableEdit}
-                InputProps={{
-                    startAdornment:
-                      <InputAdornment position="start">
-                        <IconButton
-                          onClick={() => toggleAdjustment()}
-                          onMouseDown={(event) => event.preventDefault()}
-                        >
-                          { <FontAwesomeIcon icon={ Number(adjustment) <= 0  ? faPlus : faMinus } size="xs" /> }
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                  }
-              />
+              <Adjustment disableEdit={disableEdit} totalAmountWithoutAdjustment={totalAmountWithoutAdjustment} />
               <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6">Total</Typography>
-                <Typography variant="h4">{totalAmount.toLocaleString()}</Typography>
+                <Typography style={{ fontSize:18, color: '#7c7c7c'  }} >
+                   { !isNaN(adjustment) && Number(adjustment) !== 0 && totalAmountWithoutAdjustment !== 0 ? <span >({ +((Number(adjustment) / totalAmountWithoutAdjustment) * 100 ).toFixed(2) }%)</span> : null }
+                </Typography>
+                <Typography variant="h4">
+                  {totalAmount.toLocaleString()} &nbsp; 
+                </Typography>
               </Box>
             </Box>
             <Box width={{xs: "100%", md: "53%"}} >
@@ -496,6 +477,60 @@ function SaleAndReturn(props){
     </form>
   )
 }
+
+const Adjustment = React.memo(
+  ({ disableEdit, totalAmountWithoutAdjustment }) => {
+    const dispatch = useDispatch();
+    const adjustment = useSelector(state => formValueSelector(formName)(state, 'adjustment'));
+
+    const toggleAdjustment = useCallback(() => {
+      if(Number(adjustment) === 0) return;
+      dispatch( change(formName, `adjustment`, -1 * Number(adjustment) ) );
+    }, [adjustment, dispatch]);
+
+    const convertToPercent = useCallback(() => {
+      if(Number(adjustment) === 0) return;
+      let newAdjustment = (adjustment / 100) * totalAmountWithoutAdjustment;
+      dispatch( change(formName, `adjustment`,  +Number(newAdjustment).toFixed(2) ) );
+    }, [adjustment, dispatch, totalAmountWithoutAdjustment]);
+
+    return(
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box width="60px">
+          <Fab size="small" color="primary" aria-label="add" style={{boxShadow: "none"}} title="Convert Adjustment to Percentage Adjustment" onClick={convertToPercent}>
+            <FontAwesomeIcon icon={faPercent} />
+          </Fab>
+        </Box>
+        <Field
+          component={TextInput}
+          label="Adjustment"
+          name="adjustment"
+          fullWidth={true}
+          variant="outlined"
+          margin="dense"
+          type="text"
+          showError={false}
+          onKeyDown={allowOnlyNumber}
+          addNewRecord={true}
+          inputProps={{ style:{ textAlign: "right" } }}
+          disabled={disableEdit}
+          InputProps={{
+              startAdornment:
+                <InputAdornment position="start">
+                  <IconButton
+                    onClick={() => toggleAdjustment()}
+                    onMouseDown={(event) => event.preventDefault()}
+                  >
+                    { <FontAwesomeIcon icon={ Number(adjustment) <= 0  ? faPlus : faMinus } size="xs" /> }
+                  </IconButton>
+                </InputAdornment>
+              }
+            }
+        />
+      </Box>
+    )
+  }
+)
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;

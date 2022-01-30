@@ -18,10 +18,16 @@ export const loadStats = () => {
       if(data.stats.dailySales)
         data.stats.dailySales = data.stats.dailySales.map(record => ({
           ...record,
-          totalSaleAmount: +Number(record.totalSaleAmount).toFixed(2),
-          totalGrossProfit: +Number(record.totalGrossProfit).toFixed(2),
+          totalSaleAmount: Math.round(record.totalSaleAmount),
+          totalGrossProfit: Math.round(record.totalGrossProfit),
           saleDate: moment(record.saleDate).format('DD MMM')
         }));
+      data.stats.sale.today.grossProfit = Math.round(data.stats.sale.today.grossProfit);
+      data.stats.sale.today.saleAmount = Math.round(data.stats.sale.today.saleAmount);
+
+      data.stats.sale.yesterday.grossProfit = Math.round(data.stats.sale.yesterday.grossProfit);
+      data.stats.sale.yesterday.saleAmount = Math.round(data.stats.sale.yesterday.saleAmount);
+
       dispatch({ type: actionTypes.DASH_STATS_LOADED, storeId, stats: data.stats });
       dispatch(statsLoaded(storeId));
     }).catch( err => {

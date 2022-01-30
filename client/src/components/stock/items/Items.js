@@ -133,12 +133,15 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
           items = items.filter(item => item.currentStock > item.maxStock );
           break;
         case 3:
-          items = items.filter(item => item.isServiceItem );
+          items = items.filter(item => Number(item.currentStock) === 0 );
           break;
         case 4:
-          items = items.filter(item => item.isActive );          
+          items = items.filter(item => item.isServiceItem );
           break;
         case 5:
+          items = items.filter(item => item.isActive );          
+          break;
+        case 6:
           items = items.filter(item => !item.isActive );   
           break;
         default:

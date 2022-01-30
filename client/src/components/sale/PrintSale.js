@@ -101,6 +101,15 @@ function PrintSale(props){
   const netTotal = useMemo(() => {
     if(!sale) return 0;
     return +((stats.totalAmount - stats.totalDiscount) + Number(sale.adjustment)).toFixed(2);
+  }, [stats, sale]);
+
+  const adjustmentPercentage = useMemo(() => {
+    if(!sale) return 0;
+    if(Number(sale.adjustment) === 0 ) return 0;
+    let invoiceTotal = stats.totalAmount - stats.totalDiscount;
+    if(invoiceTotal === 0) return 0;
+
+    return +( (Number(sale.adjustment) / invoiceTotal) * 100 ).toFixed(2);
   }, [stats, sale])
 
   const totalPayment = useMemo(() => {
@@ -227,14 +236,14 @@ function PrintSale(props){
                   {
                     stats.totalDiscount > 0 ?
                     <>
-                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Discount: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Total Discount: </div>
                       <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+stats.totalDiscount.toFixed(2)).toLocaleString() } </div>
                     </> : null
                   }
                   {
                     Number(sale.adjustment) !== 0 ?
                     <>
-                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Adjustment: </div>
+                      <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", fontWeight: "bold", width: "70%" }}>Adjustment ({ adjustmentPercentage }%): </div>
                       <div style={{ fontSize: "12px", margin: "0px", textAlign: "right", width: "30%" }}>{  (+Number(sale.adjustment).toFixed(2)).toLocaleString() } </div>
                     </> : null
                   }
