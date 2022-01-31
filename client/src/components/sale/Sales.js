@@ -2,16 +2,22 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencilAlt, faSync, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, TablePagination, Typography } from '@material-ui/core';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { loadSales, emptySales } from '../../store/actions/saleActions';
 import moment from 'moment';
 import SaleFilters from './SaleFilters';
+import { isOwner } from 'utils';
+import ReactGA from "react-ga4";
 
 function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loadingRecords, loadSales, emptySales, printSale }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
+  const userRole = useSelector(state => state.stores.userRole);
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/sale/list", 'title' : "Sale History" });
+  }, []);
 
   useEffect(() => {
     if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0
@@ -62,13 +68,16 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
                   <TableCell align="center">Date</TableCell>
                   <TableCell align="center">Items</TableCell>
                   <TableCell align="center">Quantity</TableCell>
+                  <TableCell align="center">Discount</TableCell>
+                  <TableCell align="center">Adjustment</TableCell>
                   <TableCell align="center">Amount</TableCell>
+                  { !isOwner(userRole) ? null : <TableCell align="center">Profit</TableCell> }
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {
-                  rows.map(sale => <Sale {...{sale, storeId, printSale}} key={sale._id}  /> )
+                  rows.map(sale => <Sale {...{sale, storeId, printSale, userRole}} key={sale._id}  /> )
                 }
               </TableBody>
             </Table>
@@ -89,7 +98,7 @@ function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loading
 }
 
 
-function Sale({ sale, storeId, printSale }){
+function Sale({ sale, storeId, printSale, userRole }){
   return(
     <>
     <TableRow hover style={{ textDecoration: sale.isVoided ? "line-through" : "none", backgroundColor: sale.isVoided ? "#7c7c7c" : "transparent" }}>
@@ -97,7 +106,10 @@ function Sale({ sale, storeId, printSale }){
       <TableCell align="center">{ moment(sale.saleDate).format("DD MMM, YYYY hh:mm A")  }</TableCell>
       <TableCell align="center">{ sale.totalItems.toLocaleString() }</TableCell>
       <TableCell align="center">{ sale.totalQuantity.toLocaleString() }</TableCell>
+      <TableCell align="center">{ sale.totalDiscount.toLocaleString() }</TableCell>
+      <TableCell align="center">{ sale.adjustment.toLocaleString() }</TableCell>
       <TableCell align="center">{ sale.totalAmount.toLocaleString() }</TableCell>
+      { !isOwner(userRole) ? null : <TableCell align="center">{ sale.profit.toLocaleString() }</TableCell> }
       
       <TableCell align="right">
         <IconButton onClick={() => printSale( sale ) } title="Print Sale">

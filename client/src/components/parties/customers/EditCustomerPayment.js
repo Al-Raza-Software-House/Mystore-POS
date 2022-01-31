@@ -20,6 +20,7 @@ import { updateCustomer } from '../../../store/actions/customerActions';
 import { updateTxns } from '../../../store/actions/accountActions';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import ReactGA from "react-ga4";
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -59,8 +60,13 @@ function EditCustomerPayment(props) {
   const { customerId, txnId } = useParams();
 
   useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/customers/editpayment", 'title' : "Edit Customer Payment" });
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
     dispatch( showProgressBar() );
-    axios.get('/api/customers/transaction', { params: { storeId, customerId, txnId }}).then(({ data }) => {
+    axios.get('/api/customers/transaction', { signal: controller.signal, params: { storeId, customerId, txnId }}).then(({ data }) => {
       dispatch(hideProgressBar());
       if(data && data._id)
       {
@@ -79,6 +85,7 @@ function EditCustomerPayment(props) {
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
       history.push('/parties/customers');
     })
+    return () => controller.abort()
   }, [customerId, txnId, dispatch, storeId, defaultBankId, history]);
 
   const customer = useSelector( state =>  state.customers[storeId].find(item => item._id === customerId) );

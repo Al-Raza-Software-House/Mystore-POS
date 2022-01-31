@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { createAdjustmentReason } from '../../../store/actions/adjustmentReasonActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -31,6 +32,10 @@ function CreateAdjustmentReason(props) {
   const history = useHistory();
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/adjustmentReasons/create", 'title' : "Create Adjustment Reason" });
+  }, []);
+
   useEffect(() => {
     if(submitSucceeded)
       history.push('/stock/adjustmentReasons');

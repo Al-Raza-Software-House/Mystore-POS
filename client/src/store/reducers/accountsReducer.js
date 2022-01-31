@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/accountActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = {
   heads: {},
   banks: {},
@@ -17,6 +18,8 @@ const accountsReducer = (state = initState, action) => {
   let newTxns = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //ACCOUNT HEAD cases
     case actionTypes.ACCOUNT_HEADS_LOADED:
       return{

@@ -20,6 +20,7 @@ import { updateSupplier } from '../../../store/actions/supplierActions';
 import { updateTxns } from '../../../store/actions/accountActions';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import ReactGA from "react-ga4";
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -57,10 +58,14 @@ function EditSupplierPayment(props) {
   const { banks, defaultBankId, lastEndOfDay } = props;
   const [txn, setTxn] = useState({});
   const { supplierId, txnId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/suppliers/editpayment", 'title' : "Edit Supplier Payment" });
+  }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     dispatch( showProgressBar() );
-    axios.get('/api/suppliers/transaction', { params: { storeId, supplierId, txnId }}).then(({ data }) => {
+    axios.get('/api/suppliers/transaction', { signal: controller.signal, params: { storeId, supplierId, txnId }}).then(({ data }) => {
       dispatch(hideProgressBar());
       if(data && data._id)
       {
@@ -79,6 +84,7 @@ function EditSupplierPayment(props) {
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
       history.push('/parties');
     })
+    return () => controller.abort()
   }, [supplierId, txnId, dispatch, storeId, defaultBankId, history]);
 
   const supplier = useSelector( state =>  state.suppliers[storeId].find(item => item._id === supplierId) );

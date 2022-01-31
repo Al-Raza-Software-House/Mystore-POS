@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faLongArrowAltLeft, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
@@ -23,16 +23,22 @@ import Panel from '../../library/Panel';
 import SelectCategorySize from './itemForm/SelectCategorySize';
 import SelectCategoryCombination from './itemForm/SelectCategoryCombination';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import ReactGA from "react-ga4";
 
 const formSelector = formValueSelector('createItem');
 
 function CreateItem(props){
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, storeId } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock, itemCode, itemName } = props;
-  const [showProps, setShowProps] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setShowProps(true), 5);
-    return () => timer && clearTimeout(timer);
+    ReactGA.send({ hitType: "pageview", page: "/stock/items/create", 'title' : "New Item" });
+  }, []);
+
+  const [showProps, setShowProps] = useState(false);
+  const renderTimer = useRef();
+  useEffect(() => {
+    renderTimer.current = setTimeout(() => setShowProps(true), 5);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, []);
   
 

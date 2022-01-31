@@ -14,6 +14,8 @@ const initState = {
 const systemReducer = (state = initState, action) => {
   switch(action.type)
   {
+    case actionTypes.RESET_APP_STATE:
+      return initState;
     case actionTypes.APP_VERSION_CHANGED:
       return{
         ...state,

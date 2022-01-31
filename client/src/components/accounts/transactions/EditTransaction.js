@@ -17,7 +17,7 @@ import RadioInput from '../../library/form/RadioInput';
 import SelectInput from '../../library/form/SelectInput';
 import { compose } from 'redux';
 import { allowOnlyPostiveNumber } from '../../../utils';
-
+import ReactGA from "react-ga4";
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -62,7 +62,9 @@ function EditTransaction(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, txnId } = useParams();
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts/transactions/edit", 'title' : "Edit Account Txn" });
+  }, []);
   const txn = useSelector( state =>  state.accounts.transactions[storeId].records.find(item => item._id === txnId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
   const { banks, heads, defaultBankId, lastEndOfDay } = props;

@@ -10,6 +10,7 @@ import axios from 'axios';
 import { actionTypes } from '../../store/actions/authActions';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import PasswordField from '../library/form/PasswordField';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -31,6 +32,7 @@ const SignUp = (props) => {
   const {auth, signupWizard, handleSubmit, pristine, submitting, error, invalid, dirty, dispatch } = props
   useEffect(() => {
     document.title = "Sign Up | " + process.env.REACT_APP_NAME;
+    ReactGA.send({ hitType: "pageview", page: "/signup", 'title' : "Sign Up" });
     const payload = {
         phone: true,
         verification: false,

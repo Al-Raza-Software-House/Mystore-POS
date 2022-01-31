@@ -18,6 +18,7 @@ import NoteCounter from './NoteCounter';
 import CheckboxInput from 'components/library/form/CheckboxInput';
 import { addNewClosing, deleteClosing, updateClosing } from 'store/actions/closingActions';
 import { lastEndOfDayUpdated } from 'store/actions/storeActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -40,6 +41,9 @@ function ViewClosing(props) {
   const history = useHistory();
   const { storeId, closingId } = useParams();
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printClosing} = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/sale/closings/view", 'title' : "View Closing" });
+  }, []);
 
   const storeRecord  = useSelector(state => {
     let closings = state.closings[storeId] ? state.closings[storeId].records : [];
@@ -61,7 +65,8 @@ function ViewClosing(props) {
       return;
     }
     dispatch( showProgressBar() );
-    axios.get('/api/closings', { params: { storeId, closingId } }).then( ({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/closings', { signal: controller.signal, params: { storeId, closingId } }).then( ({ data }) => {
       dispatch( hideProgressBar() );
       if(data.closing)
       {
@@ -72,7 +77,7 @@ function ViewClosing(props) {
       dispatch(hideProgressBar());
       dispatch( showError( err.response && err.response.data.message ? err.response.data.message: err.message ) );
     });
-
+    return () => controller.abort()
   }, [storeRecord, dispatch, storeId, closingId])
 
   const classes = useStyles();

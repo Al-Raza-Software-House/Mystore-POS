@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/customerActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = {
 }
 
@@ -6,6 +7,8 @@ const customerReducer = (state = initState, action) => {
   let customers = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     case actionTypes.CUSTOMERS_LOADED:
       customers = state[action.storeId] ? state[action.storeId] : [];
       return{

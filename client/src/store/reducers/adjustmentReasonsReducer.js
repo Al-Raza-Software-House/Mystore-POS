@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/adjustmentReasonActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = {
 }
 
@@ -6,6 +7,8 @@ const adjustmentReasonsReducer = (state = initState, action) => {
   let reasons = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     case actionTypes.ADJUST_REASONS_LOADED:
       return{
         ...state,

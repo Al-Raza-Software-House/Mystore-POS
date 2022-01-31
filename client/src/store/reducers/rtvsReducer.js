@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/rtvActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = { }
 const defaultStoreRtvs = {
   records: [],
@@ -11,6 +12,8 @@ const rtvsReducer = (state = initState, action) => {
   let newRtvs = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //Transaction cases
     case actionTypes.RTVS_LOADED:
       storeRtvs = state[action.storeId] ? state[action.storeId] : defaultStoreRtvs;

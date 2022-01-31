@@ -12,6 +12,7 @@ import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { createBank } from '../../../store/actions/accountActions';
 import CheckboxInput from '../../library/form/CheckboxInput';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -32,6 +33,9 @@ function CreateBank(props) {
   const history = useHistory();
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts/banks/create", 'title' : "New Bank" });
+  }, []);
   useEffect(() => {
     if(submitSucceeded)
       history.push('/accounts/banks');

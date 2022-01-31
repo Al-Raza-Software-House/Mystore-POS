@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
 import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
@@ -20,7 +20,7 @@ import UploadFile from '../../library/UploadFile';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
 import { addNewRtv } from '../../../store/actions/rtvActions';
-
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -43,6 +43,10 @@ function CreateRtv(props) {
   const history = useHistory();
   const classes = useStyles();
   const { dispatch, storeId, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printRtv} = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/rtvs/new", 'title' : "New RTV" });
+  }, []);
+
   const formValues = useSelector(state => {
     let formData = getFormValues(formName)(state);
     if(formData)
@@ -66,7 +70,8 @@ function CreateRtv(props) {
       return;
     }
     dispatch( showProgressBar() );
-    axios.get('/api/grns', { params: { storeId, supplierId } }).then(({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/grns', { signal: controller.signal, params: { storeId, supplierId } }).then(({ data }) => {
     dispatch( hideProgressBar() );
 
       setGrns(data.grns);
@@ -75,6 +80,7 @@ function CreateRtv(props) {
       dispatch( hideProgressBar() );
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     } );
+    return () => controller.abort()
   }, [supplierId, storeId, dispatch]);
 
   const grnOption = useMemo(() => {
@@ -84,7 +90,12 @@ function CreateRtv(props) {
     return options;
   }, [grns, supplierId])
 
+  const renderTimer = useRef();
+  const lastGrn = useRef();
+
   useEffect(() => {
+    if(typeof lastGrn.current !== 'undefined' && lastGrn.current === grnId) return;//grnId not changed, allitems changed by other device
+    lastGrn.current = grnId;
     setItems([]);
     dispatch(change(formName, 'items', undefined));
     if(!grnId) return;
@@ -108,13 +119,14 @@ function CreateRtv(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches };
       dispatch( change(formName, `items[${_id}]`, {_id, currentStock, packQuantity, sourceBatches: batches, packParentId: item.packParentId, costPrice: record.costPrice, quantity: record.quantity, adjustment: record.adjustment, tax: record.tax, notes: "", batches:[{ batchNumber: 0, batchQuantity: 0 }] }));
       newItems.push(newItem);
     }
-    setItems(newItems);
+    renderTimer.current = setTimeout(() => setItems(newItems), 20); 
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [grnId, dispatch, grns, allItems])
 
   //pass to item Picker
@@ -140,7 +152,7 @@ function CreateRtv(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches };
       dispatch( change(formName, `items[${_id}]`, {_id, currentStock, packQuantity, sourceBatches: batches, packParentId: item.packParentId,  costPrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: 0, batchQuantity: 0 }] }));
@@ -290,10 +302,7 @@ function CreateRtv(props) {
           
           <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center">
             <Box width={{ xs: '100%', md: '31%' }}>
-              {
-                parseInt(formValues.grnId) !== 0 ? null : 
-                <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
-              }
+              <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
             </Box>
             <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
               <Typography align="center">Total Quantity: <b>{ totalQuantity }</b></Typography>

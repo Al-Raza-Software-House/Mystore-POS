@@ -9,7 +9,7 @@ const UpdateSoftware = ({ isAuthLoaded, appVersion }) => {
       <DialogContent >
         <Box textAlign="center" py={2}>
           <Typography align="center" variant="h6" style={{ marginBottom: 25 }}>Software updates are available... </Typography>
-          <Typography align="center" variant="h6" style={{ marginBottom: 25 }}>Please close app and open again 2 times</Typography>
+          <Typography align="center" variant="h6" style={{ marginBottom: 25 }}>Please software ko re-start krien, 60 seconds wait krein aur phir software re-start krein</Typography>
         </Box>
       </DialogContent>
     </Dialog>

@@ -8,11 +8,16 @@ import { loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder } from '..
 import { poStates } from '../../../utils/constants';
 import moment from 'moment';
 import PurchaseOrdersFilters from './PurchaseOrdersFilters';
+import ReactGA from "react-ga4";
 
 function PurchaseOrders({ storeId, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadPurchaseOrders, emptyPurchaseOrders, deletePurchaseOrder, printPo }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
+
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase", 'title' : "Purchase Orders" });
+  }, []);
 
   useEffect(() => {
     if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0

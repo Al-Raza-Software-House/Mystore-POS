@@ -5,6 +5,7 @@ import { Box, Paper, makeStyles, Typography, Button } from '@material-ui/core';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Store from './Store';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   firstStore:{
@@ -19,6 +20,7 @@ function  Stores({ loadStores, stores, allLoaded, selectedStoreId, selectStore }
 
   useEffect(() => {
       loadStores();
+      ReactGA.send({ hitType: "pageview", page: "/stores", 'title' : "Stores" });
   }, [loadStores]);
 
   useEffect(() => {

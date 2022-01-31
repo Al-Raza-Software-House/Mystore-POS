@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/dashboardActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = { }
 const defaultStoreDashboard = {
   stats: null,
@@ -9,6 +10,8 @@ const dashboardReducer = (state = initState, action) => {
   let newDashboard = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //Transaction cases
     case actionTypes.DASH_STATS_LOADED:
       storeDashboard = state[action.storeId] ? state[action.storeId] : defaultStoreDashboard;

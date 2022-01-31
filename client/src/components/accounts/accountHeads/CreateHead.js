@@ -13,6 +13,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { createHead } from '../../../store/actions/accountActions';
 import RadioInput from '../../library/form/RadioInput';
 import { accountHeadTypes } from '../../../utils/constants';
+import ReactGA from "react-ga4";
 
 let headTypes = [
   { id: accountHeadTypes.ACCOUNT_HEAD_TYPE_GENERAL, title: "General" },
@@ -39,6 +40,9 @@ function CreateHead(props) {
   const history = useHistory();
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts/heads/create", 'title' : "Create Head" });
+  }, []);
   useEffect(() => {
     if(submitSucceeded)
       history.push('/accounts/heads');

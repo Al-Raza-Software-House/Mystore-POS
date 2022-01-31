@@ -14,6 +14,7 @@ import { hideProgressBar, showProgressBar } from '../../../store/actions/progres
 import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { actionTypes as accountActions } from '../../../store/actions/accountActions';
 import { updateCustomer } from '../../../store/actions/customerActions';
+import ReactGA from "react-ga4";
 
 function CustomerLedger({ lastEndOfDay, banks, printTxn, loadingRecords, dispatch }) {
   const { storeId, customerId } = useParams();
@@ -25,6 +26,10 @@ function CustomerLedger({ lastEndOfDay, banks, printTxn, loadingRecords, dispatc
   const [recordsLoaded, setRecordsLoaded] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/customers/ledger", 'title' : "Customer Ledger" });
+  }, []);
 
   useEffect(() => {
     setPage(0);

@@ -15,6 +15,7 @@ import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { amber } from '@material-ui/core/colors';
 import { useDispatch } from 'react-redux';
 import { showError } from 'store/actions/alertActions';
+import ReactGA from "react-ga4";
 
 function CurrentBill(props){
   const { selectedMonths, store, loadSelectedStore, storesStampChanged, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty } = props;
@@ -22,9 +23,13 @@ function CurrentBill(props){
   const dispatch = useDispatch();
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/billing", 'title' : "Billing" });
+  }, []);
 
   const ping = useCallback(() => {
-    axios.get('/api/billing/ping', { params: { storeId: store._id, txnId: store.paymentTxnId } }).then(({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/billing/ping', { signal: controller.signal, params: { storeId: store._id, txnId: store.paymentTxnId } }).then(({ data }) => {
       if(data.success)
       {
         dispatch(loadSelectedStore());
@@ -37,6 +42,7 @@ function CurrentBill(props){
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
       timer.current = setTimeout(ping, 6000);
     });
+    return () => controller.abort()
   }, [store._id, store.paymentTxnId, loadSelectedStore, storesStampChanged, dispatch]);
 
   useEffect(() => {

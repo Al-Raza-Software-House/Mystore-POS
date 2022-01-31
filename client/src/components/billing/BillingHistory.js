@@ -3,8 +3,12 @@ import { connect } from 'react-redux';
 import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody } from '@material-ui/core';
 import { loadBillingHistory } from '../../store/actions/storeActions';
 import moment from 'moment';
+import ReactGA from "react-ga4";
 
 function BillingHistory({ transactions, selectedStoreId, loadBillingHistory }){
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/billing/history", 'title' : "Billing History" });
+  }, []);
   useEffect(() => {
     loadBillingHistory(selectedStoreId);
   }, [loadBillingHistory, selectedStoreId]);

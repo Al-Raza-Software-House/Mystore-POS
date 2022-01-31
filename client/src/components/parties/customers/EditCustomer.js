@@ -11,6 +11,7 @@ import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import { updateCustomer } from '../../../store/actions/customerActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -31,6 +32,10 @@ function EditCustomer(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, customerId } = useParams();
+
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/customers/edit", 'title' : "Edit Customer" });
+  }, []);
 
   const customer = useSelector( state =>  state.customers[storeId].find(item => item._id === customerId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;

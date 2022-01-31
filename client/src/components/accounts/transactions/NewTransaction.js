@@ -18,6 +18,7 @@ import { useSelector } from 'react-redux';
 import DateTimeInput from '../../library/form/DateTimeInput';
 import moment from 'moment';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import ReactGA from "react-ga4";
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -63,7 +64,9 @@ function NewTransaction(props) {
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, dispatch } = props;
   const { banks, heads, defaultBankId, lastEndOfDay } = props;
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts/transactions/new", 'title' : "New Account Txn" });
+  }, []);
   useEffect(() => {
     dispatch( initialize(formName, { headId: 0, type: paymentModes.PAYMENT_MODE_CASH, generalTxnType: -1, time: moment().format("DD MMMM, YYYY hh:mm A") } )  );
   }, [dispatch]);

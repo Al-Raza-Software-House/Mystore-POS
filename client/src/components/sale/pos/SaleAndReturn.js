@@ -26,6 +26,7 @@ import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { emptyTxns } from 'store/actions/accountActions';
 import { useDispatch } from 'react-redux';
+import ReactGA from "react-ga4";
 
 const formName = "saleAndReturn";
 const batchDateFormat = "DD-MM-YYYY";
@@ -76,7 +77,10 @@ function SaleAndReturn(props){
   const allItems = useMemo(() => storeItems.filter(item => item.isActive), [storeItems]);
   const { saleId } = useParams();
   const sale = useSelector(state => saleId ? state.sales[storeId].records.find(record => record._id === saleId) : null);
-  
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/sale", 'title' : "Sale & Return" });
+  }, []);
+
   const refreshTimeInterval = useRef(); //keep refreshing sale time if page Idle
   const [items, setItems] = useState([]); //items in the cart
   const location = useLocation();

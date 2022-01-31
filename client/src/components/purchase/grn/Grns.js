@@ -7,11 +7,15 @@ import { Link } from 'react-router-dom';
 import { loadGrns, emptyGrns, deleteGrn } from '../../../store/actions/grnActions';
 import moment from 'moment';
 import GRNFilters from './GrnFilters';
+import ReactGA from "react-ga4";
 
 function Grns({ storeId, lastEndOfDay, suppliers, records, filters, totalRecords, recordsLoaded, loadingRecords, loadGrns, emptyGrns, deleteGrn, printGrn }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/grns", 'title' : "GRNs" });
+  }, []);
 
   useEffect(() => {
     if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0

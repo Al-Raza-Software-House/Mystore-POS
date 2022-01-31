@@ -14,6 +14,7 @@ import { hideProgressBar, showProgressBar } from '../../../store/actions/progres
 import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { actionTypes as accountActions } from '../../../store/actions/accountActions';
 import { updateSupplier } from '../../../store/actions/supplierActions';
+import ReactGA from "react-ga4";
 
 function SupplierLedger({ lastEndOfDay, banks, loadingRecords, dispatch, printTxn }) {
   const { storeId, supplierId } = useParams();
@@ -21,6 +22,11 @@ function SupplierLedger({ lastEndOfDay, banks, loadingRecords, dispatch, printTx
   const [dateRange, setDateRange] = useState(() => {
     return moment().subtract(30, 'days').format("DD MMM, YYYY") + " - " + moment().format("DD MMM, YYYY")
   });
+
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/suppliers/ledger", 'title' : "Supplier Ledger" });
+  }, []);
+
   const [records, setRecords] = useState([]);
   const [recordsLoaded, setRecordsLoaded] = useState(false);
   const [page, setPage] = useState(0);

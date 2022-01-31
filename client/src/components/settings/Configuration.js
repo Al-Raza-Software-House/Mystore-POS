@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { reduxForm, Field, SubmissionError, initialize } from 'redux-form';
@@ -9,6 +9,7 @@ import axios from 'axios';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import SwitchInput from '../library/form/SwitchInput';
 import { showSuccess } from '../../store/actions/alertActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -23,9 +24,12 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const Receipt = (props) => {
+const Configuration = (props) => {
   const classes = useStyles();
   const { handleSubmit, pristine, submitting, error, invalid } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/store-settings/configuration", 'title' : "Configuration" });
+  }, [])
   return (
     <Box width={{ xs: '100%', md: '50%' }} >
       <form onSubmit={handleSubmit} >
@@ -95,4 +99,4 @@ export default compose(
     validate,
     onSubmit
   })
-)(Receipt);
+)(Configuration);

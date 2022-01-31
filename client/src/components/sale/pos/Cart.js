@@ -12,6 +12,7 @@ import { useState } from 'react';
 import SaleBatches from './SaleBatches';
 import ReturnBatches from './ReturnBatches';
 import SelectInput from 'components/library/form/SelectInput';
+import QuantityField from 'components/library/form/QuantityField';
 
 function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
   const totals = useMemo(() => {
@@ -184,7 +185,7 @@ const  QuantityInput = React.memo(
 
   return(
     <Field
-      component={TextInput}
+      component={QuantityField}
       label="Quantity"
       name={`items[${itemId}].quantity`}
       placeholder="Qty..."

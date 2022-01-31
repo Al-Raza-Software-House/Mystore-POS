@@ -55,7 +55,8 @@ function AdjustStock(props){
   const loadItem = useCallback(() => {
     if(!itemId) return;
     showProgressBar();
-    axios.get('/api/items/load', { params: { storeId, itemId } } ).then( ({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/items/load', { signal: controller.signal, params: { storeId, itemId } } ).then( ({ data }) => {
       hideProgressBar();
       let variants = data.item.variants.length ? data.item.variants : [data.item] ;
       for(var i=0; i<variants.length; i++)
@@ -71,6 +72,8 @@ function AdjustStock(props){
       showError( err.response && err.response.data.message ? err.response.data.message: err.message );
       handleClose();
     });
+
+    return () => controller.abort()
   }, [storeId, itemId, showProgressBar, hideProgressBar, dispatch, showError, reasons, handleClose]);
 
   useEffect(() => {

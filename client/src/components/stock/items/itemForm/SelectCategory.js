@@ -12,12 +12,15 @@ import FormMessage from '../../../library/FormMessage';
 import axios from 'axios';
 import { showSuccess } from '../../../../store/actions/alertActions';
 import { createCategory } from '../../../../store/actions/categoryActions';
+import { useRef } from 'react';
 
 function SelectCategory(props) {
   const { storeId, formName, categories, addNewRecord=true, showError=true, disabled=false } = props;
   const [showAddBtn, setShowAddBtn] = useState(false);
+  const renderTimer = useRef();
   useEffect(() => {
-    setTimeout(() => setShowAddBtn(true), 5);
+    renderTimer.current = setTimeout(() => setShowAddBtn(true), 5);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [])
   return(
     <>

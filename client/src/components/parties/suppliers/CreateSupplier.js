@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { createSupplier } from '../../../store/actions/supplierActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -31,6 +32,9 @@ function CreateSupplier(props) {
   const history = useHistory();
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/suppliers/new", 'title' : "New Supplier" });
+  }, []);
   useEffect(() => {
     if(submitSucceeded)
       history.push('/parties');

@@ -13,6 +13,7 @@ import { compose } from 'redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
+import ReactGA from "react-ga4";
 
 let categoryTypeOptions = [
   { id: categoryTypes.CATEGORY_TYPE_STANDARD, title: "Standard" },
@@ -38,6 +39,10 @@ function CreateCategory(props) {
   const history = useHistory();
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/categories/create", 'title' : "Create Category" });
+  }, []);
+
   useEffect(() => {
     if(submitSucceeded)
       history.push('/stock/categories');

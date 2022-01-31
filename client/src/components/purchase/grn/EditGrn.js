@@ -27,6 +27,8 @@ import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { addNewTxns, updateTxns, actionTypes as accountActions } from '../../../store/actions/accountActions';
 import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
+import { useRef } from 'react';
+import ReactGA from "react-ga4";
 
 const payNowOrCreditOptions = [
   { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
@@ -60,6 +62,10 @@ function EditGrn(props) {
   const history = useHistory();
   const { storeId, grnId } = useParams();
   const { dispatch, banks, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printGrn} = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/grns/edit", 'title' : "Edit GRN" });
+  }, []);
+
   const grn  = useSelector(state => {
     let grns = state.grns[storeId] ? state.grns[storeId].records : [];
     return grns.find(record => record._id === grnId);
@@ -85,8 +91,11 @@ function EditGrn(props) {
   
   const [items, setItems] = useState([]);//selected items
   const [po, setPo] = useState(null);
-
+  const renderTimer = useRef();
+  const pageInitialized = useRef();
   useEffect(() => {
+    if(pageInitialized.current) return; //run only once at page load
+    pageInitialized.current = true;
     if(!grn) return;
     let formItems = {};
     grn.items.forEach(item => {
@@ -127,15 +136,20 @@ function EditGrn(props) {
         selectedItems.push(newItem);
       }
     });
-    setTimeout(() => setItems(selectedItems), 10);
+    renderTimer.current = setTimeout(() => setItems(selectedItems), 10);
     if(!grn.poId) return;
-    axios.get('/api/purchaseOrders/', { params: { storeId, supplierId: grn.supplierId, poId: grn.poId } }).then(({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/purchaseOrders/', { signal: controller.signal, params: { storeId, supplierId: grn.supplierId, poId: grn.poId } }).then(({ data }) => {
       if(data.order._id)
         setPo(data.order);
     }).catch(err => {
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });
 
+    return () => {
+      controller.abort();
+      renderTimer.current && clearTimeout(renderTimer.current);
+    }
   }, [grn, allItems, dispatch, storeId]);
 
   //pass to item Picker
@@ -161,7 +175,7 @@ function EditGrn(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
       dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));

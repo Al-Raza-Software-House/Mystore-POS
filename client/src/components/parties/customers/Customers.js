@@ -8,7 +8,7 @@ import { deleteCustomer } from '../../../store/actions/customerActions';
 import moment from 'moment';
 import * as fuzzysort from 'fuzzysort';
 import _ from "lodash";
-
+import ReactGA from "react-ga4";
 
 function Customers({ storeId, records, deleteCustomer }) {
   const [page, setPage] = useState(0);
@@ -18,6 +18,10 @@ function Customers({ storeId, records, deleteCustomer }) {
   const [filteredRecords, setFilteredRecords] = useState([]);
   const inputRef = useRef();
   const mobileInputRef = useRef();
+  
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/customers", 'title' : "Customers" });
+  }, []);
 
   const totalBalance = useMemo(() => {
     let allBalance = records.map(record => record.currentBalance);

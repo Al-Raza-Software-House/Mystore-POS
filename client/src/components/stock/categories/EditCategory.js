@@ -12,6 +12,7 @@ import { updateCategory } from '../../../store/actions/categoryActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
+import ReactGA from "react-ga4";
 
 let categoryTypeOptions = [
   { id: categoryTypes.CATEGORY_TYPE_STANDARD, title: "Standard" },
@@ -37,6 +38,9 @@ function EditCategory(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, categoryId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/categories/edit", 'title' : "Edit Category" });
+  }, []);
 
   const category = useSelector( state =>  state.categories[storeId].find(item => item._id === categoryId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;

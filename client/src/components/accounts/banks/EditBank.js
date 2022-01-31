@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import CheckboxInput from '../../library/form/CheckboxInput';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -31,7 +32,9 @@ function EditBank(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, bankId } = useParams();
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts/banks/edit", 'title' : "Edit Bank" });
+  }, []);
   const bank = useSelector( state =>  state.accounts.banks[storeId].find(item => item._id === bankId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;
 

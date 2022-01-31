@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/purchaseOrderActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = { }
 const defaultStorePurchaseOrders = {
   records: [],
@@ -11,6 +12,8 @@ const purchaseOrdersReducer = (state = initState, action) => {
   let newPOs = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //Transaction cases
     case actionTypes.PURCHASE_ORDERS_LOADED:
       storePOs = state[action.storeId] ? state[action.storeId] : defaultStorePurchaseOrders;

@@ -10,6 +10,7 @@ import { updateAdjustmentReason } from '../../../store/actions/adjustmentReasonA
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -30,6 +31,9 @@ function EditAdjustmentReason(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, reasonId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/adjustmentReasons/edit", 'title' : "Edit Adjustment Reason" });
+  }, []);
 
   const reason = useSelector( state =>  state.adjustmentReasons[storeId].find(item => item._id === reasonId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;

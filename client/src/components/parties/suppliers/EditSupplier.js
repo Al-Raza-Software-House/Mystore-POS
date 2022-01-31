@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import { updateSupplier } from '../../../store/actions/supplierActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -30,6 +31,9 @@ function EditSupplier(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, supplierId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/suppliers/edit", 'title' : "Edit Supplier" });
+  }, []);
 
   const supplier = useSelector( state =>  state.suppliers[storeId].find(item => item._id === supplierId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;

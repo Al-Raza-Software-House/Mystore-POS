@@ -1,5 +1,6 @@
 import { actionTypes } from '../actions/storeActions';
 import { actionTypes as authActions } from '../actions/authActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = {
   stores: [],
   allLoaded: false,
@@ -10,6 +11,8 @@ const initState = {
 const storeReducer = (state = initState, action) => {
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     case authActions.LOGOUT_SUCCESS:
     case authActions.AUTH_FAILED:
       return initState;

@@ -6,13 +6,16 @@ import { faBoxOpen, faChevronDown, faChevronUp, faExclamationTriangle, faTimes }
 import TextInput from '../../library/form/TextInput';
 import { Field, FieldArray } from 'redux-form';
 import GrnBatches from './GrnBatches';
+import { useRef } from 'react';
 
 function GrnItemRow(props){
   const { item, values, supplierId, beforeLastEndOfDay=false, removeItem } = props;
   const [open, setOpen] = useState(false);
   const [renderInputs, setRenderInputs] = useState(false);
+  const renderTimer = useRef();
   useEffect(() => {
-    setTimeout(() => setRenderInputs(true), 10);
+    renderTimer.current = setTimeout(() => setRenderInputs(true), 10);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, []);
   const itemAmount = useMemo(() => {
     let total = 0;

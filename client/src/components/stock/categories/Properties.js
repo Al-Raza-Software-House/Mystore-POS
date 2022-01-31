@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Box, Typography } from '@material-ui/core'
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useParams } from 'react-router-dom';
 import Property from './properties/Property';
+import ReactGA from "react-ga4";
 
 function Properties(props) {
   const { storeId, categoryId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/categories/properties", 'title' : "Category Properties" });
+  }, []);
+
   const category = useSelector( state =>  state.categories[storeId].find(item => item._id === categoryId) );
   
     return(

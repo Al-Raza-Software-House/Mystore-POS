@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
 import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
@@ -26,6 +26,7 @@ import { updateSupplier } from '../../../store/actions/supplierActions';
 import { addNewTxns } from '../../../store/actions/accountActions';
 import { closePurchaseOrder } from '../../../store/actions/purchaseOrderActions';
 import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
+import ReactGA from "react-ga4";
 
 const payNowOrCreditOptions = [
   { id: payOrCreditOptions.PAY_NOW, title: "Pay Now" },
@@ -60,6 +61,10 @@ function CreateGrn(props) {
   const history = useHistory();
   const classes = useStyles();
   const { dispatch, storeId, banks, lastEndOfDay, defaultBankId, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printGrn} = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/grns/new", 'title' : "New GRN" });
+  }, []);
+
   const formValues = useSelector(state => {
     let formData = getFormValues(formName)(state);
     if(formData)
@@ -83,7 +88,8 @@ function CreateGrn(props) {
       return;
     }
     dispatch( showProgressBar() );
-    axios.get('/api/purchaseOrders/open', { params: { storeId, supplierId } }).then(({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/purchaseOrders/open', { signal: controller.signal, params: { storeId, supplierId } }).then(({ data }) => {
     dispatch( hideProgressBar() );
 
       setPurchaseOrders(data.orders);
@@ -91,7 +97,9 @@ function CreateGrn(props) {
     }).catch( err => {
       dispatch( hideProgressBar() );
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
-    } );
+    });
+
+    return () => controller.abort()
   }, [supplierId, storeId, dispatch]);
 
   const poOptions = useMemo(() => {
@@ -101,7 +109,12 @@ function CreateGrn(props) {
     return orders;
   }, [purchaseOrders, supplierId])
 
+  const renderTimer = useRef();
+  const lastPo = useRef();
+
   useEffect(() => {
+    if(typeof lastPo.current !== 'undefined' && lastPo.current === poId) return;//Poid not changed, allitems changed by other device
+    lastPo.current = poId;
     setItems([]);
     dispatch(change(formName, 'items', undefined));
     if(!poId) return;
@@ -125,13 +138,14 @@ function CreateGrn(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
       dispatch( change(formName, `items[${_id}]`, {_id, costPrice: record.costPrice, salePrice, packSalePrice, quantity: record.quantity, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));
       newItems.push(newItem);
     }
-    setTimeout(() => setItems(newItems), 20);
+    renderTimer.current = setTimeout(() => setItems(newItems), 20);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [poId, dispatch, purchaseOrders, allItems])
 
   //pass to item Picker
@@ -157,7 +171,7 @@ function CreateGrn(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
       dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));
@@ -388,10 +402,7 @@ function CreateGrn(props) {
           </Box>
           <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center">
             <Box width={{ xs: '100%', md: '31%' }}>
-              {
-                parseInt(formValues.poId) !== 0 ? null : 
-                <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
-              }
+              <ItemPicker disabled={!supplierId} {...{supplierId, selectItem, removeItem, selectedItems: items}} />
             </Box>
             <Box width={{ xs: '100%', md: '31%' }} height="52px" display="flex" alignItems="center" justifyContent="center">
               <Typography align="center">Total Quantity: <b>{ totalQuantity }</b></Typography>

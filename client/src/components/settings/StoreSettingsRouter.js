@@ -7,6 +7,7 @@ import Configuration from './Configuration';
 import Users from './Users';
 import Receipt from './Receipt';
 import AddUser from './AddUser';
+import SystemSettings from './SystemSettings';
 const useStyles = makeStyles(theme => ({
   paper:{
     width: 'inherit',
@@ -18,6 +19,7 @@ const menues = [
   {to: '/store-settings/configuration', title: 'Configuration'},
   {to: '/store-settings/receipt', title: 'Receipt'},
   {to: '/store-settings/users', title: 'Users'},
+  {to: '/store-settings/system', title: 'System'},
 ]
 
 function StoreSettingsRouter(props){
@@ -41,6 +43,7 @@ function StoreSettingsRouter(props){
             <Route path="/store-settings/users" component={Users} />
             <Route path="/store-settings/receipt" component={Receipt} />
             <Route path="/store-settings/configuration" component={Configuration} />
+            <Route path="/store-settings/system" component={SystemSettings} />
             <Route path="/store-settings/" component={General} />
           </Switch>
         </Box>

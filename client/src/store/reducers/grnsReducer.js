@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/grnActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = { }
 const defaultStoreGrns = {
   records: [],
@@ -11,6 +12,8 @@ const grnsReducer = (state = initState, action) => {
   let newGrns = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //Transaction cases
     case actionTypes.GRNS_LOADED:
       storeGrns = state[action.storeId] ? state[action.storeId] : defaultStoreGrns;

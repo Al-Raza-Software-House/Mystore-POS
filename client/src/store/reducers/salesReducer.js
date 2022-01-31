@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/saleActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = { }
 const defaultStoreSales = {
   records: [],
@@ -12,6 +13,8 @@ const salesReducer = (state = initState, action) => {
   let newSales = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //Transaction cases
     case actionTypes.SALES_LOADED:
       storeSales = state[action.storeId] ? state[action.storeId] : defaultStoreSales;

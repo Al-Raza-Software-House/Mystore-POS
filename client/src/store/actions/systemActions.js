@@ -22,6 +22,12 @@ export const actionTypes = {
 
   PING_STARTED: 'pingStarted',
   PING_STOPPED: 'pingStopped',
+
+  RESET_APP_STATE: 'resetAppState' //clear redux to default values, reset app
+}
+
+export const resetAppState = () => {
+  return { type: actionTypes.RESET_APP_STATE };
 }
 
 const deleteActionsMap = {

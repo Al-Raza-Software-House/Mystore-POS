@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Box, Button, TableContainer, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Popover, Typography } from '@material-ui/core';
@@ -6,8 +6,12 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { deleteCategory } from '../../../store/actions/categoryActions';
 import { categoryTypes } from '../../../utils/constants';
+import ReactGA from "react-ga4";
 
 function Categories({ storeId, categories, deleteCategory }) {
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/categories", 'title' : "Categories" });
+  }, []);
   return(
     <>
     {

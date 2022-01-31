@@ -7,11 +7,16 @@ import { Link } from 'react-router-dom';
 import { loadRtvs, emptyRtvs, deleteRtv } from '../../../store/actions/rtvActions';
 import moment from 'moment';
 import RtvFilters from './RtvFilters';
+import ReactGA from "react-ga4";
 
 function Rtvs({ storeId, suppliers, lastEndOfDay, records, filters, totalRecords, recordsLoaded, loadingRecords, loadRtvs, emptyRtvs, deleteRtv, printRtv }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
+  
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/rtvs", 'title' : "RTVs" });
+  }, []);
 
   useEffect(() => {
     if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0

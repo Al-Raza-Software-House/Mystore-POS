@@ -8,6 +8,7 @@ import { loadTxns, emptyTxns, deleteTxn } from '../../../store/actions/accountAc
 import { paymentModes } from '../../../utils/constants';
 import moment from 'moment';
 import TransactionsFilters from './TransactionsFilters';
+import ReactGA from "react-ga4";
 
 const filtersHeight = 72.5;
 function AccountTransactions({ storeId, heads, banks, lastEndOfDay, records, filters, totalRecords, recordsLoaded, loadingRecords, loadTxns, emptyTxns, deleteTxn }) {
@@ -15,7 +16,9 @@ function AccountTransactions({ storeId, heads, banks, lastEndOfDay, records, fil
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [moreFilters, setMoreFilters] = useState(false);
   const filterRef = useRef();
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts", 'title' : "Accounts Txn" });
+  }, []);
   let moreFiltersHeight = moreFilters ? filtersHeight : 0;
 
   useEffect(() => {

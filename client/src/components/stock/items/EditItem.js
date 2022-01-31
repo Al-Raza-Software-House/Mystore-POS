@@ -22,6 +22,7 @@ import SelectItemProperty from './itemForm/SelectItemProperty';
 import UploadFile from '../../library/UploadFile';
 import Panel from '../../library/Panel';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import ReactGA from "react-ga4";
 
 const formName = "editItem";
 const formSelector = formValueSelector( formName );
@@ -30,6 +31,9 @@ function EditItem(props){
   const { showProgressBar, hideProgressBar, showError } = props;
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid } = props;
   const { categoryId, category, variants, costPrice, salePrice, minStock, maxStock, itemCode, itemName } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/items/edit", 'title' : "Edit Item" });
+  }, []);
 
   const [itemLoaded, setItemLoaded] = useState(null);
   const { storeId, itemId, rowsPerPage, pageNumber } = useParams();
@@ -37,8 +41,9 @@ function EditItem(props){
 
   //load item from server on Component Mount
   useEffect(() => {
+    const controller = new AbortController();
     showProgressBar();
-    axios.get('/api/items/load', { params: { storeId, itemId } } ).then( ({ data }) => {
+    axios.get('/api/items/load', { signal: controller.signal, params: { storeId, itemId } } ).then( ({ data }) => {
       hideProgressBar();
       dispatch( initialize(formName, data.item) );
       setItemLoaded(true);
@@ -47,6 +52,7 @@ function EditItem(props){
       showError( err.response && err.response.data.message ? err.response.data.message: err.message );
       history.push('/stock');
     } );
+    return () => controller.abort()
   }, [dispatch, hideProgressBar, history, itemId, showError, showProgressBar, storeId]);
 
   const copyCostPrice = () => {

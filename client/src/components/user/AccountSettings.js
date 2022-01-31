@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { reduxForm, Field, SubmissionError, initialize } from 'redux-form';
@@ -12,6 +12,7 @@ import { Redirect } from 'react-router-dom';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import { showSuccess } from '../../store/actions/alertActions';
 import UploadFile from '../library/UploadFile';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -29,6 +30,9 @@ const useStyles = makeStyles(theme => ({
 const AccountSettings = (props) => {
   const classes = useStyles();
   const { auth, handleSubmit, pristine, submitting, error, invalid } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/account-settings", 'title' : "Account Settings" });
+  }, []);
   if(!auth.uid)  return <Redirect to="signin" />
   return (
     <Box p={3}>

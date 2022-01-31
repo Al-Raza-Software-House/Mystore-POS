@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/itemActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = {}
 const defaultStoreRecord = { 
     allItems: [], //master data
@@ -10,6 +11,8 @@ let newItems = null;
 const itemReducer = (state = initState, action) => {
   switch(action.type)
   { 
+    case systemActions.RESET_APP_STATE:
+      return initState;
     case actionTypes.MASTER_ITEMS_LOADED:
      storeRecord = state[action.storeId] ? state[action.storeId] : defaultStoreRecord;
      newItems = action.items.map(item => ({ ...item, itemNameLC: item.itemName.toLowerCase(), itemCodeLC: (item.sizeId ? `${item.itemCode}-${item.sizeCode}-${item.combinationCode}` : item.itemCode ).toLowerCase() }))

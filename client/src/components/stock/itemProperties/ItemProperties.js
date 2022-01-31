@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography } from '@material-ui/core'
 import { useSelector } from 'react-redux';
 import Property from './Property';
+import ReactGA from "react-ga4";
 
 function ItemProperties() {
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/itemProperties", 'title' : "Item Properties" });
+  }, []);
   const { properties } = useSelector( state =>  ({
       storeId: state.stores.selectedStoreId,
       properties: state.itemProperties[state.stores.selectedStoreId] ? state.itemProperties[state.stores.selectedStoreId] : {}

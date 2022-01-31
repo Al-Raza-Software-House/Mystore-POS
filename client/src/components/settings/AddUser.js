@@ -13,6 +13,7 @@ import { userTypes } from '../../utils/constants';
 import { connect } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
 import { showSuccess } from '../../store/actions/alertActions';
+import ReactGA from "react-ga4";
 
 let userRoles = [
   { id: userTypes.USER_ROLE_OWNER, title: "Owner" },
@@ -43,6 +44,10 @@ function AddUser({ id, myRole }) {
     verification: false,
     password: false
   });
+
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/store-settings/users/adduser", 'title' : "Add User to Store" });
+  }, [])
 
   const closeDialog = () => {
     history.push('/store-settings/users')

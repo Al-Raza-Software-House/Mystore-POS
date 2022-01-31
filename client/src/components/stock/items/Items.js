@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TablePagination, Typography, Popover, IconButton, makeStyles } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowsAltV, faCalendarAlt, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsAltV, faCalendarAlt, faExclamationTriangle, faLayerGroup, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { connect, useSelector } from 'react-redux';
 import { deleteItem } from '../../../store/actions/itemActions';
 import ItemFilters from './ItemFilters';
@@ -15,6 +15,9 @@ import Pagination from '@material-ui/lab/Pagination';
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList as List } from "react-window";
 import clsx from "clsx";
+import { useRef } from 'react';
+import { categoryTypes } from '../../../utils/constants';
+import ReactGA from "react-ga4";
 
 const formSelector = formValueSelector('itemListFilters');
 
@@ -26,24 +29,31 @@ const columns = [
   {
     id: 'categoryId',
     label: 'Category',
-    align: 'left'
+    align: 'left',
+    width: 120,
   },
   {
     id: 'costPrice',
-    label: 'Cost Price',
-    width: 85,
+    label: 'Cost',
+    width: 65,
     align: 'center',
   },
   {
     id: 'salePrice',
-    label: 'Sale Price',
-    width: 85,
+    label: 'Retail',
+    width: 65,
+    align: 'center',
+  },
+  {
+    id: 'currentStock',
+    label: 'Stock',
+    width: 65,
     align: 'center',
   },
   {
     id: 'actions',
     label: 'Actions',
-    width: 205,
+    width: 170,
     align: 'right'
   }
 ];
@@ -79,6 +89,9 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 0,
     flexShrink: 0
   },
+  justifyCenter:{
+    justifyContent: "center"
+  },
   expandingCell: {
     flex: 1
   },
@@ -91,12 +104,20 @@ const itemKey = (index, data) => data.items[index]._id+index;
 
 function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
   const classes = useStyles();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock", 'title' : "Items" });
+  }, []);
+
   const { recordsPerPage, pageNumber } = useParams(); // while coming back from Edit item
   const [page, setPage] = useState(pageNumber? parseInt(pageNumber) :  1);
   const [rowsPerPage, setRowsPerPage] = useState(recordsPerPage ? parseInt(recordsPerPage) : 10);
   const [moreFilters, setMoreFilters] = useState(false);
+
   const [deleteAnchorEl, setDeleteAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null); //item selected for delete
+
+  const [stockAnchorEl, setStockAnchorEl] = useState(null);
+
   const [adjustStockItemId, setAdjustStockItemId] = useState(null); //item selected for Adjust stock
   const [adjustBatchStockItem, setAdjustBatchStockItem] = useState(null); //item selected for Adjust stock
   const filterRef = React.useRef();
@@ -126,14 +147,23 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
     {
       switch(parseInt(filters.itemType))
       {
-        case 1:
-          items = items.filter(item => item.currentStock < item.minStock );
+        case 1: //find low stock item
+          items = items.filter(item => {
+            if(categoriesMap[item.categoryId].type === categoryTypes.CATEGORY_TYPE_STANDARD) return item.currentStock < item.minStock;
+            return item.currentStock < item.minStock ||  allItems.filter(record => record.varientParentId === item._id && record.currentStock < record.minStock).length > 0;
+          });
           break;
         case 2:
-          items = items.filter(item => item.currentStock > item.maxStock );
+          items = items.filter(item => {
+            if(categoriesMap[item.categoryId].type === categoryTypes.CATEGORY_TYPE_STANDARD) return item.currentStock > item.maxStock;
+            return item.currentStock > item.maxStock ||  allItems.filter(record => record.varientParentId === item._id && record.currentStock > record.maxStock).length > 0;
+          });
           break;
         case 3:
-          items = items.filter(item => Number(item.currentStock) === 0 );
+          items = items.filter(item => {
+            if(categoriesMap[item.categoryId].type === categoryTypes.CATEGORY_TYPE_STANDARD) return item.currentStock === 0;
+            return item.currentStock === 0 ||  allItems.filter(record => record.varientParentId === item._id && record.currentStock === 0 ).length > 0;
+          });;
           break;
         case 4:
           items = items.filter(item => item.isServiceItem );
@@ -167,11 +197,16 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
       if(filters.categoryPropertyValues.property4) items = items.filter(item => item.categoryPropertyValues.property4 === filters.categoryPropertyValues.property4);
     }
     return items;
-  }, [parentItems, filters])
+  }, [parentItems, allItems, filters, categoriesMap])
 
   const promptDelete = useCallback((event, item) => {
     setSelectedItem(item);
     setDeleteAnchorEl(event.currentTarget);
+  }, []);
+
+  const showVariantStock = useCallback((event, item) => {
+    setSelectedItem(item);
+    setStockAnchorEl(event.currentTarget);
   }, []);
 
   const deleteRecord = useCallback(() => {
@@ -211,17 +246,19 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
       classes,
       categoriesMap,
       promptDelete,
+      showVariantStock,
       setAdjustStockItemId,
       setAdjustBatchStockItem,
       rowsPerPage,
       page
     }
-  }, [rows, classes, categoriesMap, promptDelete, rowsPerPage, page]);
+  }, [rows, classes, categoriesMap, promptDelete, rowsPerPage, page, showVariantStock]);
 
   const [showFilters, setShowFilters] = useState(false);
+  const renderTimer = useRef();
   useEffect(() => {
-    const timer = setTimeout(() => setShowFilters(true), 5);
-    return () => timer && clearTimeout(timer);
+    renderTimer.current = setTimeout(() => setShowFilters(true), 5);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [])
 
   return(
@@ -249,6 +286,7 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
                     className={clsx(
                       classes.cell,
                       classes.column,
+                      column.align === 'center' && classes.justifyCenter,
                       !column.width && classes.expandingCell
                     )}
                     style={{
@@ -309,6 +347,7 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
       
     }
     <DeletePopOver {...{deleteRecord, deleteAnchorEl, setDeleteAnchorEl }} item={selectedItem} />
+    <StockPopOver {...{stockAnchorEl, setStockAnchorEl, allItems}} item={selectedItem} />
     <AdjustStock storeId={storeId} itemId={adjustStockItemId} setItemId={setAdjustStockItemId} />
     <AdjustBatchStock storeId={storeId} item={adjustBatchStockItem} setItem={setAdjustBatchStockItem} />
     </Box>
@@ -316,17 +355,31 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
 }
 
 
-const Row = ({ index, style, data: { items, classes, categoriesMap, promptDelete, setAdjustStockItemId, setAdjustBatchStockItem, rowsPerPage,page } }) => {
+const Row = ({ index, style, data: { items, classes, categoriesMap, promptDelete, showVariantStock, setAdjustStockItemId, setAdjustBatchStockItem, rowsPerPage,page } }) => {
   const item = items[index];
-
+  let currentStock = item.currentStock;
+  let lowStock = item.currentStock < item.minStock;
+  let overStock = item.currentStock > item.maxStock;
   return (
     <TableRow component="div" className={classes.row} style={style}>
       <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 110, height: ROW_HEIGHT }}>{ item.itemCode }</TableCell>
       <TableCell component="div" variant="body" className={clsx( classes.cell, classes.expandingCell  )} style={{ height: ROW_HEIGHT }}>{ item.itemName }</TableCell>
-      <TableCell component="div" variant="body" className={clsx( classes.cell, classes.expandingCell  )} style={{ height: ROW_HEIGHT }}>{ categoriesMap[item.categoryId] ? categoriesMap[item.categoryId] : "" }</TableCell>
-      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 85, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.costPrice.toLocaleString('en-US') }</TableCell>
-      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 85, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.salePrice.toLocaleString('en-US') }</TableCell>
-      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 205, height: ROW_HEIGHT, display: "block"}} align="right">
+      <TableCell component="div" variant="body" className={clsx( classes.cell, )} style={{ flexBasis: 120, height: ROW_HEIGHT }}>{ categoriesMap[item.categoryId] ? categoriesMap[item.categoryId].name : "" }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 65, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.costPrice.toLocaleString('en-US') }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 65, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.salePrice.toLocaleString('en-US') }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 65, height: ROW_HEIGHT, justifyContent: "center" }} align="center">
+        {
+          item.sizeId ? 
+          <IconButton onClick={(event) => showVariantStock(event, item) } title="View Stock of All variants"> <FontAwesomeIcon icon={faLayerGroup} size="xs" /> </IconButton>
+          :
+          <>
+            { currentStock.toLocaleString() }
+            { lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+            { overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+          </>
+        }
+      </TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 170, height: ROW_HEIGHT, display: "block"}} align="right">
         { 
           item.isServiceItem ? null : 
           <IconButton onClick={(event) => setAdjustStockItemId(item._id) } title="Adjust Stock">
@@ -386,6 +439,64 @@ const DeletePopOver = React.memo(
   }
 )
 
+const StockPopOver = React.memo(
+  function ({ stockAnchorEl, setStockAnchorEl, item, allItems }){
+    const variants = useMemo(() => {
+      if(!item) return [];
+      let variants = allItems.filter(record => record.varientParentId === item._id);
+      let rows = [item, ...variants];
+      rows = rows.map(row => ({
+        ...row,
+        lowStock: row.currentStock < row.minStock,
+        overStock: row.currentStock > row.maxStock
+      }))
+      return rows;
+    }, [item, allItems]);
+    const handleClose = () => {
+      setStockAnchorEl(null);
+    };
+    const open = Boolean(stockAnchorEl);
+    const id = open ? 'stock-popover' : undefined;
+    if(!item) return null;
+    return(
+      <Popover 
+        id={id}
+        open={open}
+        anchorEl={stockAnchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        >
+        <Box py={2} px={4} textAlign="center">
+          <Typography gutterBottom align="center"><b>{item.itemName}</b></Typography>
+          <Table>
+            <TableBody>
+              {
+                variants.map(record => (
+                  <TableRow key={record._id}>
+                    <TableCell><Typography style={{ color: '#6c6a6a', fontSize: 14 }}>{record.sizeName} { record.sizeName && record.combinationName ? "|" : ""  } {record.combinationName}</Typography></TableCell>
+                    <TableCell>
+                      { record.currentStock.toLocaleString() }
+                      { record.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+                      { record.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+                    </TableCell>
+                  </TableRow>
+                ))
+              }
+            </TableBody>
+          </Table>
+        </Box>
+      </Popover>
+    )
+  }
+)
+
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
   const storeRecord = state.items[storeId] ? state.items[storeId] : { 
@@ -395,7 +506,7 @@ const mapStateToProps = state => {
   const categories = state.categories[storeId] ? state.categories[storeId] : [];
   const categoriesMap = {};
   categories.forEach((record) => {
-    categoriesMap[record._id] = record.name
+    categoriesMap[record._id] = record;
   })
   return{
     storeId,

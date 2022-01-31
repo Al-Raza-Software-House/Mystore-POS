@@ -8,11 +8,15 @@ import { loadClosings, emptyClosings } from '../../store/actions/closingActions'
 import moment from 'moment';
 import ClosingFilters from './ClosingFilters';
 import { closingStates } from 'utils/constants';
+import ReactGA from "react-ga4";
 
 function Closings({ storeId, records, filters, totalRecords, recordsLoaded, loadingRecords, loadClosings, emptyClosings, printClosing, offlineSales }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const filterRef = useRef();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/sale/closings", 'title' : "Closings" });
+  }, []);
 
   useEffect(() => {
     if(filterRef.current !== filters && page !== 0)//filters changed, reset page to 0

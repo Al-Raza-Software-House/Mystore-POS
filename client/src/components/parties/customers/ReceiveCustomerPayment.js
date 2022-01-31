@@ -20,6 +20,7 @@ import { updateCustomer } from '../../../store/actions/customerActions';
 import { addNewTxns } from '../../../store/actions/accountActions';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import { allowOnlyPostiveNumber } from '../../../utils';
+import ReactGA from "react-ga4";
 
 const paymentModeOptions = [
   { id: paymentModes.PAYMENT_MODE_CASH, title: "Cash" },
@@ -55,6 +56,10 @@ function ReceiveCustomerPayment(props) {
   const classes = useStyles();
   const { handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, dispatch } = props;
   const { banks, defaultBankId, lastEndOfDay } = props;
+
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties/customers/receivepayment", 'title' : "Receive Customer Payment" });
+  }, []);
 
   useEffect(() => {
     dispatch( initialize(formName, { type: paymentModes.PAYMENT_MODE_CASH, payOrRecieve: 1, time: moment().format("DD MMMM, YYYY hh:mm A") })  );

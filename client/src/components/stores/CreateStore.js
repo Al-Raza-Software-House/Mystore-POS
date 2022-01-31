@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { reduxForm, Field, SubmissionError } from 'redux-form';
@@ -28,6 +28,7 @@ import { actionTypes as grnActions } from '../../store/actions/grnActions'; //ba
 import { actionTypes as rtvActions } from '../../store/actions/rtvActions'; //banks and heads actions
 
 import { lastUpdatedStampsChanged, masterDataLoaded } from '../../store/actions/systemActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -45,6 +46,9 @@ const useStyles = makeStyles(theme => ({
 const CreateStore = (props) => {
   const classes = useStyles();
   const { handleSubmit, pristine, submitting, error, invalid, submitSucceeded } = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stores/create", 'title' : "Create New Store" });
+  }, []);
   if(submitSucceeded) return <Redirect to="/dashboard"/>
   return (
     <Box p={3}>

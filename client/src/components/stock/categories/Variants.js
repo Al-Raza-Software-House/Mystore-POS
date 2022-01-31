@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Box, Typography } from '@material-ui/core'
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,13 +6,17 @@ import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useParams } from 'react-router-dom';
 import Sizes from './sizes/Sizes';
 import Combinations from './combinations/Combinations';
-
+import ReactGA from "react-ga4";
 
 
 
 
 function Variants(props) {
   const { storeId, categoryId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/stock/categories/variants", 'title' : "Category Variants" });
+  }, []);
+
   const category = useSelector( state =>  state.categories[storeId].find(item => item._id === categoryId) );
   
     return(

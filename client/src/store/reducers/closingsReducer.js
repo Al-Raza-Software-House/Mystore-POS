@@ -1,4 +1,5 @@
 import { actionTypes } from '../actions/closingActions';
+import { actionTypes as systemActions } from 'store/actions/systemActions';
 const initState = { }
 const defaultStoreClosings = {
   records: [],
@@ -11,6 +12,8 @@ const closingsReducer = (state = initState, action) => {
   let newClosings = null;
   switch(action.type)
   {
+    case systemActions.RESET_APP_STATE:
+      return initState;
     //Transaction cases
     case actionTypes.CLOSINGS_LOADED:
       storeClosings = state[action.storeId] ? state[action.storeId] : defaultStoreClosings;

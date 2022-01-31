@@ -10,6 +10,7 @@ import { showProgressBar, hideProgressBar } from '../../store/actions/progressAc
 import axios from 'axios';
 import PasswordField from '../library/form/PasswordField';
 import { showSuccess } from '../../store/actions/alertActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -35,6 +36,7 @@ const ResetPassword = (props) => {
   useEffect(() => {
     document.title = "Reset Password | " + process.env.REACT_APP_NAME;
     dispatch({ type: actionTypes.INIT_RESET_PASSWORD });
+    ReactGA.send({ hitType: "pageview", page: "/reset-password", 'title' : "Reset Password" });
   }, [dispatch]);
   
   useEffect(() => {

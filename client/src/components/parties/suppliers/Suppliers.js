@@ -8,7 +8,7 @@ import { deleteSupplier } from '../../../store/actions/supplierActions';
 import moment from 'moment';
 import * as fuzzysort from 'fuzzysort';
 import _ from "lodash";
-
+import ReactGA from "react-ga4";
 
 function Suppliers({ storeId, records, deleteSupplier }) {
   const [page, setPage] = useState(0);
@@ -16,7 +16,9 @@ function Suppliers({ storeId, records, deleteSupplier }) {
   const [query, setQuery] = useState("");
   const [filteredRecords, setFilteredRecords] = useState([]);
   const inputRef = useRef();
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/parties", 'title' : "Suppliers" });
+  }, []);
   const totalBalance = useMemo(() => {
     let allBalance = records.map(record => record.currentBalance);
     let total = allBalance.length === 0 ? 0 : allBalance.reduce((total, currentBalance) => total + currentBalance);

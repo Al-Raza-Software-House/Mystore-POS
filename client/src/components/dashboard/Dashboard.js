@@ -10,6 +10,7 @@ import { loadStats } from 'store/actions/dashboardActions';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { isManager } from 'utils';
 import { closingStates } from 'utils/constants';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles((theme) => ({
   quickLink:{
@@ -71,6 +72,10 @@ const quickLinks = [
 
 function Dashboard({ storeId, loadStats, stats, userRole, openedClosing }){
   const classes = useStyles();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/dashboard", 'title' : "Dashboard" });
+  }, []);
+
   useEffect(() => {
     if(!storeId) return;
       loadStats(); 

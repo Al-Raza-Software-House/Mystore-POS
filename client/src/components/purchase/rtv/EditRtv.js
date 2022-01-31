@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, IconButton } from '@material-ui/core'
 import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
@@ -21,6 +21,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -67,6 +68,10 @@ function EditRtv(props) {
   const history = useHistory();
   const { storeId, rtvId } = useParams();
   const { dispatch, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printRtv} = props;
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/rtvs/edit", 'title' : "Edit RTV" });
+  }, []);
+
   const rtv  = useSelector(state => {
     let rtvs = state.rtvs[storeId] ? state.rtvs[storeId].records : [];
     return rtvs.find(record => record._id === rtvId);
@@ -92,8 +97,11 @@ function EditRtv(props) {
   
   const [items, setItems] = useState([]);//selected items
   const [grn, setGrn] = useState(null);
-
+  const renderTimer = useRef();
+  const pageInitialized = useRef();
   useEffect(() => {
+    if(pageInitialized.current) return; //run only once at page load
+    pageInitialized.current = true;
     if(!rtv) return;
     let formItems = {};
     rtv.items.forEach(item => {
@@ -139,15 +147,20 @@ function EditRtv(props) {
       }
     });
     dispatch(initialize(formName, { ...rtv, items: formItems, rtvDate: moment(rtv.rtvDate).format("DD MMMM, YYYY hh:mm A") }));
-    setItems(selectedItems);
+    renderTimer.current = setTimeout(() => setItems(selectedItems), 10);
     if(!rtv.grnId) return;
-    axios.get('/api/grns/', { params: { storeId, supplierId: rtv.supplierId, grnId: rtv.grnId } }).then(({ data }) => {
+    const controller = new AbortController();
+    axios.get('/api/grns/', { signal: controller.signal, params: { storeId, supplierId: rtv.supplierId, grnId: rtv.grnId } }).then(({ data }) => {
       if(data.grn._id)
         setGrn(data.grn);
     }).catch(err => {
       dispatch(showError( err.response && err.response.data.message ? err.response.data.message: err.message ));
     });
 
+    return () => {
+      controller.abort();
+      renderTimer.current && clearTimeout(renderTimer.current);
+    }
   }, [rtv, allItems, dispatch, storeId]);
 
   //pass to item Picker
@@ -173,7 +186,7 @@ function EditRtv(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches };
       dispatch( change(formName, `items[${_id}]`, {_id, currentStock, packQuantity, sourceBatches: batches, packParentId: item.packParentId,  costPrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: 0, batchQuantity: 0 }] }));

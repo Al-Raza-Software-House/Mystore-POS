@@ -10,6 +10,7 @@ import { showProgressBar, hideProgressBar } from '../../store/actions/progressAc
 import { actionTypes as storeActions } from '../../store/actions/storeActions';
 import axios from 'axios';
 import PasswordField from '../library/form/PasswordField';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -31,6 +32,7 @@ const SignIn = (props) => {
   const classes = useStyles();
   useEffect(() => {
     document.title = "Sign In | " + process.env.REACT_APP_NAME;
+    ReactGA.send({ hitType: "pageview", page: "/signin", 'title' : "Sign In" });
   }, []);
   if(uid)
     return <Redirect to="/dashboard" />

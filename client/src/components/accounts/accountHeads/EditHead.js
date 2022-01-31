@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import { accountHeadTypes } from '../../../utils/constants';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -37,6 +38,9 @@ function EditHead(props) {
   const history = useHistory();
   const classes = useStyles();
   const { storeId, headId } = useParams();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/accounts/heads/edit", 'title' : "Edit Head" });
+  }, []);
 
   const head = useSelector( state =>  state.accounts.heads[storeId].find(item => item._id === headId) );
   const { dispatch, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty } = props;

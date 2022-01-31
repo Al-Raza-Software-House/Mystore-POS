@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, IconButton } from '@material-ui/core'
 import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
@@ -6,7 +6,7 @@ import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { showError, showSuccess } from '../../../store/actions/alertActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faExclamationTriangle, faPrint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { Redirect, useHistory, useParams } from 'react-router-dom';
 import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import DateInput from '../../library/form/DateInput';
@@ -15,8 +15,9 @@ import ItemPicker from '../../library/ItemPicker';
 import { updatePO } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
-import { allowOnlyPostiveNumber } from '../../../utils';
 import { poStates } from '../../../utils/constants';
+import PoItemRow from './PoItemRow';
+import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -35,15 +36,6 @@ const useStyles = makeStyles(theme => ({
 const formName = "editPurchaseOrder";
 const formSelector = formValueSelector(formName);
 
-const calculateMargin = (item, values, showInPercent=false) => {
-  if(item.salePrice === 0) return 0;
-  let costPrice = isNaN(values[item._id].costPrice) ? 0 : Number(values[item._id].costPrice);
-  let salePrice = item.packParentId ? item.packSalePrice : item.salePrice;
-  let margin = salePrice - costPrice;
-  if(!showInPercent) return (+margin.toFixed(2)).toLocaleString();
-  return +((margin/salePrice)*100).toFixed(2);
-}
-
 function EditPurchaseOrder(props) {
   const history = useHistory();
   const { storeId, poId } = useParams();
@@ -51,7 +43,9 @@ function EditPurchaseOrder(props) {
     let orders = state.purchaseOrders[storeId] ? state.purchaseOrders[storeId].records : [];
     return orders.find(record => record._id === poId);
   })
-
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/purchase/orders/edit", 'title' : "Edit Purchase Order" });
+  }, []);
   const isClosed = useMemo(() => {
     if(!order) return false;
     return order.status === poStates.PO_STATUS_CLOSED;
@@ -67,7 +61,11 @@ function EditPurchaseOrder(props) {
     return records ? records : []
   } );
   
+  const renderTimer = useRef();
+  const pageInitialized = useRef();
   useEffect(() => {
+    if(pageInitialized.current) return; //run only once at page load
+    pageInitialized.current = true;
     if(!order) return;
     let formItems = {};
     order.items.forEach(item => {
@@ -96,7 +94,8 @@ function EditPurchaseOrder(props) {
         selectedItems.push(newItem);
       }
     });
-    setTimeout(() => setItems(selectedItems), 15);
+    renderTimer.current = setTimeout(() => setItems(selectedItems), 15);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [order, allItems, dispatch]);
 
   const [items, setItems] = useState([]);
@@ -123,7 +122,7 @@ function EditPurchaseOrder(props) {
           lowStock = parentItem.currentStock < parentItem.minStock;
           overStock = parentItem.currentStock > parentItem.maxStock
         }
-        costPrice = item.packQuantity * costPrice;
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
       let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
       dispatch( change(formName, `items[${_id}]._id`, _id));
@@ -308,73 +307,7 @@ function EditPurchaseOrder(props) {
                     <TableBody>
                       {
                         items.map((item, index) => (
-                          <TableRow hover key={item._id}>
-                            <TableCell>
-                              <Box my={1} display="flex" justifyContent="space-between">
-                                <span>
-                                  {item.itemName}
-                                </span>
-                                { item.packParentId ? <span style={{ color: '#7c7c7c' }}>Packing <FontAwesomeIcon title="Packing" style={{ marginLeft: 4 }} icon={faBoxOpen} /> </span> : null }
-                                {
-                                  item.sizeName ?
-                                  <span style={{ color: '#7c7c7c' }}> {item.sizeName} | {item.combinationName} </span>
-                                  : null
-                                }
-                              </Box>
-                              <Box mb={1} display="flex" justifyContent="space-between" style={{ color: '#7c7c7c' }}>
-                                <span>{item.itemCode}{item.sizeCode ? '-'+item.sizeCode+'-'+item.combinationCode : '' }</span>
-                                <span>Price: { item.packParentId ? item.packSalePrice.toLocaleString() : item.salePrice.toLocaleString() } </span>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              {item.currentStock.toLocaleString()}
-                              { item.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                              { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box height="100%" display="flex" justifyContent="center" alignItems="center">
-                                <Field
-                                  component={TextInput}
-                                  label="Cost Price"
-                                  name={`items[${item._id}].costPrice`}
-                                  placeholder="Cost Price..."
-                                  fullWidth={true}
-                                  variant="outlined"
-                                  margin="dense"
-                                  disabled={!supplierId || isClosed}
-                                  showError={false}
-                                  onKeyDown={allowOnlyPostiveNumber}
-                                />
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Box mb={1}>{ calculateMargin(item, values) }</Box>
-                              <Box style={{ color: '#7c7c7c' }}>{ calculateMargin(item, values, true) }%</Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Field
-                                component={TextInput}
-                                label="Quantity"
-                                name={`items[${item._id}].quantity`}
-                                placeholder="Quantity..."
-                                fullWidth={true}
-                                variant="outlined"
-                                margin="dense"
-                                disabled={!supplierId || isClosed}
-                                showError={false}
-                                onKeyDown={allowOnlyPostiveNumber}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              { Number( ( isNaN(values[item._id].costPrice) ? 0 :  values[item._id].costPrice ) * ( isNaN(values[item._id].quantity) ? 0 :  values[item._id].quantity ) ).toLocaleString() }
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton disabled={!supplierId || isClosed} onClick={() => removeItem(item)}>
-                                <FontAwesomeIcon icon={faTimes} size="xs" />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
+                          <PoItemRow key={item._id} item={item} formName={formName} supplierId={supplierId} removeItem={removeItem} isClosed={isClosed} />
                         ))
                       }
                     </TableBody>

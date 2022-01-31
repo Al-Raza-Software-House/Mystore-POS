@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Typography, Box, Link, useTheme } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import MessengerCustomerChat from 'react-messenger-customer-chat';
+import ReactGA from "react-ga4";
 
 function ContactUs(props) {
   const theme = useTheme();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/help/contactus", 'title' : "Contact Us" });
+  }, []);
   return(
     <Box>
       <Typography gutterBottom>Please check the related help section first. If you have any query or suggestion, You can reach us through WhatsApp or Facebook </Typography>
@@ -21,6 +25,9 @@ function ContactUs(props) {
           Facebook Page
         </Link>
       </Typography>
+      <Box mt={5}>
+        { process.env.REACT_APP_NAME } is the product of <b>Cloud Crafts (Private) Limited</b>
+      </Box>
       <MessengerCustomerChat
         pageId={process.env.REACT_APP_FACEBOOK_PAGE_ID}
         appId={''}
