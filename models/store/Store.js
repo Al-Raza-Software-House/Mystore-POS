@@ -42,6 +42,7 @@ const receiptSettingsSchema = new mongoose.Schema({
 
 const storeConfiguration = new mongoose.Schema({
   allowNegativeInventory: Boolean,
+  forceBatchesOnGrn: Boolean,
   weightedCostPrice:Boolean
 });
 

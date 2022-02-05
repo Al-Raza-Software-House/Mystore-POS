@@ -284,6 +284,11 @@ function SaleAndReturn(props){
       resetSale();
     }
     
+    ReactGA.event({
+      category: "Sale",
+      action: "New_Sale",
+      label: "New Sale",
+    });
   }, [items, resetSale, printSalesReceipt, printSale, customer]);
 
   const toggleVoid = useCallback(() => {

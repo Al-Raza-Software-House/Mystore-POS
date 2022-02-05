@@ -77,7 +77,7 @@ function EditPurchaseOrder(props) {
       let storeItem = allItems.find(record => record._id === item._id);
       if(storeItem)
       {
-        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, salePrice, currentStock, packParentId, packQuantity, packSalePrice } = storeItem;
+        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock } = storeItem;
         let lowStock = storeItem.currentStock < storeItem.minStock;
         let overStock = storeItem.currentStock > storeItem.maxStock
         if(storeItem.packParentId)
@@ -90,7 +90,7 @@ function EditPurchaseOrder(props) {
             overStock = parentItem.currentStock > parentItem.maxStock
           }
         }
-        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: item.quantity };
+        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock, lowStock, overStock, quantity: item.quantity };
         selectedItems.push(newItem);
       }
     });
@@ -110,7 +110,7 @@ function EditPurchaseOrder(props) {
       setItems(newItems);
     }else
     {
-      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice } = item;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock } = item;
       let lowStock = item.currentStock < item.minStock;
       let overStock = item.currentStock > item.maxStock
       if(item.packParentId)
@@ -124,7 +124,7 @@ function EditPurchaseOrder(props) {
         }
         costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
-      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock, lowStock, overStock, quantity: 1 };
       dispatch( change(formName, `items[${_id}]._id`, _id));
       dispatch( change(formName, `items[${_id}].costPrice`, costPrice));
       dispatch( change(formName, `items[${_id}].quantity`, 1));

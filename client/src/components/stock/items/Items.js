@@ -374,8 +374,8 @@ const Row = ({ index, style, data: { items, classes, categoriesMap, promptDelete
           :
           <>
             { currentStock.toLocaleString() }
-            { lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-            { overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+            { lowStock ? <FontAwesomeIcon title={`Low Stock, Min: ${item.minStock}`} color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+            { overStock ? <FontAwesomeIcon title={`Over Stock, Max: ${item.maxStock}`} color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
           </>
         }
       </TableCell>
@@ -483,8 +483,8 @@ const StockPopOver = React.memo(
                     <TableCell><Typography style={{ color: '#6c6a6a', fontSize: 14 }}>{record.sizeName} { record.sizeName && record.combinationName ? "|" : ""  } {record.combinationName}</Typography></TableCell>
                     <TableCell>
                       { record.currentStock.toLocaleString() }
-                      { record.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-                      { record.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+                      { record.lowStock ? <FontAwesomeIcon title={`Low Stock, Min: ${record.minStock}`} color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+                      { record.overStock ? <FontAwesomeIcon title={`Over Stock, Max: ${record.maxStock}`} color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
                     </TableCell>
                   </TableRow>
                 ))

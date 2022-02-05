@@ -48,8 +48,8 @@ function PoItemRow({ item, supplierId, isClosed, removeItem, formName }){
       </TableCell>
       <TableCell align="center">
         {item.currentStock.toLocaleString()}
-        { item.lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-        { item.overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+        { item.lowStock ? <FontAwesomeIcon title={`Low Stock, Min: ${item.minStock}`} color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+        { item.overStock ? <FontAwesomeIcon title={`Over Stock, Max: ${item.maxStock}`} color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
         { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
       </TableCell>
       <TableCell align="center">

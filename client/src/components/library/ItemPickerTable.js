@@ -124,8 +124,8 @@ function Item({ item, selectItem, removeItem, selectedItems, userRole }){
       </TableCell>
       <TableCell align="center">
         { currentStock.toLocaleString() }
-        { lowStock ? <FontAwesomeIcon title="Low Stock" color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
-        { overStock ? <FontAwesomeIcon title="Over Stock" color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+        { lowStock ? <FontAwesomeIcon title={`Low Stock, Min: ${item.minStock}`} color="#c70000" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
+        { overStock ? <FontAwesomeIcon title={`Over Stock, Max: ${item.maxStock}`} color="#06ba3a" style={{ marginLeft: 4 }} icon={faExclamationTriangle} /> : null }
         { item.packParentId ? <Box style={{ color: '#7c7c7c' }}>units</Box> : null }
       </TableCell>
       {

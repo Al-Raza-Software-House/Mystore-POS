@@ -113,13 +113,12 @@ function EditGrn(props) {
       formItems[item._id] = item;
     })
     let paymentMode = grn.bankId ? paymentModes.PAYMENT_MODE_BANK : paymentModes.PAYMENT_MODE_CASH;
-    dispatch(initialize(formName, { ...grn, paymentMode,  items: formItems, grnDate: moment(grn.grnDate).format("DD MMMM, YYYY hh:mm A"), billDate: moment(grn.billDate).format("DD MMMM, YYYY"), billDueDate: moment(grn.billDueDate).format("DD MMMM, YYYY")  }));
     let selectedItems = [];
     grn.items.forEach(item => {
       let storeItem = allItems.find(record => record._id === item._id);
       if(storeItem)
       {
-        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, currentStock, packParentId, packQuantity } = storeItem;
+        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, currentStock, packParentId, packQuantity, minStock, maxStock } = storeItem;
         let lowStock = storeItem.currentStock < storeItem.minStock;
         let overStock = storeItem.currentStock > storeItem.maxStock
         if(storeItem.packParentId)
@@ -132,10 +131,12 @@ function EditGrn(props) {
             overStock = parentItem.currentStock > parentItem.maxStock
           }
         }
-        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice: item.salePrice, currentStock, packParentId, packQuantity, packSalePrice: item.packSalePrice, lowStock, overStock, quantity: item.quantity };
+        formItems[item._id] = {...formItems[item._id], sizeCode};
+        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice: item.salePrice, currentStock, packParentId, packQuantity, packSalePrice: item.packSalePrice, lowStock, overStock, quantity: item.quantity, minStock, maxStock };
         selectedItems.push(newItem);
       }
     });
+    dispatch(initialize(formName, { ...grn, paymentMode,  items: formItems, grnDate: moment(grn.grnDate).format("DD MMMM, YYYY hh:mm A"), billDate: moment(grn.billDate).format("DD MMMM, YYYY"), billDueDate: moment(grn.billDueDate).format("DD MMMM, YYYY")  }));
     renderTimer.current = setTimeout(() => setItems(selectedItems), 10);
     if(!grn.poId) return;
     const controller = new AbortController();
@@ -163,7 +164,7 @@ function EditGrn(props) {
       setItems(newItems);
     }else
     {
-      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice } = item;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock } = item;
       let lowStock = item.currentStock < item.minStock;
       let overStock = item.currentStock > item.maxStock
       if(item.packParentId)
@@ -177,8 +178,8 @@ function EditGrn(props) {
         }
         costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
-      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1 };
-      dispatch( change(formName, `items[${_id}]`, {_id, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock, lowStock, overStock, quantity: 1 };
+      dispatch( change(formName, `items[${_id}]`, {_id, sizeCode, costPrice, salePrice, packSalePrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: "", batchExpiryDate: null, batchQuantity: 0 }] }));
       setItems([
         newItem,
         ...items
@@ -653,7 +654,7 @@ function EditGrn(props) {
 }
 
 const validate = (values, props) => {
-  const { dirty, lastEndOfDay } = props;
+  const { dirty, lastEndOfDay, store } = props;
   if(!dirty) return {};
   const errors = { items: {}};
   if(!values.supplierId)
@@ -681,6 +682,8 @@ const validate = (values, props) => {
       batchCount++;
       batchQuantity += Number(batch.batchQuantity);
     });
+    if(store.configuration.forceBatchesOnGrn && !values.items[itemId].sizeCode && batchCount === 0 && !errors.items[itemId].quantity)
+      errors.items[itemId].quantity = "Enter batch details";
     if(batchCount && batchQuantity !== quantity && !errors.items[itemId].batches._error) //batches applied but quantity doesn't match
       errors.items[itemId].batches._error = "Sum of batch quantities should be equal to total quantity";
   }
@@ -694,6 +697,7 @@ const mapStateToProps = state => {
   const itemsLastUpdatedOn = state.system.lastUpdatedStamps[storeId] ? state.system.lastUpdatedStamps[storeId].items : null;
   return{
     storeId,
+    store,
     banks: banks.map(bank => ({ id: bank._id, title: bank.name }) ),
     lastEndOfDay: store.lastEndOfDay,
     itemsLastUpdatedOn

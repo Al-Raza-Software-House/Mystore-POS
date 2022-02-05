@@ -41,6 +41,10 @@ const Configuration = (props) => {
           <Field component={SwitchInput} name="weightedCostPrice" label="Use Weighted Average Cost Price on GRN" />    
         </Box>
 
+        <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
+          <Field component={SwitchInput} name="forceBatchesOnGrn" label="Force Batches on GRN" />    
+        </Box>
+
         <Box display="flex" alignItems="center" justifyContent="center" flexDirection="column"> 
           <Button disableElevation type="submit" variant="contained" color="primary" disabled={pristine || submitting || invalid} className={classes.button}>
             Update

@@ -20,7 +20,14 @@ export const isSmallScreen = (screenWidth) => {
 }
 
 export const allowOnlyPostiveNumber = (e) => {
-  let allowedKeys = [8, 9, 38, 40, 110, 190, 37, 39, 46];
+  if(e.ctrlKey)
+  {
+    if( [67, 86, 65, 88, 90, 89].indexOf(e.keyCode) === -1 ){ //select all, copy, past, do, undo
+      e.preventDefault();
+      return false;
+    }else return;
+  }
+  let allowedKeys = [8, 9, 35, 36, 38, 40, 110, 190, 37, 39, 46];
   if(!((e.keyCode > 95 && e.keyCode < 106)
     || (e.keyCode > 47 && e.keyCode < 58) 
     || allowedKeys.indexOf(e.keyCode) !== -1 )) {
@@ -30,7 +37,14 @@ export const allowOnlyPostiveNumber = (e) => {
 }
 
 export const allowOnlyNumber = (e) => {
-  let allowedKeys = [8, 9, 38, 40, 110, 190, 37, 39, 46, 189, 109];
+  if(e.ctrlKey)
+  {
+    if( [67, 86, 65, 88, 90, 89].indexOf(e.keyCode) === -1 ){ //select all, copy, past, do, undo
+      e.preventDefault();
+      return false;
+    }else return;
+  }
+  let allowedKeys = [8, 9, 35, 36, 38, 40, 110, 190, 37, 39, 46, 189, 109];
   if(!((e.keyCode > 95 && e.keyCode < 106)
     || (e.keyCode > 47 && e.keyCode < 58) 
     || allowedKeys.indexOf(e.keyCode) !== -1 )) {

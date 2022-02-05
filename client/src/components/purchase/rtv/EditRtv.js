@@ -127,7 +127,7 @@ function EditRtv(props) {
       let storeItem = allItems.find(record => record._id === item._id);
       if(storeItem)
       {
-        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, currentStock, packParentId, packQuantity, salePrice, packSalePrice } = storeItem;
+        let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, currentStock, packParentId, packQuantity, salePrice, packSalePrice, minStock, maxStock } = storeItem;
         let lowStock = storeItem.currentStock < storeItem.minStock;
         let overStock = storeItem.currentStock > storeItem.maxStock
         if(storeItem.packParentId)
@@ -141,7 +141,7 @@ function EditRtv(props) {
           }
         }
         let originalBatches = mergeItemBatchesWithRTVBatches(storeItem.batches, item.batches, storeItem.packParentId ? storeItem.packQuantity : 1 );
-        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: item.quantity, batches: originalBatches };
+        let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice: item.costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: item.quantity, batches: originalBatches, minStock, maxStock };
         formItems[item._id] = { ...formItems[item._id], currentStock, packQuantity, sourceBatches: originalBatches, packParentId: storeItem.packParentId, };
         selectedItems.push(newItem);
       }
@@ -174,7 +174,7 @@ function EditRtv(props) {
       setItems(newItems);
     }else
     {
-      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, batches } = item;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, batches, minStock, maxStock } = item;
       let lowStock = item.currentStock < item.minStock;
       let overStock = item.currentStock > item.maxStock
       if(item.packParentId)
@@ -188,7 +188,7 @@ function EditRtv(props) {
         }
         costPrice = (item.packQuantity * costPrice).toFixed(2);
       }
-      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches };
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches, minStock, maxStock };
       dispatch( change(formName, `items[${_id}]`, {_id, currentStock, packQuantity, sourceBatches: batches, packParentId: item.packParentId,  costPrice, quantity: 1, adjustment: 0, tax: 0, notes: "", batches:[{ batchNumber: 0, batchQuantity: 0 }] }));
       setItems([
         newItem,
