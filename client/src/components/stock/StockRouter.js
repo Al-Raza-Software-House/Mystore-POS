@@ -2,7 +2,6 @@ import React from 'react';
 import { makeStyles, Paper, Box } from '@material-ui/core';
 import StyledTabs from '../library/StyledTabs';
 import { Route, Switch } from 'react-router-dom';
-import { connect } from 'react-redux';
 import Categories from './categories/Categories';
 import CreateCategory from './categories/CreateCategory';
 import EditCategory from './categories/EditCategory';
@@ -30,7 +29,7 @@ const menues = [
   {to: '/stock/adjustmentReasons', title: 'Adjustment Reasons'},
 ]
 
-function StockRouter({ loadVideos }){
+function StockRouter(){
   const classes = useStyles();
 
   return(
@@ -70,4 +69,4 @@ function StockRouter({ loadVideos }){
   )
 }
 
-export default connect(null, null)(StockRouter);
+export default StockRouter;

@@ -70,6 +70,8 @@ app.use('/api/help', require('./routes/help'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/services', require('./routes/services'));
 
+app.use('/api/reports/stock', require('./routes/reports/stock'));
+
 
 app.get('*', (req, res) => {
   res.sendFile(

@@ -19,6 +19,7 @@ import PurchaseRouter from '../purchase/PurchaseRouter';
 import SaleRouter from '../sale/SaleRouter';
 import NoInternetBlock from 'components/library/NoInternetBlock';
 import AppExpiredBlock from 'components/library/AppExpiredBlock';
+import ReportsRouter from 'components/reports/ReportsRouter';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -55,6 +56,7 @@ function Content({ userRole }) {
         <Route path="/sale" component={SaleRouter} />
         <Route path="/purchase" component={PurchaseRouter} />
         <Route path="/parties" component={PartiesRouter} />
+        <Route path="/reports" component={ReportsRouter} />
         <Route path="/accounts" component={AccountsRouter} />
         
         <Route path="/store-settings" component={StoreSettingsRouter} />

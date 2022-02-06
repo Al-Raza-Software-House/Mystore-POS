@@ -654,15 +654,17 @@ router.post('/adjustStock', async (req, res) => {
     const records = req.body.records;
     const items = [];
     let packings = [];
+    let varientItem = null;
     for(let index = 0; index < records.length; index++)
     {
-      items[index] = await Item.findById(records[index]._id);
+      if(Number( records[index].adjustmentQuantity ) === 0) continue;
+      varientItem = await Item.findById(records[index]._id);
       //log Stock TXN
       await new StockTransactions({
         storeId: store._id,
         userId: req.user._id,
-        itemId: items[index]._id,
-        categoryId: items[index].categoryId,
+        itemId: varientItem._id,
+        categoryId: varientItem.categoryId,
         packId: null,
         saleId: null,
         grnId: null,
@@ -674,15 +676,16 @@ router.post('/adjustStock', async (req, res) => {
         time: now
       }).save();
       //update current stock
-      items[index].lastUpdated = now;
-      items[index].currentStock = items[index].currentStock + Number( records[index].adjustmentQuantity );
-      await items[index].save();
+      varientItem.lastUpdated = now;
+      varientItem.currentStock = varientItem.currentStock + Number( records[index].adjustmentQuantity );
+      await varientItem.save();
       //update Current stock field in the Packings if any
-      await Item.updateMany({ packParentId : items[index]._id }, {
+      await Item.updateMany({ packParentId : varientItem._id }, {
         lastUpdated: now,
-        currentStock: items[index].currentStock
+        currentStock: varientItem.currentStock
       });
-      let itemPackings = await Item.find({ packParentId : items[index]._id });
+      items.push(varientItem);
+      let itemPackings = await Item.find({ packParentId : varientItem._id });
       packings.push( ...itemPackings  );
     }
     await store.updateLastActivity();
