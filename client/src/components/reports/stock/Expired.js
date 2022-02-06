@@ -131,6 +131,10 @@ function Expired(props){
 
   const parentItems = useMemo(() => allItems.filter(record => !record.isServiceItem && record.packParentId === null && categoriesMap[record.categoryId].type === categoryTypes.CATEGORY_TYPE_STANDARD), [allItems, categoriesMap]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [formFilters]);
+
   const filteredItems = useMemo(() => {
     if(!formFilters || !formFilters.expiryDate) return [];
     let items = parentItems;
