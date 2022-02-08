@@ -100,7 +100,7 @@ function Adjustments({ storeId, reasons, allItems, loadingRecords, dispatch }) {
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Time</TableCell>
+                  <TableCell width="120px">Time</TableCell>
                   <TableCell>Item</TableCell>
                   <TableCell align="center">Quantity</TableCell>
                   <TableCell align="center">Reason</TableCell>

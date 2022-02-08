@@ -168,7 +168,7 @@ router.post('/create', async (req, res) => {
         rtvId: null,
         reasonId: null,
         quantity: dbItem.isServiceItem ? 0 :  -1 * (parentItem ? quantity * dbItem.packQuantity : quantity),
-        batches: formItem.batches,
+        batches: parentItem ? batches.map(batch => ({...batch, batchQuantity: batch.batchQuantity * dbItem.packQuantity})) : batches,
         notes: "",
         time: sale.creationDate
       }).save();
@@ -666,7 +666,7 @@ const unVoidSale = async (sale, salesHeadId, now) => {
       rtvId: null,
       reasonId: null,
       quantity: dbItem.isServiceItem ? 0 :  -1 * (parentItem ? saleItem.quantity * dbItem.packQuantity : saleItem.quantity),
-      batches: saleItem.batches,
+      batches: parentItem ? saleItem.batches.map(batch => ({...(batch.toObject()), batchQuantity: batch.batchQuantity * dbItem.packQuantity})) : saleItem.batches,
       notes: "",
       time: sale.creationDate
     }).save();

@@ -117,7 +117,7 @@ router.post('/create', async (req, res) => {
         rtvId: rtv._id,
         reasonId: null,
         quantity: -1 * (parentItem ? item.quantity * dbItem.packQuantity : item.quantity),
-        batches: item.batches,
+        batches: parentItem ? item.batches.map(batch => ({...(batch.toObject()), batchQuantity: batch.batchQuantity * dbItem.packQuantity })) : item.batches,
         notes: item.notes,
         time: now
       }).save();
@@ -311,7 +311,7 @@ router.post('/update', async (req, res) => {
         userId: req.user._id,
         packId: parentItem ? dbItem._id : null,
         quantity: -1 * (parentItem ? quantity * dbItem.packQuantity : quantity), //convert to units if pack
-        batches,
+        batches: parentItem ? batches.map(batch => ({ ...batch, batchQuantity: batch.batchQuantity * dbItem.packQuantity })) : batches,
         notes: item.notes,
         time: now
       });
@@ -393,7 +393,7 @@ router.post('/update', async (req, res) => {
         grnId: null,
         reasonId: null,
         quantity: -1 * (parentItem ? rtvItem.quantity * dbItem.packQuantity : rtvItem.quantity),
-        batches,
+        batches: parentItem ? batches.map(batch => ({ ...batch, batchQuantity: batch.batchQuantity * dbItem.packQuantity })) : batches,
         notes: item.notes,
         time: now
       }).save();

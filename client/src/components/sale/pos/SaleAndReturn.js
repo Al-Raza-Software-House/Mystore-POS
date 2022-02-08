@@ -592,11 +592,15 @@ const validate = (values, props) => {
       batchQuantity += Number(batch.batchQuantity);
     });
     if(batchCount && batchQuantity !== Math.abs(quantity) && !errors.items[itemId].batches._error) //batches applied but quantity doesn't match
+    {
       errors.items[itemId].batches._error = "Sum of batch quantities should be equal to total quantity";
+      if(!errors.items[itemId].quantity) errors.items[itemId].quantity = "Batches quantity doesn't match";
+    }
     if(quantity < 0 && values.items[itemId].sourceBatches.length > 0 && batchCount === 0) //return, source batches exist no batches specified
     {
       errors.items[itemId].batches._error = "Please enter batch details for return item";
       errors._error = "Please enter batch details for return item";
+      if(!errors.items[itemId].quantity) errors.items[itemId].quantity = "Enter batch details";
     } 
   }
   return errors;

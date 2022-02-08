@@ -685,7 +685,10 @@ const validate = (values, props) => {
     if(store.configuration.forceBatchesOnGrn && !values.items[itemId].sizeCode && batchCount === 0 && !errors.items[itemId].quantity)
       errors.items[itemId].quantity = "Enter batch details";
     if(batchCount && batchQuantity !== quantity && !errors.items[itemId].batches._error) //batches applied but quantity doesn't match
+    {
       errors.items[itemId].batches._error = "Sum of batch quantities should be equal to total quantity";
+      if(!errors.items[itemId].quantity) errors.items[itemId].quantity = "Batches quantity doesn't match";
+    }
   }
   return errors;
 }

@@ -7,6 +7,7 @@ const { resolve } = require('path');
 const Item = require( '../models/stock/Item' );
 const { closingStates } = require( './constants' );
 const Closing = require( '../models/sale/Closing' );
+const StockTransactions = require( '../models/stock/StockTransactions' );
 
 const createJwtToken = (user, expire_in_hours = 5 * 365 * 24) => {
   const payload = {
@@ -215,6 +216,16 @@ const autoRemoveBatchStock = (item, transactionItem, now, parentItem = null) => 
     }
     // update batches in other packings too;
     await Item.updateMany({ packParentId: parentItem ? parentItem._id : item._id }, { batches: sourceBatches, lastUpdated: now });
+
+    await StockTransactions.findOneAndUpdate({
+        storeId: transactionItem.storeId,
+        saleId: transactionItem.saleId,
+        itemId: parentItem ? parentItem._id : item._id,
+        packId: parentItem ? item._id : null,
+    }, {
+      batches: parentItem ? transactionItem.batches.map(batch => ({ ...(batch.toObject()), batchQuantity: batch.batchQuantity * item.packQuantity })) : transactionItem.batches,
+    });
+
     resolve();
   });
 }
