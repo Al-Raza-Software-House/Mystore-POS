@@ -2,12 +2,9 @@ import React, { useMemo } from 'react';
 import { makeStyles, Paper, Box } from '@material-ui/core';
 import StyledTabs from '../../library/StyledTabs';
 import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
-import StockValue from './StockValue';
-import Expired from './Expired';
-import Adjustments from './Adjustments';
 import { isManager } from 'utils';
 import { useSelector } from 'react-redux';
-import Bincard from './Bincard';
+import ItemTrends from './ItemTrends';
 
 
 const useStyles = makeStyles(theme => ({
@@ -17,19 +14,23 @@ const useStyles = makeStyles(theme => ({
 }))
 
 const menues = [
-  {to: '/reports', title: 'Bin card'},
-  {to: '/reports/stock/adjustments', title: 'Adjustments'},
-  {to: '/reports/stock/expired', title: 'Expired'},
-  {to: '/reports/stock/stockvalue', title: 'Stock Value'},
+  {to: '/reports/sale', title: 'Item Trends'},
+  {to: '/reports/sale/history', title: 'History'},
+  {to: '/reports/sale/topselling', title: 'Top Selling'},
+  {to: '/reports/sale/lowselling', title: 'Low Selling'},
+  {to: '/reports/sale/topprofitable', title: 'Top Profitable'},
+  {to: '/reports/sale/lowprofitable', title: 'Low Profitable'},
+  {to: '/reports/sale/zerosales', title: 'Zero Sales'},
 ]
 
 const managersMenues = [
-  {to: '/reports', title: 'Bin card'},
-  {to: '/reports/stock/adjustments', title: 'Adjustments'},
-  {to: '/reports/stock/expired', title: 'Expired'},
+  {to: '/reports/sale', title: 'Item Trends'},
+  {to: '/reports/sale/topselling', title: 'Top Selling'},
+  {to: '/reports/sale/lowselling', title: 'Low Selling'},
+  {to: '/reports/sale/zerosales', title: 'Zero Sales'},
 ]
 
-function StockReportsRouter(){
+function SaleReportsRouter(){
   const classes = useStyles();
   const userRole = useSelector(state => state.stores.userRole);
   const { pathname } = useLocation();
@@ -56,10 +57,13 @@ function StockReportsRouter(){
       <Paper style={{flexGrow: 1}} variant="outlined" square>
         <Box px={3} pt={0} >
           <Switch>
-             <Route path="/reports/stock/stockvalue" component={StockValue} /> 
-             <Route path="/reports/stock/expired" component={Expired} />
-             <Route path="/reports/stock/adjustments" component={Adjustments} />
-             <Route path="/reports" component={Bincard} />
+             <Route path="/reports/sale/history" component={ItemTrends} /> 
+             <Route path="/reports/sale/topselling" component={ItemTrends} />
+             <Route path="/reports/sale/lowselling" component={ItemTrends} />
+             <Route path="/reports/sale/topprofitable" component={ItemTrends} />
+             <Route path="/reports/sale/lowprofitable" component={ItemTrends} />
+             <Route path="/reports/sale/zerosales" component={ItemTrends} />
+             <Route path="/reports/sale" component={ItemTrends} />
           </Switch>
         </Box>
       </Paper>
@@ -67,4 +71,4 @@ function StockReportsRouter(){
   )
 }
 
-export default StockReportsRouter;
+export default SaleReportsRouter;

@@ -28,9 +28,15 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'category'
   },
-  isVoided: Boolean,
+  supplierId: { //always unit item
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'supplier'
+  },
+  isVoided: Boolean, //item is voided or not
+  saleVoided: Boolean, //if parent sale is voided or not
 
   quantity: Number,
+  unitsQuantity: Number,
   costPrice: Number,
   salePrice: Number,
   discountType: Number, // 1=> percentage, 2=> rupees

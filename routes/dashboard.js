@@ -71,7 +71,7 @@ router.get('/stats', async (req, res) => {
 
       aggregate = await Sale.aggregate([
         { $match: { storeId: store._id, isVoided: false, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
-        { $group: { _id: { $dayOfYear: {date: "$saleDate",timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
+        { $group: { _id: { $dayOfYear: {date: "$saleDate"} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
         {$sort: {_id: 1}}
       ]);
       stats.dailySales = aggregate;

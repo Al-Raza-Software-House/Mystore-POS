@@ -3,6 +3,7 @@ import { makeStyles, Paper, Box } from '@material-ui/core';
 import StyledTabs from '../library/StyledTabs';
 import { Route, Switch } from 'react-router-dom';
 import StockReportsRouter from './stock/StockReportsRouter';
+import SaleReportsRouter from './sale/SaleReportsRouter';
 
 
 const useStyles = makeStyles(theme => ({
@@ -33,6 +34,7 @@ function ReportsRouter(){
       <Paper className={classes.paper} style={{flexGrow: 1}} variant="outlined" square>
         <Box height="100%">
           <Switch>
+            <Route path="/reports/sale" component={SaleReportsRouter} />
             <Route path="/reports" component={StockReportsRouter} />
           </Switch>
         </Box>

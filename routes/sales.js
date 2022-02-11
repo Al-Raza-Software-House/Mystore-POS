@@ -138,8 +138,11 @@ router.post('/create', async (req, res) => {
         parentId: dbItem.packParentId ? dbItem.packParentId : null, //always parent id if pack, used to diff pack/unit sale
         baseItemId: dbItem.packParentId ? dbItem.packParentId : dbItem._id, //always unit item
         categoryId: dbItem.categoryId,
+        supplierId: dbItem.supplierId,
         isVoided: formItem.isVoided,
+        saleVoided: false,
         quantity,
+        unitsQuantity: parentItem ? quantity * dbItem.packQuantity : quantity,
         costPrice: +costPrice.toFixed(2),
         salePrice,
         discountType:  isNaN(formItem.discountType) ? 2 : Number(formItem.discountType),
@@ -505,8 +508,11 @@ router.post('/update', async (req, res) => {
         parentId: dbItem.packParentId ? dbItem.packParentId : null, //always parent id if pack, used to diff pack/unit sale
         baseItemId: dbItem.packParentId ? dbItem.packParentId : dbItem._id, //always unit item
         categoryId: dbItem.categoryId,
+        supplierId: dbItem.supplierId,
         isVoided: formItem.isVoided,
+        saleVoided: false,
         quantity,
+        unitsQuantity: parentItem ? quantity * dbItem.packQuantity : quantity,
         costPrice: +costPrice.toFixed(2),
         salePrice,
         discountType:  isNaN(formItem.discountType) ? 2 : Number(formItem.discountType),
@@ -639,6 +645,7 @@ const voidSale = async (sale, salesHeadId, now) => {
   await AccountTransaction.deleteMany({ storeId: sale.storeId, parentId: sale._id, headId: salesHeadId });
   sale.isVoided = true;
   await sale.save();
+  await SaleItem.updateMany({ storeId: sale.storeId, saleId: sale._id }, { saleVoided: true });
 }
 
 //remove stock txn, reverse batch txn, remove account txn, remove customer ledger txns, 
@@ -822,6 +829,7 @@ const unVoidSale = async (sale, salesHeadId, now) => {
   
   sale.isVoided = false;
   await sale.save();
+  await SaleItem.updateMany({ storeId: sale.storeId, saleId: sale._id }, { saleVoided: false });
 }
 
 router.post('/toggleVoid', async (req, res) => {
