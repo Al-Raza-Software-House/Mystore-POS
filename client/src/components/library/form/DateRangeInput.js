@@ -18,7 +18,7 @@ const useStyles = makeStyles(theme => ({
 
 const DateRangeInput = (props) => {
   const {
-    label, dateFormat,
+    label, dateFormat, showError=true,
     meta: { touched, invalid, error },
     input: { value, onChange },
     ...custom
@@ -49,12 +49,14 @@ const DateRangeInput = (props) => {
         {...custom}
        onFocus={() => setOpen(true)}
       />
-      <FormHelperText error={ touched && invalid }>
-        {
-          touched && error ? <span>{ touched && error }</span> : <span>&nbsp;</span>
-        }
-        
-      </FormHelperText>
+      {
+        !showError ? null :
+        <FormHelperText error={ touched && invalid }>
+          {
+            touched && error ? <span>{ touched && error }</span> : <span>&nbsp;</span>
+          }
+        </FormHelperText>
+      }
       <Box className={classes.picker}>
           <DateRangePicker
             open={open}

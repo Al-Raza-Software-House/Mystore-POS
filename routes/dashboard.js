@@ -2,11 +2,6 @@ const router = require('express').Router();
 const Store = require('../models/store/Store');
 const { authCheck } = require('../utils/middlewares');
 const moment = require("moment-timezone");
-const { paymentModes, closingStates, accountHeadTypes } = require( '../utils/constants' );
-const { createNewClosingRecord } = require( '../utils' );
-const AccountTransaction = require( '../models/accounts/AccountTransaction' );
-const Closing = require( '../models/sale/Closing' );
-const AccountHead = require( '../models/accounts/AccountHead' );
 const Sale = require( '../models/sale/Sale' );
 const Item = require( '../models/stock/Item' );
 const Customer = require( '../models/parties/Customer' );
@@ -71,7 +66,7 @@ router.get('/stats', async (req, res) => {
 
       aggregate = await Sale.aggregate([
         { $match: { storeId: store._id, isVoided: false, saleDate: { $gte: thirtyDaysBefore, $lte: todayEnd } } },
-        { $group: { _id: { $dayOfYear: {date: "$saleDate"} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
+        { $group: { _id: { $dayOfYear: {date: "$saleDate", timezone:'Asia/Karachi'} }, saleDate: { $first: "$saleDate" }, totalSaleAmount: { $sum: "$totalAmount" }, totalGrossProfit: { $sum: "$profit" }, totalReceipts: { $sum: 1 } } },
         {$sort: {_id: 1}}
       ]);
       stats.dailySales = aggregate;

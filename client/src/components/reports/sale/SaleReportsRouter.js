@@ -4,7 +4,10 @@ import StyledTabs from '../../library/StyledTabs';
 import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
 import { isManager } from 'utils';
 import { useSelector } from 'react-redux';
-import ItemTrends from './ItemTrends';
+import Trends from './Trends';
+import History from './History';
+import ItemsStats from './ItemsStats';
+import ZeroSales from './ZeroSales';
 
 
 const useStyles = makeStyles(theme => ({
@@ -14,7 +17,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 const menues = [
-  {to: '/reports/sale', title: 'Item Trends'},
+  {to: '/reports/sale', title: 'Trends'},
   {to: '/reports/sale/history', title: 'History'},
   {to: '/reports/sale/topselling', title: 'Top Selling'},
   {to: '/reports/sale/lowselling', title: 'Low Selling'},
@@ -24,7 +27,7 @@ const menues = [
 ]
 
 const managersMenues = [
-  {to: '/reports/sale', title: 'Item Trends'},
+  {to: '/reports/sale', title: 'Trends'},
   {to: '/reports/sale/topselling', title: 'Top Selling'},
   {to: '/reports/sale/lowselling', title: 'Low Selling'},
   {to: '/reports/sale/zerosales', title: 'Zero Sales'},
@@ -57,13 +60,13 @@ function SaleReportsRouter(){
       <Paper style={{flexGrow: 1}} variant="outlined" square>
         <Box px={3} pt={0} >
           <Switch>
-             <Route path="/reports/sale/history" component={ItemTrends} /> 
-             <Route path="/reports/sale/topselling" component={ItemTrends} />
-             <Route path="/reports/sale/lowselling" component={ItemTrends} />
-             <Route path="/reports/sale/topprofitable" component={ItemTrends} />
-             <Route path="/reports/sale/lowprofitable" component={ItemTrends} />
-             <Route path="/reports/sale/zerosales" component={ItemTrends} />
-             <Route path="/reports/sale" component={ItemTrends} />
+             <Route path="/reports/sale/history" component={History} /> 
+             <Route path="/reports/sale/topselling" render={props => <ItemsStats {...props} type="topSelling" />}  />
+             <Route path="/reports/sale/lowselling" render={props => <ItemsStats {...props} type="lowselling" />} />
+             <Route path="/reports/sale/topprofitable" render={props => <ItemsStats {...props} type="topprofitable" />} />
+             <Route path="/reports/sale/lowprofitable" render={props => <ItemsStats {...props} type="lowprofitable" />} />
+             <Route path="/reports/sale/zerosales" component={ZeroSales} />
+             <Route path="/reports/sale" component={Trends} />
           </Switch>
         </Box>
       </Paper>

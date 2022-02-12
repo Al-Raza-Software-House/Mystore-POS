@@ -25,10 +25,10 @@ const columns = [
   { id: 'itemCode', label: 'Code', width: 110,  },
   { id: 'itemName', label: 'Name' },
   {
-    id: 'categoryId',
-    label: 'Category',
+    id: 'supplierId',
+    label: 'Supplier',
     align: 'left',
-    width: 120,
+    width: 160,
   },
   {
     id: 'costPrice',
@@ -116,7 +116,7 @@ const areFiltersApplied = (filters) => {
 }
 const itemKey = (index, data) => data.items[index]._id+index;
 function Expired(props){
-  const { dispatch, allItems, categoriesMap } = props;
+  const { dispatch, allItems, categoriesMap, suppliersMap } = props;
   const classes = useStyles();
   const formFilters = useSelector(state => getFormValues(formName)(state));
   const [page, setPage] = useState(1);
@@ -179,10 +179,10 @@ function Expired(props){
     return{
       items: rows,
       classes,
-      categoriesMap,
+      suppliersMap,
       showBatches
     }
-  }, [rows, classes, categoriesMap, showBatches]);
+  }, [rows, classes, suppliersMap, showBatches]);
 
   return(
     <>
@@ -312,7 +312,7 @@ function Expired(props){
   )
 }
 
-const Row = ({ index, style, data: { items, classes, categoriesMap, showBatches } }) => {
+const Row = ({ index, style, data: { items, classes, suppliersMap, showBatches } }) => {
   const item = items[index];
   let currentStock = item.currentStock;
   let lowStock = item.currentStock < item.minStock;
@@ -321,7 +321,7 @@ const Row = ({ index, style, data: { items, classes, categoriesMap, showBatches 
     <TableRow component="div" className={classes.row} style={style}>
       <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 110, height: ROW_HEIGHT }}>{ item.itemCode }</TableCell>
       <TableCell component="div" variant="body" className={clsx( classes.cell, classes.expandingCell  )} style={{ height: ROW_HEIGHT }}>{ item.itemName }</TableCell>
-      <TableCell component="div" variant="body" className={clsx( classes.cell, )} style={{ flexBasis: 120, height: ROW_HEIGHT }}>{ categoriesMap[item.categoryId] ? categoriesMap[item.categoryId].name : "" }</TableCell>
+      <TableCell component="div" variant="body" className={clsx( classes.cell, )} style={{ flexBasis: 160, height: ROW_HEIGHT }}>{ item.supplierId && suppliersMap[item.supplierId] ? suppliersMap[item.supplierId].name : "" }</TableCell>
       <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 65, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.costPrice.toLocaleString('en-US') }</TableCell>
       <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 65, height: ROW_HEIGHT, justifyContent: "center" }} align="center">{ item.salePrice.toLocaleString('en-US') }</TableCell>
       <TableCell component="div" variant="body" className={clsx( classes.cell  )} style={{ flexBasis: 65, height: ROW_HEIGHT, justifyContent: "center" }} align="center">
@@ -402,10 +402,17 @@ const mapStateToProps = state => {
   categories.forEach((record) => {
     categoriesMap[record._id] = record;
   })
+
+  const suppliers = state.suppliers[storeId] ? state.suppliers[storeId] : [];
+  const suppliersMap = {};
+  suppliers.forEach((record) => {
+    suppliersMap[record._id] = record;
+  })
   return{
     storeId,
     ...storeRecord,
     categoriesMap,
+    suppliersMap
   }
 }
 
