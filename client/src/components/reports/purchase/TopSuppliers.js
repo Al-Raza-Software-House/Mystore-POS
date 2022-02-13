@@ -81,10 +81,10 @@ function Supplier({ record }){
   return(
     <TableRow hover>
       <TableCell>{ record.name }</TableCell>
-      <TableCell align="center"><b style={{ fontSize: 18, color: "#2196f3" }}>{ record.totalPurchases.toLocaleString() }</b></TableCell>
-      <TableCell align="center">{ record.totalReturns.toLocaleString() }</TableCell>
-      <TableCell align="center">{ record.totalPayment.toLocaleString() }</TableCell>
-      <TableCell align="center">{ record.currentBalance.toLocaleString() }</TableCell>
+      <TableCell align="center"><b style={{ fontSize: 18, color: "#2196f3" }}>{ Math.round(record.totalPurchases).toLocaleString() }</b></TableCell>
+      <TableCell align="center">{ Math.round(record.totalReturns).toLocaleString() }</TableCell>
+      <TableCell align="center">{ Math.round(record.totalPayment).toLocaleString() }</TableCell>
+      <TableCell align="center">{ Math.round(record.currentBalance).toLocaleString() }</TableCell>
     </TableRow>
   )
 }

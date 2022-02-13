@@ -23,7 +23,7 @@ function PayableReceivable({ customers, suppliers }) {
   }, []);
 
   const topSuppliers = useMemo(() => {
-    let records = [...suppliers];
+    let records = suppliers.filter(record => record.currentBalance !== 0);
     return records.sort(function(a, b){
       if(a.currentBalance > b.currentBalance) return -1;
       if(a.currentBalance < b.currentBalance) return 1;
@@ -33,7 +33,7 @@ function PayableReceivable({ customers, suppliers }) {
   const totalPayable = useMemo(() => Math.round(suppliers.reduce((total, record) => total + record.currentBalance, 0)) , [suppliers]);
 
   const topCustomers = useMemo(() => {
-    let records = [...customers];
+    let records = customers.filter(record => record.currentBalance !== 0);
     return records.sort(function(a, b){
       if(a.currentBalance > b.currentBalance) return -1;
       if(a.currentBalance < b.currentBalance) return 1;
