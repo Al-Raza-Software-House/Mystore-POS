@@ -72,6 +72,8 @@ app.use('/api/services', require('./routes/services'));
 
 app.use('/api/reports/stock', require('./routes/reports/stock'));
 app.use('/api/reports/sale', require('./routes/reports/sale'));
+app.use('/api/reports/purchase', require('./routes/reports/purchase'));
+app.use('/api/reports/accounts', require('./routes/reports/accounts'));
 
 
 app.get('*', (req, res) => {

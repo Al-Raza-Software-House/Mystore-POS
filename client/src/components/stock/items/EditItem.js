@@ -280,6 +280,13 @@ function EditItem(props){
                 disabled={!categoryId}
               />
             </Box>
+
+            <Field
+              component={CheckboxInput}
+              label="Favorite"
+              name="isFavorite"
+              disabled={!categoryId}
+            />
             
           </Box>
           <Box width={{ xs: '100%', md: '31%' }} alignSelf="flex-start" >
@@ -456,14 +463,14 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
             return(
             <Box width="100%" pt={2} key={index} display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="flex-start" style={{ borderBottom: "2px solid #ececec" }}>
 
-              <Box width={{ xs: '100%', md: "35%" }} mt={2}>
+              <Box width={{ xs: '100%', md: "30%" }} mt={2}>
                 <Box display="flex" justifyContent="space-between">
                   <Typography align="left" style={{ color: '#6c6a6a' }}>{itemCode}-{variant.sizeCode}-{variant.combinationCode} </Typography>
                   <Typography align="center" style={{ color: '#6c6a6a' }}>{ variant.sizeName } | { variant.combinationName }</Typography>
                 </Box>
               </Box>
 
-              <Box width={{ xs: '48%', md: '15%' }}>
+              <Box width={{ xs: '48%', md: '13%' }}>
                 <Field
                     component={TextInput}
                     label="Cost Price"
@@ -476,7 +483,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                 />
               </Box>
 
-              <Box width={{ xs: '48%', md: '15%' }}>
+              <Box width={{ xs: '48%', md: '13%' }}>
                 <Field
                     component={TextInput}
                     label="Sale Price"
@@ -489,7 +496,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                 />
               </Box>
 
-              <Box width={{ xs: '48%', md: '15%' }}>
+              <Box width={{ xs: '48%', md: '14%' }}>
                 <Field
                     component={TextInput}
                     label="Minimum Stock"
@@ -502,7 +509,7 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                 />
               </Box>
 
-              <Box width={{ xs: '48%', md: '15%' }}>
+              <Box width={{ xs: '48%', md: '14%' }}>
                 <Field
                     component={TextInput}
                     label="Maximum Stock"
@@ -512,6 +519,14 @@ function Variants({ fields, costPrice, salePrice, minStock, maxStock, category, 
                     variant="outlined"
                     margin="dense"
                     onKeyDown={allowOnlyPostiveNumber}
+                />
+              </Box>
+
+              <Box width={{ xs: '100%', md: '9%' }} pt={1}>
+                <Field
+                  component={CheckboxInput}
+                  label="Favorite"
+                  name={`${item}.isFavorite`}
                 />
               </Box>
 
@@ -610,8 +625,20 @@ function Packings({ fields, unitSalePrice, unitItemName, unitItemCode, meta: { e
                 onKeyDown={allowOnlyPostiveNumber}
             />
           </Box>
-          <Box width={{ xs: '100%', md: '14%' }} textAlign="center" display="flex" justifyContent="center" alignItems="flex-start" pt={1} >
-            { packings[index].preventDelete !== true && <Button variant="outlined" style={{ marginTop: 8 }} startIcon={ <FontAwesomeIcon icon={faTimes} size="xs" /> } onClick={() => fields.remove(index)}>Remove</Button> }
+          <Box width={{ xs: '100%', md: '10%' }} pt={1}>
+            <Field
+              component={CheckboxInput}
+              label="Favorite"
+              name={`${pack}.isFavorite`}
+            />
+          </Box>
+          <Box width={{ xs: '100%', md: '5%' }} textAlign="center" display="flex" justifyContent="center" alignItems="flex-start" pt={1} >
+            { 
+              packings[index].preventDelete !== true && 
+              <IconButton title="Remove Packing" variant="outlined" onClick={() => fields.remove(index)}>
+                <FontAwesomeIcon icon={faTimes}  /> 
+              </IconButton> 
+            }
             { packings[index].preventDelete === true && 
               <Tooltip title="Sales/Purchase records exist against this packing so it cannot be deleted">
                 <IconButton> <FontAwesomeIcon icon={faInfoCircle} size="xs" /> </IconButton>

@@ -74,6 +74,8 @@ router.post('/history', async (req, res) => {
     }
     if(req.body.userId)
       conditions.userId = new mongoose.mongo.ObjectId(req.body.userId );
+    if(req.body.customerId)
+      conditions.customerId = new mongoose.mongo.ObjectId(req.body.customerId );
 
     let startMoment = null;
     let endMoment = null;

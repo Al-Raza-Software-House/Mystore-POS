@@ -40,9 +40,10 @@ const itemTypes = [
   {id: 1, title: "Low stock items"},
   {id: 2, title: "Over stock items"},
   {id: 3, title: "Zero stock items"},
-  {id: 4, title: "Service items"},
-  {id: 5, title: "Active items"},
-  {id: 6, title: "Inactive items"},
+  {id: 4, title: "Favorite items"},
+  {id: 5, title: "Service items"},
+  {id: 6, title: "Active items"},
+  {id: 7, title: "Inactive items"},
 ]
 
 const defaultFilters = {

@@ -405,7 +405,7 @@ function SaleAndReturn(props){
                 />
               </Box>
               <Box style={{ flexGrow: 1 }}>
-                <ItemPicker disabled={disableEdit} {...{selectItem, removeItem, selectedItems: items, showServiceItems: true, autoFocus: true}} />
+                <ItemPicker disabled={disableEdit} {...{selectItem, removeItem, selectedItems: items, showServiceItems: true, autoFocus: true, sortBy: 'units'}} />
               </Box>
             </Box>
             <ItemsGrid disabled={disableEdit} selectItem={selectItem} style={{ flexGrow: 1 }} />

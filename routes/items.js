@@ -46,6 +46,7 @@ router.post('/create', async (req, res) => {
       description: req.body.description ? req.body.description : '',
       image: req.body.image,
       isServiceItem: req.body.isServiceItem ? true : false,
+      isFavorite: req.body.isFavorite ? true : false,
       isActive: true,
       minStock: req.body.minStock ? req.body.minStock : 0,
       maxStock: req.body.maxStock ? req.body.maxStock : 0,
@@ -75,6 +76,7 @@ router.post('/create', async (req, res) => {
           salePrice: req.body.variants[index].salePrice ? req.body.variants[index].salePrice : item.salePrice,
           minStock: req.body.variants[index].minStock ? req.body.variants[index].minStock : item.minStock,
           maxStock: req.body.variants[index].maxStock ? req.body.variants[index].maxStock : item.maxStock,
+          isFavorite: req.body.variants[index].isFavorite ? true : false,
         }
         if(index === 0) //first variant is also Parent of all varients
         {
@@ -99,6 +101,7 @@ router.post('/create', async (req, res) => {
           itemName: req.body.packings[index].itemName,
           packQuantity: req.body.packings[index].packQuantity ? req.body.packings[index].packQuantity : 0,
           packSalePrice: req.body.packings[index].packSalePrice ? req.body.packings[index].packSalePrice : 0,
+          isFavorite: req.body.packings[index].isFavorite ? true : false,
           packParentId: item._id
         }).save();
       }
@@ -158,6 +161,7 @@ router.post('/update', async (req, res) => {
       description: req.body.description ? req.body.description : '',
       isServiceItem: req.body.isServiceItem ? true : false,
       isActive: req.body.isActive ? true : false,
+      isFavorite: req.body.isFavorite ? true : false,
       image: req.body.image,
       categoryPropertyValues: req.body.categoryPropertyValues,
       itemPropertyValues: req.body.itemPropertyValues,
@@ -223,6 +227,7 @@ router.post('/update', async (req, res) => {
             salePrice: req.body.variants[index].salePrice ? req.body.variants[index].salePrice : (item && item.salePrice ? item.salePrice : 0),
             minStock: req.body.variants[index].minStock ? req.body.variants[index].minStock : (item && item.minStock ? item.minStock : 0),
             maxStock: req.body.variants[index].maxStock ? req.body.variants[index].maxStock : (item && item.maxStock ? item.maxStock : 0),
+            isFavorite: req.body.variants[index].isFavorite ? true: false,
           }
           if(index === 0) //first variant is also Parent of all varients
           {
@@ -336,6 +341,7 @@ router.post('/update', async (req, res) => {
               itemName: req.body.packings[index].itemName,
               packQuantity: req.body.packings[index].packQuantity ? req.body.packings[index].packQuantity : 0,
               packSalePrice: req.body.packings[index].packSalePrice ? req.body.packings[index].packSalePrice : 0,
+              isFavorite: req.body.packings[index].isFavorite ? true : false,
             });
           }else // new Packing added
           {
@@ -349,6 +355,7 @@ router.post('/update', async (req, res) => {
               batches: item.batches,
               packQuantity: req.body.packings[index].packQuantity,
               packSalePrice: req.body.packings[index].packSalePrice,
+              isFavorite: req.body.packings[index].isFavorite ? true : false,
               varientParentId: null,
               packParentId: item._id,
               expiryDate: null,

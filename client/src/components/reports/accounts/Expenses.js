@@ -12,27 +12,29 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import DateRangeInput from 'components/library/form/DateRangeInput';
 import { Field, getFormValues, initialize, reduxForm } from 'redux-form';
 import SelectInput from 'components/library/form/SelectInput';
+import SelectCustomer from 'components/sale/pos/SelectCustomer';
+import { accountHeadTypes } from 'utils/constants';
 
 const defaultStats = {
-    totalReceipts: 0,
-    totalSale: 0,
-    totalProfit: 0
-  }
-const formName = "saleHistoryFilters";
+    totalTxns: 0,
+    totalAmount: 0
+}
 
-function History({ storeId, users, loadingRecords, dispatch }) {
+const formName = "expensesFilters";
+
+function Expenses({ storeId, heads, loadingRecords, dispatch }) {
   const filters = useSelector(state => getFormValues(formName)(state));
   useEffect(() => {
-    dispatch(initialize(formName, { dateRange: moment().subtract(30, 'days').format("DD MMM, YYYY") + " - " + moment().format("DD MMM, YYYY"), userId: 0 }))
+    dispatch(initialize(formName, { dateRange: moment().subtract(365, 'days').format("DD MMM, YYYY") + " - " + moment().format("DD MMM, YYYY"), headId: 0, }))
   }, [dispatch])  
 
-  const userOptions = useMemo(() => {
-    let options = users.map(user => ({ id: user._id, title: user.name }) );
-    return [{ id: 0, title: "Select user" }, ...options]
-  }, [users]);
+  const headOptions = useMemo(() => {
+    let options = heads.map(head => ({ id: head._id, title: head.name }) );
+    return [{ id: 0, title: "Select Expense Head" }, ...options]
+  }, [heads]);
 
   useEffect(() => {
-    ReactGA.send({ hitType: "pageview", page: "/reports/sale/history", 'title' : "Reports-Sale-History" });
+    ReactGA.send({ hitType: "pageview", page: "/reports/accounts/expenses", 'title' : "Reports-Accounts-Expenses" });
   }, []);
 
   const [records, setRecords] = useState([]);
@@ -50,19 +52,16 @@ function History({ storeId, users, loadingRecords, dispatch }) {
    if(!filters) return;
     dispatch( showProgressBar() );
     const payload = { storeId,  dateRange: filters.dateRange };
-    if(filters.userId) payload.userId = filters.userId;
-    axios.post('/api/reports/sale/history',  payload).then( ({ data }) => {
+    if(filters.headId) payload.headId = filters.headId;
+    axios.post('/api/reports/accounts/expenses',  payload).then( ({ data }) => {
       dispatch( hideProgressBar() );
       setRecords(data.map(record => ({
-        ...record,
-        totalSaleAmount: Math.round(record.totalSaleAmount),
-        totalGrossProfit: Math.round(record.totalGrossProfit),
-        saleDate: moment(record.saleDate).format('DD MMM')
+        totalAmount: Math.round(Math.abs(record.totalAmount)),
+        month: moment(record.month).format('MMM')
       })));
       setStats({
-        totalReceipts: data.reduce((total, record) => total + record.totalReceipts, 0),
-        totalSale: Math.round(data.reduce((total, record) => total + record.totalSaleAmount, 0)),
-        totalProfit: Math.round(data.reduce((total, record) => total + record.totalGrossProfit, 0)),
+        totalTxns: data.reduce((total, record) => total + record.totalTxns, 0),
+        totalAmount: Math.round(data.reduce((total, record) => total + Math.abs(record.totalAmount), 0)),
       });
       setRecordsLoaded(true);
     }).catch( err => {
@@ -78,13 +77,13 @@ function History({ storeId, users, loadingRecords, dispatch }) {
   
 
   return(
-    <>
-      <HistoryFilters users={userOptions} />
+    <Box px={3}>
+      <ExpenseFilters heads={headOptions} />
       {
         records.length === 0 && recordsLoaded && !loadingRecords ?
         <Box width="100%" justifyContent="center" flexDirection="column" alignItems="center" height="50vh" display="flex" mb={2}>
-          { filters && (filters.dateRange || filters.userId) ? <Typography gutterBottom>No sales data found in this period</Typography> : <Typography gutterBottom>Please select an item/category/supplier to find it's sales trends</Typography> }
-          { filters && (filters.dateRange || filters.userId) ? <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => loadRecords()} color="primary" disableElevation  >Refresh</Button> : null }
+          { filters && (filters.dateRange || filters.headId) ? <Typography gutterBottom>No data found in this period</Typography> : <Typography gutterBottom>No data found</Typography> }
+          { filters && (filters.dateRange || filters.headId) ? <Button startIcon={ <FontAwesomeIcon icon={faSync} /> } variant="contained" onClick={() => loadRecords()} color="primary" disableElevation  >Refresh</Button> : null }
         </Box>
         :
         <Box>
@@ -94,9 +93,8 @@ function History({ storeId, users, loadingRecords, dispatch }) {
       {
         records.length === 0 && recordsLoaded && !loadingRecords ? null :
         <Box display="flex" justifyContent="space-between" mt={1}>
-          <Typography>Total Receipts: <b>{ stats.totalReceipts.toLocaleString() }</b></Typography>
-          <Typography>Total Sale Amount: <b>{ stats.totalSale.toLocaleString() }</b></Typography>
-          <Typography>Total Profit: <b>{ stats.totalProfit.toLocaleString() }</b></Typography>
+          <Typography>Total Transactions: <b>{ stats.totalTxns.toLocaleString() }</b></Typography>
+          <Typography>Total Amount: <b>{ Math.abs(stats.totalAmount).toLocaleString() }</b></Typography>
         </Box>
       }
       {
@@ -115,29 +113,27 @@ function History({ storeId, users, loadingRecords, dispatch }) {
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="saleDate" />
+              <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="totalSaleAmount" name="Sale" stroke="#8884d8" activeDot={{ r: 8 }} />
-              <Line type="monotone" dataKey="totalGrossProfit" name="Gross Profit" stroke="#2196f3" />
-              <Line type="monotone" dataKey="totalReceipts" name="Receipts" stroke="#82ca9d" />
+              <Line type="monotone" dataKey="totalAmount" name="Sale" stroke="#8884d8" activeDot={{ r: 8 }} />
             </LineChart>
           </ResponsiveContainer>
         </Box>
       }
-      </>
+      </Box>
   )
 }
 
 
 
 const Filters = React.memo(
-  ({ users }) => {
+  ({ heads }) => {
 
     return(
       <Box display="flex" justifyContent="space-between" alignItems="center" >
-        <Box width={{ xs: '100%', md: '40%' }} >
+        <Box width={{ xs: '100%', md: '45%' }} >
           <Field
             component={DateRangeInput}
             label="Date Range"
@@ -149,11 +145,11 @@ const Filters = React.memo(
             showError={false}
           />
         </Box>
-        <Box width={{ xs: '100%', md: '40%' }}>
+        <Box width={{ xs: '100%', md: '45%' }}>
           <Field
             component={SelectInput}
-            options={users}
-            name="userId"
+            options={heads}
+            name="headId"
             fullWidth={true}
             variant="outlined"
             margin="dense"
@@ -165,20 +161,21 @@ const Filters = React.memo(
   }
 )
 
-const HistoryFilters = reduxForm({
+const ExpenseFilters = reduxForm({
     'form': formName,
 })(Filters);
 
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
-  const store = state.stores.stores.find(store => store._id === storeId);
+  const heads = state.accounts.heads[storeId] ? state.accounts.heads[storeId] : [];
+
   return {
     storeId,
-    users: store.users.map(user => user.record),
+    heads: heads.filter(head => head.type === accountHeadTypes.ACCOUNT_HEAD_TYPE_EXPENSE),
     loadingRecords: state.progressBar.loading
   }
 }
 
 
 
-export default connect(mapStateToProps)(History);
+export default connect(mapStateToProps)(Expenses);

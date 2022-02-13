@@ -5,9 +5,10 @@ import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
 import { isManager } from 'utils';
 import { useSelector } from 'react-redux';
 import Trends from './Trends';
-import History from './History';
+import SaleHistory from './SaleHistory';
 import ItemsStats from './ItemsStats';
 import ZeroSales from './ZeroSales';
+import TopCustomers from './TopCustomers';
 
 
 const useStyles = makeStyles(theme => ({
@@ -24,6 +25,7 @@ const menues = [
   {to: '/reports/sale/topprofitable', title: 'Top Profitable'},
   {to: '/reports/sale/lowprofitable', title: 'Low Profitable'},
   {to: '/reports/sale/zerosales', title: 'Zero Sales'},
+  {to: '/reports/sale/topcustomers', title: 'Top Customers'},
 ]
 
 const managersMenues = [
@@ -31,6 +33,7 @@ const managersMenues = [
   {to: '/reports/sale/topselling', title: 'Top Selling'},
   {to: '/reports/sale/lowselling', title: 'Low Selling'},
   {to: '/reports/sale/zerosales', title: 'Zero Sales'},
+  {to: '/reports/sale/topcustomers', title: 'Top Customers'},
 ]
 
 function SaleReportsRouter(){
@@ -60,12 +63,13 @@ function SaleReportsRouter(){
       <Paper style={{flexGrow: 1}} variant="outlined" square>
         <Box px={3} pt={0} >
           <Switch>
-             <Route path="/reports/sale/history" component={History} /> 
+             <Route path="/reports/sale/history" component={SaleHistory} /> 
              <Route path="/reports/sale/topselling" render={props => <ItemsStats {...props} type="topSelling" />}  />
              <Route path="/reports/sale/lowselling" render={props => <ItemsStats {...props} type="lowselling" />} />
              <Route path="/reports/sale/topprofitable" render={props => <ItemsStats {...props} type="topprofitable" />} />
              <Route path="/reports/sale/lowprofitable" render={props => <ItemsStats {...props} type="lowprofitable" />} />
              <Route path="/reports/sale/zerosales" component={ZeroSales} />
+             <Route path="/reports/sale/topcustomers" component={TopCustomers} />
              <Route path="/reports/sale" component={Trends} />
           </Switch>
         </Box>

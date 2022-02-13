@@ -22,6 +22,7 @@ const itemSchema = new mongoose.Schema({
   description: String,
   image: String,
   isServiceItem: Boolean, //quantity doesn't matter
+  isFavorite: Boolean, //quantity doesn't matter
   isActive: Boolean, //if not selling it anymore make inactive
   minStock: Number,
   maxStock: Number,

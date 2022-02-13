@@ -21,9 +21,39 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+const packsFirst = (options, { inputValue }) => {
+      let matches = matchSorter(options, inputValue, { keys: ["itemNameLC", 'itemCodeLC'] }).slice(0, 10);
+      return matches.sort((a, b) => {
+        if(a.packParentId !== null && a.packParentId === b.packParentId && Number(a.packQuantity) > Number(b.packQuantity)) //big quantity first
+          return -1;
+        if(a.packParentId !== null && a.packParentId === b.packParentId && Number(a.packQuantity) < Number(b.packQuantity)) //big quantity first
+          return 1;
+        if(a._id === b.packParentId) //packing first
+          return 1;
+        if(b._id === a.packParentId) //packing first
+          return -1;
+        return 0;
+      });
+}
+
+const unitsFirst = (options, { inputValue }) => {
+      let matches = matchSorter(options, inputValue, { keys: ["itemNameLC", 'itemCodeLC'] }).slice(0, 10);
+      return matches.sort((a, b) => {
+        if(a.packParentId !== null && a.packParentId === b.packParentId && Number(a.packQuantity) > Number(b.packQuantity)) //big quantity first
+          return 1;
+        if(a.packParentId !== null && a.packParentId === b.packParentId && Number(a.packQuantity) < Number(b.packQuantity)) //big quantity first
+          return -1;
+        if(a._id === b.packParentId) //packing first
+          return -1;
+        if(b._id === a.packParentId) //packing first
+          return 1;
+        return 0;
+      });
+}
+
 function ItemPicker(props) {
   const classes = useStyles();
-  const { supplierId, selectedItems, selectItem, removeItem, disabled=false, showServiceItems=false, autoFocus=false } = props;
+  const { supplierId, selectedItems, selectItem, removeItem, disabled=false, showServiceItems=false, autoFocus=false, sortBy="packs" } = props;
   const storeId = useSelector(state => state.stores.selectedStoreId);
   let items = useSelector(state => state.items[storeId].allItems );
   items = useMemo(() => showServiceItems ? items.filter(item => item.isActive === true) : items.filter(item => item.isServiceItem === false && item.isActive === true), [items, showServiceItems]);
@@ -99,20 +129,7 @@ function ItemPicker(props) {
       noOptionsText="No items found by this name or code"
       onChange={(event, selectedOption) => selectSuggestion( selectedOption ? selectedOption: null ) }
       getOptionSelected={(option, value) => option._id === value}
-      filterOptions={(options, { inputValue }) => {
-        let matches = matchSorter(options, inputValue, { keys: ["itemNameLC", 'itemCodeLC'] }).slice(0, 10);
-        return matches.sort((a, b) => {
-          if(a.packParentId !== null && a.packParentId === b.packParentId && Number(a.packQuantity) > Number(b.packQuantity)) //big quantity first
-            return -1;
-          if(a.packParentId !== null && a.packParentId === b.packParentId && Number(a.packQuantity) < Number(b.packQuantity)) //big quantity first
-            return 1;
-          if(a._id === b.packParentId) //packing first
-            return 1;
-          if(b._id === a.packParentId) //packing first
-            return -1;
-          return 0;
-        });
-      }}
+      filterOptions={ sortBy === 'packs' ? packsFirst : unitsFirst}
       />
       
       <ItemPickerPopup {...{ disabled, supplierId, selectItem, removeItem, selectedItems, showServiceItems, popupOpen, setPopupOpen }} />

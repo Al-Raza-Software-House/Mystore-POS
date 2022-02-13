@@ -1,35 +1,33 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Box, ButtonBase, Paper, Typography, useMediaQuery } from '@material-ui/core';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxOpen } from '@fortawesome/free-solid-svg-icons';
-import Pagination from '@material-ui/lab/Pagination';
 import { useMemo } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import ItemImage from 'components/library/ItemImage';
-const rowsPerPage = 12;
 
 function ItemsGrid({ selectItem, disabled }){
   const storeId = useSelector(state => state.stores.selectedStoreId);
   let items = useSelector(state => state.items[storeId].allItems );
-  const totalPages = useMemo(() => Math.ceil( items.length / rowsPerPage ), [items]);
-  const [page, setPage] = useState(1);
-
-  const rows = useMemo(() => {
-    return items.slice((page - 1) * rowsPerPage, (page - 1) * rowsPerPage + rowsPerPage);
-  }, [page, items]);
+  const favoriteItems = useMemo(() => {
+    return items.filter(record => record.isFavorite)
+  }, [items]);
 
   return(
-    <Box display="flex" flexDirection="column" flexGrow={1}>
+    <Box display="flex" flexDirection="column" flexGrow={1} style={{ overflowY: "auto" }}>
       <Box flexGrow={1} width="100%" height="320px" px={2} py={1} borderRadius={5} style={{ boxSizing: "border-box" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
         {
-          rows.map(item => (
+          favoriteItems.map(item => (
             <Item item={item} key={item._id} selectItem={selectItem} disabled={disabled} />
           ))
         }
-      </Box>
-      <Box textAlign="center" display="flex" justifyContent="center" alignItems="center" py={1} style={{ backgroundColor: "#fff" }} borderTop="1px solid #ececec">
-        <Pagination count={totalPages} page={page}  onChange={(event, value) => setPage(value)} variant="outlined" color="primary" shape="round"/>
+        {
+          favoriteItems.length !== 0 ? null :
+          <Box width='100%' height="100%" display="flex" justifyContent="center" alignItems="center">
+            <Typography align="center">No favorite items found</Typography>
+          </Box>
+        }
       </Box>
     </Box>
   )

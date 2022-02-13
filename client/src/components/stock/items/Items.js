@@ -166,12 +166,18 @@ function Items({storeId, filters, allItems, categoriesMap, deleteItem }) {
           });;
           break;
         case 4:
-          items = items.filter(item => item.isServiceItem );
+          items = items.filter(item => {
+            if(categoriesMap[item.categoryId].type === categoryTypes.CATEGORY_TYPE_STANDARD) return item.isFavorite;
+            return item.isFavorite ||  allItems.filter(record => record.varientParentId === item._id && record.isFavorite ).length > 0;
+          });
           break;
         case 5:
-          items = items.filter(item => item.isActive );          
+          items = items.filter(item => item.isServiceItem );
           break;
         case 6:
+          items = items.filter(item => item.isActive );          
+          break;
+        case 7:
           items = items.filter(item => !item.isActive );   
           break;
         default:
