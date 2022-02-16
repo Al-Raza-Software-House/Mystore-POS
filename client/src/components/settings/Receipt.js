@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { reduxForm, Field, SubmissionError, initialize } from 'redux-form';
-import { Box, makeStyles, Button } from '@material-ui/core';
+import { Box, makeStyles, Button, FormHelperText } from '@material-ui/core';
 import FormMessage from '../library/FormMessage';
 import TextInput from '../library/form/TextInput';
 import {  storesStampChanged, updateStore } from '../../store/actions/storeActions';
@@ -11,6 +11,7 @@ import { showProgressBar, hideProgressBar } from '../../store/actions/progressAc
 import SwitchInput from '../library/form/SwitchInput';
 import { showSuccess } from '../../store/actions/alertActions';
 import ReactGA from "react-ga4";
+import UploadFile from 'components/library/UploadFile';
 
 
 const useStyles = makeStyles(theme => ({
@@ -28,7 +29,7 @@ const useStyles = makeStyles(theme => ({
 
 const Receipt = (props) => {
   const classes = useStyles();
-  const { handleSubmit, pristine, submitting, error, invalid } = props;
+  const { handleSubmit, pristine, submitting, error, invalid, selectedStoreId } = props;
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: "/store-settings/receipt", 'title' : "Receipt Settings" });
   }, []);
@@ -37,6 +38,10 @@ const Receipt = (props) => {
       <form onSubmit={handleSubmit} >
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
           <Field component={SwitchInput} name="printSalesReceipt" label="Print Sales Receipt" />    
+        </Box>
+
+        <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
+          <Field component={SwitchInput} name="printLogo" label="Print Logo" />    
         </Box>
 
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
@@ -93,6 +98,20 @@ const Receipt = (props) => {
           multiline={true}
           rows={3}
           />    
+        </Box>
+
+        <Box>
+          <FormHelperText>
+            Recommended black & white png logo with transparent background having dimesions 200px X 65px
+          </FormHelperText>
+          <Field
+            component={UploadFile}
+            label="Upload Logo"
+            resize={false}
+            storeId={selectedStoreId}
+            name="logo"
+            filePath="receipt/"
+          />
         </Box>
 
         <Box display="flex" alignItems="center" justifyContent="center" flexDirection="column"> 

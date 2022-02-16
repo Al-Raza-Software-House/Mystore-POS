@@ -63,7 +63,7 @@ function IncomeStatement({ storeId, loadingRecords, dispatch }) {
   useEffect(() => {
     if(stats === null && !recordsLoaded)
       loadRecords();
-  }, [loadRecords, recordsLoaded]);
+  }, [loadRecords, recordsLoaded, stats]);
 
   const purchaseCost = useMemo(() => {
     if(stats === null) return 0;
@@ -73,8 +73,9 @@ function IncomeStatement({ storeId, loadingRecords, dispatch }) {
 
   const grossIncome = useMemo(() => {
     if(stats === null) return 0;
-    let grnExpenses = stats.purchase.totalLoadingExpense + stats.purchase.totalFreightExpense + stats.purchase.totalOtherExpense + stats.purchase.totalPurchaseTax;
-    return Math.round( stats.sale.totalGrossProfit - grnExpenses );
+    return Math.round( stats.sale.totalGrossProfit );
+    //let grnExpenses = stats.purchase.totalLoadingExpense + stats.purchase.totalFreightExpense + stats.purchase.totalOtherExpense + stats.purchase.totalPurchaseTax;
+    //return Math.round( stats.sale.totalGrossProfit - grnExpenses );
   }, [stats]);
 
   const netIncome = useMemo(() => {

@@ -12,7 +12,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import DateRangeInput from 'components/library/form/DateRangeInput';
 import { Field, getFormValues, initialize, reduxForm } from 'redux-form';
 import SelectInput from 'components/library/form/SelectInput';
-import SelectCustomer from 'components/sale/pos/SelectCustomer';
 import { accountHeadTypes } from 'utils/constants';
 
 const defaultStats = {

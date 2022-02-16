@@ -143,6 +143,13 @@ function PrintSale(props){
         <DialogContent>
           <Box id="receipt-container" style={{ backgroundColor: '#ececec', padding: '0px 10px' }} maxWidth="80mm" margin="auto">
             <Box style={{ fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', maxWidth: "80mm" }} py={2}>
+              {
+                store.receiptSettings.printLogo && store.receiptSettings.logo ? 
+                <Box style={{ textAlign: "center"}}>
+                  <img alt="storebook" src={process.env.REACT_APP_STORAGE_BASE_URL + store._id + '/receipt/' + store.receiptSettings.logo} style={{ maxWidth: "100%"}} />
+                </Box>
+                : null
+              }
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 20, textAlign: "center" }}>{ store.receiptSettings.receiptTitle }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 18, textAlign: "center" }}>{ store.name }</Typography>
               <Typography style={{ marginTop: "0px", marginBottom: "0px", fontSize: 12, textAlign: "center" }}>{ store.address }</Typography>
@@ -199,7 +206,7 @@ function PrintSale(props){
                       <th style={{...cellStyle, textAlign: "left", borderTop: "1px solid black", borderBottom: "1px solid black"}} >Item</th>
                       <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Price</th>
                       <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Qty</th>
-                      <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Amount</th>
+                      <th style={{...cellStyle, borderTop: "1px solid black", borderBottom: "1px solid black"}} >Amt</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -298,11 +305,11 @@ function PrintSale(props){
               </Box>
               {
                  store.receiptSettings.footer ?
-                  <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center",  }} >
+                  <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center", whiteSpace: "pre-line" }} >
                     { store.receiptSettings.footer }
                   </Box> : null
               }
-              <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center", marginTop: "10px" }} id="app-name" >
+              <Box style={{ fontSize: 12, padding: "0px 8px", textAlign: "center", marginTop: "10px", }} id="app-name" >
                 { process.env.REACT_APP_PRINT_FOOTER }
               </Box>
             </Box>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { makeStyles, Paper, Box } from '@material-ui/core';
 import StyledTabs from '../../library/StyledTabs';
 import { Route, Switch } from 'react-router-dom';

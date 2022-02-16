@@ -15,6 +15,7 @@ const useStyles = makeStyles(theme => ({
 
 const menues = [
   {to: '/help', title: 'General'},
+  {to: '/help/faqs', title: 'Faqs'},
   {to: '/help/stock', title: 'Stock'},
   {to: '/help/sale', title: 'Sale'},
   {to: '/help/purchase', title: 'Purchase'},

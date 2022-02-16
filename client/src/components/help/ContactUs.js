@@ -26,7 +26,7 @@ function ContactUs(props) {
         </Link>
       </Typography>
       <Box mt={5}>
-        { process.env.REACT_APP_NAME } is the product of <b>Cloud Crafts (Private) Limited</b>
+        { process.env.REACT_APP_NAME } is the product of <b>Cloud Crafts (Pvt) Ltd.</b>  &nbsp; &nbsp; Registration No: <b>0189502</b>
       </Box>
       <MessengerCustomerChat
         pageId={process.env.REACT_APP_FACEBOOK_PAGE_ID}

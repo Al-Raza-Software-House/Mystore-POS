@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const videoSchema = new mongoose.Schema({
   moduleName: String,
-  screenId: String,
+  screens: [String],
   order: Number,
   thumbnail: String,
   duration: String,

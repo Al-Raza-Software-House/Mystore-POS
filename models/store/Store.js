@@ -26,6 +26,7 @@ const registorSchema = new mongoose.Schema({
 const receiptSettingsSchema = new mongoose.Schema({
   logo: String,  
   printSalesReceipt: Boolean,
+  printLogo: Boolean,
   printSaleId: Boolean,
   printSalesperson: Boolean,
   printCustomerName: Boolean,

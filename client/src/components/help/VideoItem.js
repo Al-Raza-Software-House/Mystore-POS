@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Badge, Box, Dialog, DialogContent, DialogActions, Button, useTheme, useMediaQuery } from '@material-ui/core';
 
-function VideoItem({ video }) {
+function VideoItem({ video, sidebar=false }) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const handleClose = () => setOpen(false);
   return(
     <>
-    <Box onClick={() => setOpen(true)} position="relative" pb={1} pr={{ xs: 0, sm: 2 }} width={{ xs: '100%', sm: '27%', 'md': '29%', lg: '19%' }} style={{ boxSizing: 'border-box', 'cursor' : 'pointer' }}>
+    <Box onClick={() => setOpen(true)} position="relative" pb={sidebar ? 0 : 1} pr={sidebar ? 0 : { xs: 0, sm: 2 }} width={sidebar ? "100%" : { xs: '100%', sm: '27%', 'md': '29%', lg: '19%' }} style={{ boxSizing: 'border-box', 'cursor' : 'pointer' }}>
       <img src={video.thumbnail} alt={video._id} style={{ width: '100%'}} />
       <Badge style={{ bottom: '14px', right: '26px' }} badgeContent={ video.duration } color="primary" variant="standard" />
     </Box>

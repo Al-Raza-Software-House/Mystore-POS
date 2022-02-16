@@ -12,6 +12,7 @@ const AdjustmentReason = require( '../models/stock/AdjustmentReason' );
 const Bank = require( '../models/accounts/Bank' );
 const AccountHead = require( '../models/accounts/AccountHead' );
 const DeleteActivity = require( '../models/store/DeleteActivity' );
+const { publicS3Object, deleteS3Object } = require('../utils');
 
 router.use(authCheck);
 
@@ -105,6 +106,7 @@ router.post('/create', async (req, res) => {
       receiptSettings: {
         logo: null,  
         printSalesReceipt: true,
+        printLogo: true,
         printSaleId: true,
         printSalesperson: true,
         printCustomerName: true,
@@ -279,6 +281,13 @@ router.post('/receipt', async (req, res) => {
     const now = moment().tz('Asia/Karachi').toDate();
     if(!(await Store.isManager(req.body.id, req.user._id) ))
       throw new Error("Invalid Request");
+    if(req.body.receiptSettings.logo && store.receiptSettings.logo !== req.body.receiptSettings.logo) // uploaded new image, 
+    {
+      if(store.receiptSettings.logo) // if item has old image , delete old image
+        await deleteS3Object( process.env.AWS_KEY_PREFIX + store._id + 'receipt/' + store.receiptSettings.logo );
+      let key = process.env.AWS_KEY_PREFIX + store._id + '/receipt/' + req.body.receiptSettings.logo;
+      await publicS3Object( key );
+    }
     
     await Store.findByIdAndUpdate(req.body.id, { receiptSettings: req.body.receiptSettings }, { runValidators: true });    
     store = await Store.findById(req.body.id).populate('users.record', 'name phone profilePicture');

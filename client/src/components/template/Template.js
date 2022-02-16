@@ -4,7 +4,7 @@ import { Box, AppBar, Toolbar, Typography, IconButton, useMediaQuery, LinearProg
 import { BrowserRouter as Router, Redirect } from 'react-router-dom';
 import AccountMenu from './AccountMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faQuestionCircle, faSync } from '@fortawesome/free-solid-svg-icons';
 import Sidebar from './Sidebar';
 import Content from './Content';
 import { connect } from 'react-redux';
@@ -12,6 +12,7 @@ import Alert from '../library/Alert';
 import MasterData from './MasterData';
 import UpdateSoftware from './UpdateSoftware';
 import { syncData } from 'store/actions/systemActions';
+import HelpSidebar from './HelpSidebar';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -51,6 +52,10 @@ function Template({ uid, progressBar, storeName, pinging, syncData }) {
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('sm'), { noSsr: true });
   const [open, setOpen] = useState(isLargeScreen);
   const toggleDrawer = () =>  setOpen(open => (!open))
+
+  const [helpOpen, setHelpOpen] = useState(false);
+  const toggleHelpDrawer = () =>  setHelpOpen(open => (!open))
+
   //sync data on app load
   useEffect(() => {
     syncData()//
@@ -94,6 +99,16 @@ function Template({ uid, progressBar, storeName, pinging, syncData }) {
               >
                 <FontAwesomeIcon icon={faSync} spin={pinging} size="xs" />
               </IconButton>
+
+              <IconButton
+                onClick={toggleHelpDrawer}
+                edge="start"
+                title="Help"
+                className={classes.menuButton}
+              >
+                <FontAwesomeIcon icon={faQuestionCircle} size="xs" />
+              </IconButton>
+
               <AccountMenu />
             </Box>
           </Toolbar>
@@ -105,6 +120,7 @@ function Template({ uid, progressBar, storeName, pinging, syncData }) {
         </Box> 
 
         <Sidebar open={open} setOpen={setOpen} isLargeScreen={isLargeScreen}/>
+        <HelpSidebar open={helpOpen} setOpen={setHelpOpen} />
         <Content />
         <MasterData />
         <UpdateSoftware />

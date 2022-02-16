@@ -49,3 +49,11 @@ code {
   padding-bottom: 0px !important;
   height: 40px;
 }
+
+.MuiAutocomplete-option[data-focus="true"] {
+    background-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.MuiTableRow-root:hover{
+  background-color: rgba(0, 0, 0, 0.15) !important;
+}

@@ -24,9 +24,23 @@ function resizeImageFile(file, imageWidth) {
   });
 }
 
+function readImageFile(file) {
+  return new Promise(async resolve => { 
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      resolve({
+        file: file,
+        base64: e.target.result
+      });
+    }
+    reader.readAsDataURL(file);
+  });
+}
+
 function UploadFile(props) {
   const {
-    label, filePath, disabled=false, imageWidth=false, storeId=null,
+    label, filePath, disabled=false, imageWidth=false, storeId=null, resize=true,
     input: { value, onChange }
   } = props;
   
@@ -46,7 +60,7 @@ function UploadFile(props) {
 
     
     setMsg('Uploading...');
-    let { file, base64 } = await resizeImageFile(files[0], imageWidth);
+    let { file, base64 } = resize ? await resizeImageFile(files[0], imageWidth) : await readImageFile(files[0]);
     setBase64(base64);
     let fileName = Math.random().toString(36).substring(2) + '.png'; 
     setInProgress(true);

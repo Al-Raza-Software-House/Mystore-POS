@@ -3,7 +3,6 @@ import { makeStyles, Button, Box, Typography, FormHelperText, FormLabel } from '
 import { Field, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
-import RadioInput from '../../library/form/RadioInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
 import { categoryTypes } from '../../../utils/constants';
 import { useSelector } from 'react-redux';
@@ -13,11 +12,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLongArrowAltLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, Redirect, useHistory, useParams } from 'react-router-dom';
 import ReactGA from "react-ga4";
-
-let categoryTypeOptions = [
-  { id: categoryTypes.CATEGORY_TYPE_STANDARD, title: "Standard" },
-  { id: categoryTypes.CATEGORY_TYPE_VARIANT, title: "Variant(Size and Color)" },
-]
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -74,22 +68,9 @@ function EditCategory(props) {
       <Box margin="auto" width={{ xs: '100%', md: '50%' }}>
         <Typography gutterBottom variant="h6" align="center">Update Category</Typography>
         <form onSubmit={handleSubmit}>
-          {
-            category.type === categoryTypes.CATEGORY_TYPE_STANDARD ?
-            <Box mb={2}>
-              <Field
-                component={RadioInput}
-                options={categoryTypeOptions}
-                label="Category Type"
-                id="type"
-                name="type"
-              />
-            </Box>
-            :
-            <FormLabel style={{ display: 'block', marginBottom: '30px' }}>
-              CategoryType: Variant(Size and Color)
-            </FormLabel>
-          }
+          <FormLabel style={{ display: 'block', marginBottom: '30px' }}>
+            CategoryType: { category.type === categoryTypes.CATEGORY_TYPE_STANDARD ? "Standard" : "Variant(Size and Color)" }
+          </FormLabel>
           <Box>
             <Field
             component={TextInput}

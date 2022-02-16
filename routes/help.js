@@ -4,6 +4,7 @@ const { authCheck } = require('../utils/middlewares');
 const moment = require("moment-timezone");
 const Store = require( '../models/store/Store' );
 const DeleteActivity = require('../models/store/DeleteActivity');
+const bcrypt = require( 'bcryptjs/dist/bcrypt' );
 //router.use(authCheck);
 
 //get user's stores list
@@ -18,23 +19,26 @@ router.get('/videos', async (req, res) => {
   }
 });
 
-router.get('/videos/new', async (req, res) => {
+router.post('/videos/new', async (req, res) => {
   try
   {
+    if(!req.body.password) throw new Error("Password is required");
+    if(!(await bcrypt.compare(req.body.password, process.env.SUPER_KEY)) )
+      throw new Error("request invalid");
+
     const now = moment().tz('Asia/Karachi').toDate();
     let record = {
-      moduleName: '',
-      screenId: '/dashboard',
-      order: 1,
-      thumbnail: 'https://picsum.photos/296/166',
-      duration: '02:34',
-      youtubeUrl: '9kdUS_ulck4',
+      moduleName: req.body.moduleName ? req.body.moduleName : "",
+      screens: req.body.screens ? req.body.screens : "",
+      order: req.body.order ? req.body.order : "",
+      thumbnail: req.body.thumbnail ? req.body.thumbnail : "",
+      duration: req.body.duration ? req.body.duration : "",
+      youtubeId: req.body.youtubeId ? req.body.youtubeId : "",
       creationDate: now,
       lastUpdated: now
     }
     await new Video(record).save();
     await Store.updateMany({}, {'dataUpdated.videos' : now });
-    await Video.updateMany({}, { youtubeId: 'OHuNnQ_pcRU', moduleName: "" });
     res.json({ success: true });
   }catch(err)
   {
@@ -42,21 +46,26 @@ router.get('/videos/new', async (req, res) => {
   }
 });
 
-router.get('/videos/edit', async (req, res) => {
+router.post('/videos/edit', async (req, res) => {
   try
   {
-    let id = '617ef2afae2e594164da4320';
+    if(!req.body.password) throw new Error("Password is required");
+    if(!req.body.videoId) throw new Error("videoId is required");
+    if(!(await bcrypt.compare(req.body.password, process.env.SUPER_KEY)) )
+      throw new Error("request invalid");
+
     const now = moment().tz('Asia/Karachi').toDate();
     let record = {
-      moduleName: 'accounts',
-      screenId: '/dashboard',
-      order: 1,
-      thumbnail: 'https://picsum.photos/296/166',
-      duration: '02:34',
-      youtubeUrl: '9kdUS_ulck4',
+      moduleName: req.body.moduleName ? req.body.moduleName : "",
+      screens: req.body.screens ? req.body.screens : "",
+      order: req.body.order ? req.body.order : "",
+      thumbnail: req.body.thumbnail ? req.body.thumbnail : "",
+      duration: req.body.duration ? req.body.duration : "",
+      youtubeId: req.body.youtubeId ? req.body.youtubeId : "",
+      creationDate: now,
       lastUpdated: now
     }
-    await Video.findByIdAndUpdate(id, record);
+    await Video.findByIdAndUpdate(req.body.videoId, record );
     await Store.updateMany({}, {'dataUpdated.videos' : now });
     res.json({ success: true });
   }catch(err)

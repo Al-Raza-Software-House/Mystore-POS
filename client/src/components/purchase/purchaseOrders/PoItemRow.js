@@ -34,7 +34,7 @@ function PoItemRow({ item, supplierId, isClosed, removeItem, formName }){
           <span>
             {item.itemName}
           </span>
-          { item.packParentId ? <span style={{ color: '#7c7c7c' }}>Packing <FontAwesomeIcon title="Packing" style={{ marginLeft: 4 }} icon={faBoxOpen} /> </span> : null }
+          { item.packParentId ? <span style={{ color: '#7c7c7c' }}>Packing <FontAwesomeIcon title={`Pack of ${item.packQuantity}`} style={{ marginLeft: 4 }} icon={faBoxOpen} /> </span> : null }
           {
             item.sizeName ?
             <span style={{ color: '#7c7c7c' }}> {item.sizeName} | {item.combinationName} </span>
