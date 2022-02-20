@@ -96,7 +96,6 @@ function SaleAndReturn(props){
       dispatch(initialize(formName, {
         saleDate: moment().toDate(),
         userId,
-        quantity: 1,
         adjustment: 0,
         cashPaid: 0,
         bankAmount: 0,
@@ -388,22 +387,6 @@ function SaleAndReturn(props){
         <Box width={{ xs: "100%", md: "48%" }} display="flex" flexDirection="column" height="100%">
           <Box style={{ backgroundColor: "#f9f9f9" }} border="1px solid #ececec" borderRadius={5} flexGrow={1} display="flex" flexDirection="column">
             <Box  style={{ backgroundColor: "#fff" }} display="flex" justifyContent="space-between" borderBottom="1px solid #ececec" flexWrap="wrap" alignItems="center" px={2} py={0} >
-              <Box style={{ width: '70px' }}>
-                <Field
-                  component={TextInput}
-                  label="Qty"
-                  name="quantity"
-                  placeholder="Qty..."
-                  fullWidth={true}
-                  variant="outlined"
-                  margin="dense"
-                  type="text"
-                  showError={false}
-                  onKeyDown={allowOnlyNumber}
-                  addNewRecord={true}
-                  disabled={disableEdit}
-                />
-              </Box>
               <Box style={{ flexGrow: 1 }}>
                 <ItemPicker disabled={disableEdit} {...{selectItem, removeItem, selectedItems: items, showServiceItems: true, autoFocus: true, sortBy: 'units'}} />
               </Box>
