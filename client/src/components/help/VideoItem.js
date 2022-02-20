@@ -8,7 +8,7 @@ function VideoItem({ video, sidebar=false }) {
   const handleClose = () => setOpen(false);
   return(
     <>
-    <Box onClick={() => setOpen(true)} position="relative" pb={sidebar ? 0 : 1} pr={sidebar ? 0 : { xs: 0, sm: 2 }} width={sidebar ? "100%" : { xs: '100%', sm: '27%', 'md': '29%', lg: '19%' }} style={{ boxSizing: 'border-box', 'cursor' : 'pointer' }}>
+    <Box onClick={() => setOpen(true)} position="relative" mb={sidebar ? 0 : 1} pr={sidebar ? 0 : { xs: 0, sm: 0 }} width={sidebar ? "100%" : { xs: '100%', sm: '27%', 'md': '24%' }} style={{ boxSizing: 'border-box', 'cursor' : 'pointer' }}>
       <img src={video.thumbnail} alt={video._id} style={{ width: '100%'}} />
       <Badge style={{ bottom: '14px', right: '26px' }} badgeContent={ video.duration } color="primary" variant="standard" />
     </Box>

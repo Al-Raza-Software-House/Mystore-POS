@@ -15,7 +15,7 @@ function VideosList({ allVideos }) {
   const videos = allVideos.filter(item => item.moduleName === moduleName);
   videos.sort(function(a, b){return a.order - b.order});
   return(
-    <Box display="flex" flexWrap="wrap" justifyContent={{ xs: 'center', sm: 'flex-start' }}>
+    <Box display="flex" flexWrap="wrap" justifyContent={{ xs: 'center', sm: 'space-between' }}>
       {
         videos.map(item => (
           <VideoItem key={item._id} video={item}/>

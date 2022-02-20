@@ -34,7 +34,7 @@ const Configuration = (props) => {
     <Box width={{ xs: '100%', md: '50%' }} >
       <form onSubmit={handleSubmit} >
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >
-          <Field component={SwitchInput} name="allowNegativeInventory" label="Allow Negative Inventory Sales" />    
+          <Field component={SwitchInput} name="allowNegativeInventory" label="Allow Negative Stock Sales" />    
         </Box>
 
         <Box mb={2} width={{ xs: '100%', md: '50%' }} margin="auto" >

@@ -61,6 +61,10 @@ function HelpSidebar({ open, setOpen, allVideos}) {
       return url = pathname.substring(0, pathname.indexOf('/edit')) + "/edit";
     else if(pathname.indexOf('/view') !== -1)
       return url = pathname.substring(0, pathname.indexOf('/view')) + "/view";
+    else if(pathname.indexOf('/categories/properties') !== -1)
+      return url = pathname.substring(0, pathname.indexOf('/categories/properties')) + "/categories/properties";
+    else if(pathname.indexOf('/categories/variants') !== -1)
+      return url = pathname.substring(0, pathname.indexOf('/categories/variants')) + "/categories/variants";
     return url;
   }, [pathname])
   
