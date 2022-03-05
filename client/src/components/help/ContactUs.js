@@ -19,11 +19,14 @@ function ContactUs(props) {
           { process.env.REACT_APP_CONTACT_US_NUMBER }
         </Link>
       </Typography>
-      <Typography variant="h5" style={{ display: 'flex', alignItems: 'center' }}>
+      <Typography variant="h5" style={{ display: 'flex', alignItems: 'center' }} gutterBottom>
         <FontAwesomeIcon style={{ color: '#4267B2', marginRight: 4 }} icon={faFacebook} /> 
         <Link target="_blank" style={{fontSize: '16px'}} href={'https://facebook.com/'+ process.env.REACT_APP_FACEBOOK_PAGE_ID }>
           Facebook Page
         </Link>
+      </Typography>
+      <Typography>
+        Subscribe our <Link target="_blank" style={{fontSize: '16px'}} href="https://www.youtube.com/channel/UCLtXC68HtYR7DvOWXM14-7A"> YouTube channel </Link>
       </Typography>
       <Box mt={5}>
         { process.env.REACT_APP_NAME } is the product of <b>Cloud Crafts (Pvt) Ltd.</b>  &nbsp; &nbsp; Registration No: <b>0189502</b>

@@ -41,7 +41,7 @@ function HelpRouter({ loadVideos }){
           <Box pl={4} py={3}>
             <Typography style={{ fontSize: '25px', fontWeight: '500', 'lineHeight': '32px' }} >Help</Typography>
           </Box>
-          <Box px={3}>
+          <Box px={1}>
             <StyledTabs menues={menues} minWidth={80} />
           </Box>
         </Box>

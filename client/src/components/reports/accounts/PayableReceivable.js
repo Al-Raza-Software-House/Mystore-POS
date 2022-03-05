@@ -52,7 +52,7 @@ function PayableReceivable({ customers, suppliers }) {
           <Typography gutterBottom>No data found</Typography>
         </Box>
         :
-        <Box display="flex" justifyContent="space-between" pt={5}>
+        <Box display="flex" justifyContent="space-between" py={5}>
           <Box width={{ xs: "100%", md: "48%" }}>
             <List className={classes.list}>
               <ListItem>

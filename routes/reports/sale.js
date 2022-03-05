@@ -49,7 +49,8 @@ router.post('/itemtrends', async (req, res) => {
     };
     let aggregate = await SaleItem.aggregate([
         { $match: conditions },
-        { $group: { _id: group_by, time: { $first: "$time" }, totalQuantity: { $sum: "$unitsQuantity" }, totalSaleAmount: { $sum: { "$multiply" : ["$quantity", "$salePrice"] } }, totalProfit: { $sum: "$totalProfit" } } }
+        { $group: { _id: group_by, time: { $first: "$time" }, totalQuantity: { $sum: "$unitsQuantity" }, totalSaleAmount: { $sum: { "$multiply" : ["$quantity", "$salePrice"] } }, totalProfit: { $sum: "$totalProfit" } } },
+        {$sort: {_id: 1}}
       ]);
     
     res.json(aggregate)

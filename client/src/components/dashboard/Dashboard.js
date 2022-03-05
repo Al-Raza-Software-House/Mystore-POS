@@ -198,12 +198,12 @@ function Dashboard({ storeId, loadStats, stats, userRole, openedClosing }){
             </ButtonBase>
 
             <Paper className={classes.stats} elevation={5}>
-              <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ stats.totals.payable.toLocaleString() }</Box>
+              <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ Math.round(stats.totals.payable).toLocaleString() }</Box>
               <span style={{ color: "#606060" }} >Net Payable</span>
             </Paper>
 
             <Paper className={classes.stats} elevation={5}>
-              <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ stats.totals.receivable.toLocaleString() }</Box>
+              <Box style={{ color: "#2196f3", fontWeight: 'bold', fontSize: 26 }} mb={3} >{ Math.round(stats.totals.receivable).toLocaleString() }</Box>
               <span style={{ color: "#606060" }} >Net Receivable</span>
             </Paper>
           </Box>

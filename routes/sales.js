@@ -363,6 +363,7 @@ router.post('/create', async (req, res) => {
 
     await store.updateLastActivity();
     await store.logCollectionLastUpdated('items', now);
+    await store.logCollectionLastUpdated('stores', now);
     res.json({
       sale,
       customer,

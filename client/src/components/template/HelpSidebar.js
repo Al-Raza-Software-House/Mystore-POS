@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Drawer, List, ListItem, Typography } from '@material-ui/core';
+import { Box, Button, Drawer, List, ListItem, Typography } from '@material-ui/core';
 
 import { connect } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -114,6 +114,9 @@ function HelpSidebar({ open, setOpen, allVideos}) {
           ))}
 
         </List>
+        <Box textAlign="center" width="100%" mb={2}>
+          <Button variant="outlined" color="primary" onClick={() => setOpen(false)} >Close</Button>
+        </Box>
       </Box>
     </Drawer>
   );

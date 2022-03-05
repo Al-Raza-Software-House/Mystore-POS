@@ -39,7 +39,7 @@ function AccountsReportsRouter(){
   }, [userRole]);
 
   if(isManager(userRole) && !managersMenues.find(record => pathname === record.to ) )
-    return <Redirect to="/reports" />
+    return <Redirect to="/reports/accounts/payablereceivable" />
 
   return(
     <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">

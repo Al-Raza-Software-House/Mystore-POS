@@ -25,7 +25,8 @@ const useStyles = makeStyles(theme => ({
 const menues = [
   {to: '/purchase', title: 'Purchase Orders'},
   {to: '/purchase/grns', title: 'Goods Receipt Note(GRN)'},
-  {to: '/purchase/rtvs', title: 'Return to Vendor(RTV)'}
+  {to: '/purchase/rtvs', title: 'Return to Vendor(RTV)'},
+  {to: '/purchase/barcodes', title: 'Print Barcodes'},
 ]
 
 function PurchaseRouter(){
