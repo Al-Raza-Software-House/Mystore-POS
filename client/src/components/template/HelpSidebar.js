@@ -48,7 +48,16 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-
+const formatURL = (pathname) => {
+  const paths = ['/editpayment', '/edit', '/view', '/ledger', '/categories/properties', '/categories/variants', '/makepayment', '/receivepayment'];
+  for(let i=0; i < paths.length; i++)
+  {
+    let path = paths[i];
+    if(pathname.indexOf( path ) !== -1)
+      return pathname.substring(0, pathname.indexOf( path )) + path; //remove dynamic object Ids from URL
+  }
+  return pathname;
+}
 
 
 function HelpSidebar({ open, setOpen, allVideos}) {
@@ -56,16 +65,7 @@ function HelpSidebar({ open, setOpen, allVideos}) {
   const { pathname } = useLocation();
   
   const currentURL = useMemo(() => {
-    let url = pathname;
-    if(pathname.indexOf('/edit') !== -1)
-      return url = pathname.substring(0, pathname.indexOf('/edit')) + "/edit";
-    else if(pathname.indexOf('/view') !== -1)
-      return url = pathname.substring(0, pathname.indexOf('/view')) + "/view";
-    else if(pathname.indexOf('/categories/properties') !== -1)
-      return url = pathname.substring(0, pathname.indexOf('/categories/properties')) + "/categories/properties";
-    else if(pathname.indexOf('/categories/variants') !== -1)
-      return url = pathname.substring(0, pathname.indexOf('/categories/variants')) + "/categories/variants";
-    return url;
+    return formatURL(pathname);
   }, [pathname])
   
   const videos = useMemo(() => {
