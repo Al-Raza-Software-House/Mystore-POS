@@ -16,9 +16,10 @@ import { amber } from '@material-ui/core/colors';
 import { useDispatch } from 'react-redux';
 import { showError } from 'store/actions/alertActions';
 import ReactGA from "react-ga4";
+import VideoItem from 'components/help/VideoItem';
 
 function CurrentBill(props){
-  const { selectedMonths, store, loadSelectedStore, storesStampChanged, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty } = props;
+  const { selectedMonths, store, loadSelectedStore, storesStampChanged, handleSubmit, submitSucceeded,  pristine, submitting, error, invalid, dirty, helpVideo } = props;
   const timer = useRef();
   const dispatch = useDispatch();
   const [paymentCompleted, setPaymentCompleted] = useState(false);
@@ -82,7 +83,13 @@ function CurrentBill(props){
         </>
       }
     </Typography>
-    { !submitSucceeded &&
+    <Box display="flex" alignItems="center" flexDirection="column" mt={7} width="100%">
+      <Typography gutterBottom style={{fontWeight: "bold", color: "#606060"}}> Help Video </Typography>
+      {
+        helpVideo ?  <VideoItem video={helpVideo} /> : null
+      }
+    </Box>
+    { !submitSucceeded && false &&
       <Box mt={5} maxWidth={400} mx="auto" textAlign="center">
         <Typography gutterBottom  variant="h5">Extend License</Typography>
         <form onSubmit={handleSubmit}>
@@ -158,9 +165,12 @@ const selector = formValueSelector('extendLicense');
 
 const mapStateToProps = state => {
   const store = state.stores.stores.find(item => item._id === state.stores.selectedStoreId);
+  const allVideos = state.help.videos ? state.help.videos : [];
+  const billingVideo = allVideos.find(item => item.moduleName === 'billing');
   return{
     store,
-    selectedMonths: selector(state, 'months')
+    selectedMonths: selector(state, 'months'),
+    helpVideo: billingVideo ? billingVideo : null
   }
 }
 

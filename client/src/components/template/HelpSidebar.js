@@ -66,7 +66,7 @@ function HelpSidebar({ open, setOpen, allVideos}) {
   
   const currentURL = useMemo(() => {
     return formatURL(pathname);
-  }, [pathname])
+  }, [pathname]);
   
   const videos = useMemo(() => {
     const screen_videos = allVideos.filter(video => video.screens.indexOf(currentURL) !== -1);

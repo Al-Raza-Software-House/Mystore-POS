@@ -11,6 +11,8 @@ import { actionTypes } from '../../store/actions/authActions';
 import { showProgressBar, hideProgressBar } from '../../store/actions/progressActions';
 import PasswordField from '../library/form/PasswordField';
 import ReactGA from "react-ga4";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -29,7 +31,7 @@ const useStyles = makeStyles(theme => ({
 
 const SignUp = (props) => {
   const classes = useStyles();
-  const {auth, signupWizard, handleSubmit, pristine, submitting, error, invalid, dirty, dispatch } = props
+  const {auth, signupWizard, handleSubmit, pristine, submitting, error, invalid, dirty, dispatch, showHelp } = props
   useEffect(() => {
     document.title = "Sign Up | " + process.env.REACT_APP_NAME;
     ReactGA.send({ hitType: "pageview", page: "/signup", 'title' : "Sign Up" });
@@ -132,6 +134,9 @@ const SignUp = (props) => {
           
           <Box fontSize={14} fontWeight={500} mb={1} mt={2} align="center">
               <Link to="/signin" type="button" component={RouterLink}> SIGN IN </Link>
+          </Box>
+          <Box fontSize={14} fontWeight={500} mb={1} mt={2} align="center">
+              <Button onClick={() => showHelp(true)} color="primary" variant="outlined" endIcon={<FontAwesomeIcon icon={faQuestionCircle} size="xs" />} >NEED HELP</Button>
           </Box>
         </Box>
       </Paper>

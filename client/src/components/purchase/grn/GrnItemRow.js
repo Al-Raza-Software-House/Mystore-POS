@@ -171,7 +171,7 @@ function GrnItemRow(props){
                     <Box width={{ xs: '100%', md: '48%' }}>
                       <Field
                         component={TextInput}
-                        label="Packe Sale Price"
+                        label="Pack Sale Price"
                         name={`items[${item._id}].packSalePrice`}
                         placeholder="Pack Sale Price..."
                         fullWidth={true}

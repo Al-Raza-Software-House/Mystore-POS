@@ -11,6 +11,8 @@ import axios from 'axios';
 import PasswordField from '../library/form/PasswordField';
 import { showSuccess } from '../../store/actions/alertActions';
 import ReactGA from "react-ga4";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -28,7 +30,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const ResetPassword = (props) => {
-  const { resetPasswordWizard, auth, handleSubmit, submitting, error, pristine, invalid, dirty, dispatch } = props
+  const { resetPasswordWizard, auth, handleSubmit, submitting, error, pristine, invalid, dirty, dispatch, showHelp } = props
   const classes = useStyles();
   const codeInputRef = useRef();
   const passwordInputRef = useRef();
@@ -114,6 +116,9 @@ const ResetPassword = (props) => {
           </form>
           <Box fontSize={14} fontWeight={500} mb={1} mt={2} align="center">
               <Link to="/signin" type="button" component={RouterLink}> SIGN IN </Link>
+          </Box>
+          <Box fontSize={14} fontWeight={500} mb={1} mt={2} align="center">
+              <Button onClick={() => showHelp(true)} color="primary" variant="outlined" endIcon={<FontAwesomeIcon icon={faQuestionCircle} size="xs" />} >NEED HELP</Button>
           </Box>
         </Box>
       </Paper>

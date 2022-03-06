@@ -1,6 +1,8 @@
 import React from 'react';
-import { Toolbar, AppBar, makeStyles, Box, Typography, LinearProgress } from '@material-ui/core';
+import { Toolbar, AppBar, makeStyles, Box, Typography, LinearProgress, IconButton } from '@material-ui/core';
 import { connect } from 'react-redux';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const useStyles = makeStyles(theme => ({
   root:{
@@ -21,13 +23,20 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const PublicNavbar = ({progressBar}) => {
+const PublicNavbar = ({progressBar, showHelp}) => {
   const classes = useStyles();
   return (
     <Box mb={{ xs: 2, sm : 1 }}>
       <AppBar position="static" className={classes.root}>
           <Toolbar className={classes.toolbar}>
             <Typography variant="h6" noWrap>{process.env.REACT_APP_NAME}</Typography>
+            <IconButton
+              onClick={() => showHelp(true)}
+              edge="start"
+              title="Help"
+            >
+              <FontAwesomeIcon icon={faQuestionCircle} size="xs" />
+            </IconButton>
           </Toolbar>
       </AppBar>
       <Box className={classes.progressContainer}>

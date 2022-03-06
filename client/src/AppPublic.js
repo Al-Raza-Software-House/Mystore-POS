@@ -10,6 +10,8 @@ import Alert from './components/library/Alert';
 import InterfaceBlock from './components/library/InterfaceBlock';
 import ErrorBoundary from 'components/library/ErrorBoundary';
 import SuperSignIn from 'components/user/SuperSignIn';
+import HelpSidebar from 'components/template/HelpSidebar';
+import { useState } from 'react';
 
 const useStyles = makeStyles(theme => ({
   app: {
@@ -24,21 +26,23 @@ const useStyles = makeStyles(theme => ({
 
 const AppPublic = () => {
   const classes = useStyles();
+  const [helpOpen, setHelpOpen] = useState(false);
   return (
     <ErrorBoundary>
       <Router>
         <AuthCheck />
         <div className={clsx('App', classes.app)}>
-          <PublicNavbar />
+          <PublicNavbar showHelp={setHelpOpen} />
+          <HelpSidebar open={helpOpen} setOpen={setHelpOpen} />
           <Alert />
           <Container className={classes.container} >
             <InterfaceBlock />
             <Switch>
-              <Route exact path="/" component={SignIn} />
-              <Route path="/signin" component={SignIn} />
-              <Route path="/super925" component={SuperSignIn} />
-              <Route path="/signup" component={SignUp} />
-              <Route path="/reset-password" component={ResetPassword} />
+              <Route exact path="/" render={props => <SignIn {...props} showHelp={setHelpOpen} />} />
+              <Route path="/signin" render={props => <SignIn {...props} showHelp={setHelpOpen} />} />
+              <Route path="/super925" render={props => <SuperSignIn {...props} showHelp={setHelpOpen} />} />
+              <Route path="/signup" render={props => <SignUp {...props} showHelp={setHelpOpen} />} />
+              <Route path="/reset-password" render={props => <ResetPassword {...props} showHelp={setHelpOpen} />} />
             </Switch>
           </Container>
         </div>

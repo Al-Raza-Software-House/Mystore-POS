@@ -11,6 +11,8 @@ import { actionTypes as storeActions } from '../../store/actions/storeActions';
 import axios from 'axios';
 import PasswordField from '../library/form/PasswordField';
 import ReactGA from "react-ga4";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const useStyles = makeStyles(theme => ({
   box: {
@@ -28,7 +30,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const SignIn = (props) => {
-  const { handleSubmit, submitting, error, dirty, pristine, invalid, uid } = props
+  const { handleSubmit, submitting, error, dirty, pristine, invalid, uid, showHelp } = props
   const classes = useStyles();
   useEffect(() => {
     document.title = "Sign In | " + process.env.REACT_APP_NAME;
@@ -80,6 +82,11 @@ const SignIn = (props) => {
           <Box fontSize={14} fontWeight={500} mb={1} align="center">
               <Link to="/signup" type="button" component={RouterLink}>CREATE NEW ACCOUNT</Link>
           </Box>
+
+          <Box fontSize={14} fontWeight={500} mb={1} mt={2} align="center">
+              <Button onClick={() => showHelp(true)} color="primary" variant="outlined" endIcon={<FontAwesomeIcon icon={faQuestionCircle} size="xs" />} >NEED HELP</Button>
+          </Box>
+
         </Box>
       </Paper>
     </Box>

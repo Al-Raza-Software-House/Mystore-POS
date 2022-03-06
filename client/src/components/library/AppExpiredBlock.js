@@ -1,4 +1,5 @@
 import { Box, Button, makeStyles, Typography } from '@material-ui/core';
+import VideoItem from 'components/help/VideoItem';
 import moment from 'moment';
 import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
@@ -12,14 +13,16 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     height: 'calc(100% - 68px)',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    zIndex: theme.zIndex.modal + 400,
+    zIndex: theme.zIndex.modal - 1 ,
     display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-start"
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    flexDirection: "column",
+    alignItems: "center"
   }
 }))
 const excludePaths = ['/dashboard', '/reports', '/store-settings', '/billing', '/stores', '/help'];
-function AppExpiredBlock({ store }){
+function AppExpiredBlock({ store, helpVideo }){
   const classes = useStyles();
   const { pathname } = useLocation();
   const isExpired = useMemo(() => {
@@ -55,6 +58,12 @@ function AppExpiredBlock({ store }){
           </Button>
         </Box>
       </Box>
+      <Box display="flex" alignItems="center" flexDirection="column" mt={7} width="100%">
+        <Typography gutterBottom style={{fontWeight: "bold", color: "#606060"}}> Help Video </Typography>
+        {
+          helpVideo ?  <VideoItem video={helpVideo} /> : null
+        }
+      </Box>
     </div>
   )
 }
@@ -62,10 +71,15 @@ function AppExpiredBlock({ store }){
 const mapStateToProps = state => {
   const storeId = state.stores.selectedStoreId;
   let store = null;
+
+  const allVideos = state.help.videos ? state.help.videos : [];
+  const billingVideo = allVideos.find(item => item.moduleName === 'billing');
+
   if(storeId)
     store = state.stores.stores.find(item => item._id === storeId);
     return {
-      store
+      store,
+      helpVideo: billingVideo ? billingVideo : null
     }
 }
 
