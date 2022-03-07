@@ -71,11 +71,12 @@ function ItemPicker(props) {
   useEffect(() => {
     if(disabled || popupOpen) return;
     let removeListener = barcodeReader.onScan((itemCode) => {
+      let scannedCode = itemCode.toLowerCase();
       let records = items.filter(item => {
         if(item.sizeId)
-          return `${item.itemCode}-${item.sizeCode}-${item.combinationCode}`.toLowerCase().indexOf(itemCode.toLowerCase()) !== -1;
+          return `${item.itemCode}-${item.sizeCode}-${item.combinationCode}`.toLowerCase().indexOf( scannedCode ) !== -1;
         else
-          return item.itemCode.toLowerCase().indexOf(itemCode) !== -1;
+          return item.itemCode.toLowerCase().indexOf(scannedCode) !== -1;
       });
       if(records.length === 1)
       {

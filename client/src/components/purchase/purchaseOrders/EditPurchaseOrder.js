@@ -100,6 +100,15 @@ function EditPurchaseOrder(props) {
 
   const [items, setItems] = useState([]);
 
+  const getItemLastCost = useCallback((itemId) => {
+    axios.get('/api/grns/lastCost', { params: { storeId, itemId } }).then(({ data }) => {
+      if(data.lastCost)
+        dispatch( change(formName, `items[${itemId}].costPrice`, data.lastCost) );
+    }).catch(err => { 
+
+    })
+  }, [dispatch, storeId]);
+
   const selectItem = useCallback((item) => {
     let isExist = items.find(record => record._id === item._id);
     if(isExist)
@@ -132,8 +141,9 @@ function EditPurchaseOrder(props) {
         newItem,
         ...items
       ]);
+      getItemLastCost(_id);
     }
-  }, [items, values, allItems, dispatch]);
+  }, [items, values, allItems, dispatch, getItemLastCost]);
 
   const removeItem = useCallback((item) => {
     dispatch( change(formName, `items[${item._id}]`, undefined));

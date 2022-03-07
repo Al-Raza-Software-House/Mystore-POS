@@ -74,7 +74,6 @@ const addNewSaleItem = (item) => {
 function SaleAndReturn(props){
   const { storeId, store, userId, lastEndOfDay, dispatch, defaultBankId, pristine, submitting, invalid, dirty, error, handleSubmit, banks, printSalesReceipt, printSale, online } = props;
   const storeItems = useSelector(state => state.items[storeId].allItems );
-  const allItems = useMemo(() => storeItems.filter(item => item.isActive), [storeItems]);
   const { saleId } = useParams();
   const sale = useSelector(state => saleId ? state.sales[storeId].records.find(record => record._id === saleId) : null);
   useEffect(() => {
@@ -143,7 +142,7 @@ function SaleAndReturn(props){
     
     let selectedItems = [];
     sale.items.forEach(item => {
-      let storeItem = allItems.find(record => record._id === item._id);
+      let storeItem = storeItems.find(record => record._id === item._id);
       if(storeItem)
       {
         let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, salePrice, packParentId, packQuantity, currentStock, packSalePrice, isServiceItem } = storeItem;
@@ -157,7 +156,7 @@ function SaleAndReturn(props){
     dispatch(initialize(formName, { ...sale, quantity: 1, bankId: sale.bankId ? sale.bankId: defaultBankId, items: formItems, saleDate: moment(sale.saleDate).format("DD MMMM, YYYY hh:mm A") }));
     setItems(selectedItems);
 
-  }, [resetSale, sale, allItems, dispatch, defaultBankId]);
+  }, [resetSale, sale, storeItems, dispatch, defaultBankId]);
 
   //get form data
   const formValues = useSelector(state => {

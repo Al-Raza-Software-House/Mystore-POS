@@ -220,7 +220,9 @@ router.get('/open', async (req, res) => {
       supplierId: req.query.supplierId,
       status: poStates.PO_STATUS_OPEN
     }
-    const orders = await PurchaseOrder.find(conditions, null, { sort : { creationDate: -1 }  });
+
+    const recordsPerPage = req.body.recordsPerPage ? req.body.recordsPerPage : 30;
+    const orders = await PurchaseOrder.find(conditions, null, { limit: recordsPerPage, sort : { creationDate: -1 }  });
 
     res.json({ orders })
   }catch(err)

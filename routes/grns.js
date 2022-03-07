@@ -188,8 +188,22 @@ router.post('/create', async (req, res) => {
         parentItem.set(itemUpdate);
         await parentItem.save();
       }
+      let allPackings = await Item.find({ packParentId: parentItem ? parentItem._id : dbItem._id });
+      for(let packIndex = 0; packIndex < allPackings.length; packIndex++)
+      {
+        let pack = allPackings[packIndex];
+        if(pack._id.toString() === dbItem._id.toString()) continue; //this pack is already updated;
+        if(parentItem && pack._id.toString() === parentItem._id.toString()) continue;
+        await pack.set({
+          currentStock: itemUpdate.currentStock,
+          costPrice,
+          salePrice: itemUpdate.salePrice,
+          packSalePrice: +(itemUpdate.salePrice * pack.packQuantity).toFixed(2),
+          lastUpdated: now
+        });
+        await pack.save();
+      }
       //update other packings of Item
-      await Item.updateMany({ packParentId: parentItem ? parentItem._id : dbItem._id }, { currentStock: itemUpdate.currentStock, costPrice, salePrice: itemUpdate.salePrice, lastUpdated: now });
       await addBatchStock(dbItem, item, now, parentItem);
     }
 
@@ -406,9 +420,24 @@ router.post('/update', async (req, res) => {
         ]);
         let currentStock = aggregate.length ? aggregate[0].currentStock : 0;
         await Item.findByIdAndUpdate(baseItemId, { currentStock, costPrice: item.prevCostPrice, salePrice: item.prevSalePrice, lastUpdated: now }); //revert old cost and sale price
-        await Item.updateMany({ packParentId: baseItemId }, { currentStock, costPrice: item.prevCostPrice, salePrice: item.prevSalePrice, lastUpdated: now }); //update old cost and current stock in all packings 
         if(item.parentId) //update pack sale of this specific packing
           await Item.findByIdAndUpdate(item._id, { packSalePrice: item.prevPackSalePrice,  lastUpdated: now });
+        //reverse sale price of packings, strips in case of pharmacy
+        let allPackings = await Item.find({ packParentId: item.parentId ? item.parentId : item._id });
+        for(let packIndex = 0; packIndex < allPackings.length; packIndex++)
+        {
+          let pack = allPackings[packIndex];
+          if(pack._id.toString() === item._id.toString()) continue; //this pack is already updated;
+          if(item.parentId && pack._id.toString() === item.parentId.toString()) continue;
+          await pack.set({
+            currentStock,
+            costPrice: item.prevCostPrice,
+            salePrice: item.prevSalePrice,
+            packSalePrice: +(item.prevSalePrice * pack.packQuantity).toFixed(2),
+            lastUpdated: now
+          });
+          await pack.save();
+        }
         delete itemMaps[item._id];
         continue;
       }
@@ -492,8 +521,22 @@ router.post('/update', async (req, res) => {
         parentItem.set(itemUpdate);
         await parentItem.save();
       }
+      let allPackings = await Item.find({ packParentId: parentItem ? parentItem._id : dbItem._id });
+      for(let packIndex = 0; packIndex < allPackings.length; packIndex++)
+      {
+        let pack = allPackings[packIndex];
+        if(pack._id.toString() === dbItem._id.toString()) continue; //this pack is already updated;
+        if(parentItem && pack._id.toString() === parentItem._id.toString()) continue;
+        await pack.set({
+          currentStock: itemUpdate.currentStock,
+          unitCostPrice,
+          salePrice: itemUpdate.salePrice,
+          packSalePrice: +(itemUpdate.salePrice * pack.packQuantity).toFixed(2),
+          lastUpdated: now
+        });
+        await pack.save();
+      }
       //update all packings of item
-      await Item.updateMany({ packParentId: parentItem ? parentItem._id : dbItem._id }, { currentStock, costPrice: unitCostPrice, salePrice: grnItem.salePrice, lastUpdated: now });
       await addBatchStock(dbItem, grnItem, now, parentItem);
       delete itemMaps[item._id]; //delete from formItems 
     }
@@ -583,6 +626,21 @@ router.post('/update', async (req, res) => {
       {
         parentItem.set(itemUpdate);
         await parentItem.save();
+      }
+      let allPackings = await Item.find({ packParentId: parentItem ? parentItem._id : dbItem._id });
+      for(let packIndex = 0; packIndex < allPackings.length; packIndex++)
+      {
+        let pack = allPackings[packIndex];
+        if(pack._id.toString() === dbItem._id.toString()) continue; //this pack is already updated;
+        if(parentItem && pack._id.toString() === parentItem._id.toString()) continue;
+        await pack.set({
+          currentStock: itemUpdate.currentStock,
+          costPrice,
+          salePrice: itemUpdate.salePrice,
+          packSalePrice: +(itemUpdate.salePrice * pack.packQuantity).toFixed(2),
+          lastUpdated: now
+        });
+        await pack.save();
       }
       //update other packings of Item
       await Item.updateMany({ packParentId: parentItem ? parentItem._id : dbItem._id }, { currentStock: itemUpdate.currentStock, costPrice, salePrice: itemUpdate.salePrice, lastUpdated: now });
@@ -818,10 +876,25 @@ router.post('/delete', async (req, res) => {
       ]);
       let currentStock = aggregate.length ? aggregate[0].currentStock : 0;
       await Item.findByIdAndUpdate(baseItemId, { currentStock, costPrice: item.prevCostPrice, salePrice: item.prevSalePrice, lastUpdated: now }); //revert old cost and sale price
-      await Item.updateMany({ packParentId: baseItemId }, { currentStock, costPrice: item.prevCostPrice, salePrice: item.prevSalePrice, lastUpdated: now }); //update old cost and current stock in all packings 
       if(item.parentId) //update pack sale of this specific packing
         await Item.findByIdAndUpdate(item._id, { packSalePrice: item.prevPackSalePrice,  lastUpdated: now });
-      
+
+      let allPackings = await Item.find({ packParentId: item.parentId ? item.parentId : item._id });
+      for(let packIndex = 0; packIndex < allPackings.length; packIndex++)
+      {
+        let pack = allPackings[packIndex];
+        if(pack._id.toString() === item._id.toString()) continue; //this pack is already updated;
+        if(item.parentId && pack._id.toString() === item.parentId.toString()) continue;
+        await pack.set({
+          currentStock,
+          costPrice: item.prevCostPrice,
+          salePrice: item.prevSalePrice,
+          packSalePrice: +(item.prevSalePrice * pack.packQuantity).toFixed(2),
+          lastUpdated: now
+        });
+        await pack.save();
+      }
+
       dbItem = await Item.findById(item._id);
       if(!dbItem) continue;
       parentItem = dbItem.packParentId ? await Item.findById(dbItem.packParentId) : null;
@@ -924,11 +997,44 @@ router.get('/', async (req, res) => {
     }
     if(req.query.grnId)
       conditions._id = req.query.grnId;
-    const grns = await GRN.find(conditions, null, { sort : { creationDate: -1 }  });
+    
+    const recordsPerPage = req.body.recordsPerPage ? req.body.recordsPerPage : 30;
+
+    const grns = await GRN.find(conditions, null, { limit: recordsPerPage,  sort : { creationDate: -1 }  });
     if(req.query.grnId)
       res.json({ grn:  grns.length ? grns[0] : null });
     else
       res.json({ grns });
+  }catch(err)
+  {
+    return res.status(400).json({message: err.message});
+  }
+});
+
+router.get('/lastCost', async (req, res) => {
+  try
+  {
+    if(!req.query.storeId) throw new Error("Store id is required");
+    if(!req.query.itemId) throw new Error("itemId id is required");
+    const store = await Store.isManager(req.query.storeId, req.user._id);
+    if(!store) throw new Error("invalid Request");
+    await store.updateLastVisited();
+
+    const conditions = {
+      storeId: req.query.storeId,
+      items: {$elemMatch: { _id: req.query.itemId }}
+    }
+
+    const grn = await GRN.findOne(conditions, null, { sort : { creationDate: -1 }  });
+    let lastCost = null;
+    if(grn)
+    {
+      let item = grn.items.find(item => item._id.toString() === req.query.itemId);
+      if(item)
+        lastCost = item.costPrice;
+    }
+
+    res.json({ lastCost });
   }catch(err)
   {
     return res.status(400).json({message: err.message});

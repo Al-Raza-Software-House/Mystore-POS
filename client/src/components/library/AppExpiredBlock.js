@@ -16,7 +16,6 @@ const useStyles = makeStyles(theme => ({
     zIndex: theme.zIndex.modal - 1 ,
     display: "flex",
     justifyContent: "flex-start",
-    alignItems: "flex-start",
     flexDirection: "column",
     alignItems: "center"
   }

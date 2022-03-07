@@ -18,6 +18,7 @@
     "axios": "^0.25.0",
     "compress.js": "^1.1.2",
     "fuzzysort": "^1.1.4",
+    "jsbarcode": "^3.11.5",
     "lodash": "^4.17.21",
     "match-sorter": "^6.3.1",
     "materialui-daterange-picker": "^1.1.92",

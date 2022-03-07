@@ -70,7 +70,7 @@ router.post('/incomestatement', async (req, res) => {
     }
     aggregate = await GRN.aggregate([
         { $match: conditions },
-        { $group: { _id: '$storeId', totalLoadingExpense: { $sum: "$loadingExpense" }, totalFreightExpense: { $sum: "$freightExpense" }, totalOtherExpense: { $sum: "$otherExpense" }, totalPurchaseTax: { $sum: "$purchaseTax" } } },
+        { $group: { _id: '$storeId', totalLoadingExpense: { $sum: "$loadingExpense" }, totalFreightExpense: { $sum: "$freightExpense" }, totalOtherExpense: { $sum: "$otherExpense" }, totalPurchaseTax: { $sum: "$totalTax" } } },
       ]);
     if(aggregate.length)
       stats.purchase = aggregate[0];

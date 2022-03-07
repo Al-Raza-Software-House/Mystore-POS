@@ -15,6 +15,7 @@ import Rtvs from './rtv/Rtvs';
 import CreateRtv from './rtv/CreateRtv';
 import EditRtv from './rtv/EditRtv';
 import PrintRtv from './rtv/PrintRtv';
+import GenerateBarcodes from './printBarcodes/GenerateBarcodes';
 
 const useStyles = makeStyles(theme => ({
   paper:{
@@ -51,6 +52,8 @@ function PurchaseRouter(){
         <Box px={3} pt={2} >
           <Switch>
             
+            <Route path="/purchase/barcodes" render={props => <GenerateBarcodes {...props}  />} />
+
             <Route path="/purchase/rtvs/edit/:storeId/:rtvId" render={props => <EditRtv {...props} printRtv={setPrintRTV} />} />
             <Route path="/purchase/rtvs/new" render={props => <CreateRtv {...props} printRtv={setPrintRTV} />} />
             <Route path="/purchase/rtvs" render={props => <Rtvs {...props} printRtv={setPrintRTV} />} />

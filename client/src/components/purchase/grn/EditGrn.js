@@ -153,6 +153,15 @@ function EditGrn(props) {
     }
   }, [grn, allItems, dispatch, storeId]);
 
+  const getItemLastCost = useCallback((itemId) => {
+    axios.get('/api/grns/lastCost', { params: { storeId, itemId } }).then(({ data }) => {
+      if(data.lastCost)
+        dispatch( change(formName, `items[${itemId}].costPrice`, data.lastCost) );
+    }).catch(err => { 
+
+    })
+  }, [storeId, dispatch]);
+
   //pass to item Picker
   const selectItem = useCallback((item) => {
     let isExist = items.find(record => record._id === item._id);
@@ -184,8 +193,9 @@ function EditGrn(props) {
         newItem,
         ...items
       ]);
+      getItemLastCost(_id);
     }
-  }, [items, values, allItems, dispatch]);
+  }, [items, values, allItems, dispatch, getItemLastCost]);
 
   //Pass to item Picker, or delete item from list
   const removeItem = useCallback((item) => {
