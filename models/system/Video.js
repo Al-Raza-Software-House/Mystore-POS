@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const videoSchema = new mongoose.Schema({
+  title: String,
   moduleName: String,
   screens: [String],
   order: Number,
