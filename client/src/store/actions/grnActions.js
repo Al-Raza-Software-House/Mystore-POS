@@ -12,7 +12,8 @@ export const actionTypes = {
   GRN_UPDATED: 'grnUpdated',
   GRN_DELETED: 'grnDeleted',
   EMPTY_GRNS: 'emptyGrns',
-  FILTERS_CHANGED: 'grnsFiltersChanged'
+  FILTERS_CHANGED: 'grnsFiltersChanged',
+  UPDATE_GRN_DRAFT: 'updateGRNDraft'
 }
 
 export const addNewGrn = (storeId, grn) => {
@@ -78,4 +79,8 @@ export const changeFilters = (storeId, filters) => {
 
 export const emptyGrns = (storeId) => {
   return { type: actionTypes.EMPTY_GRNS, storeId }
+}
+
+export const updateGrnDraft = (storeId, draft) => {
+  return { type: actionTypes.UPDATE_GRN_DRAFT, storeId, draft }
 }

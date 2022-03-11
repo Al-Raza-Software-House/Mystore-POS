@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
+import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core'
 import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
@@ -21,7 +21,7 @@ import RadioInput from '../../library/form/RadioInput';
 import { allowOnlyPostiveNumber } from '../../../utils';
 import GrnItemRow from './GrnItemRow';
 import UploadFile from '../../library/UploadFile';
-import { addNewGrn } from '../../../store/actions/grnActions';
+import { addNewGrn, updateGrnDraft } from '../../../store/actions/grnActions';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { addNewTxns } from '../../../store/actions/accountActions';
 import { closePurchaseOrder } from '../../../store/actions/purchaseOrderActions';
@@ -60,7 +60,7 @@ const formName = "createGrn";
 function CreateGrn(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { dispatch, storeId, banks, lastEndOfDay, defaultBankId, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printGrn} = props;
+  const { dispatch, storeId, draft, banks, lastEndOfDay, defaultBankId, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printGrn} = props;
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: "/purchase/grns/new", 'title' : "New GRN" });
   }, []);
@@ -72,6 +72,23 @@ function CreateGrn(props) {
     else
       return { items: [] }
   });
+
+  const isOldDraft = useRef();
+  const [showDraftOptions, setShowDraftOptions] = useState(false);
+  useEffect(()=> {
+    if(isOldDraft.current) return; // run only once at page load
+    isOldDraft.current = true;
+    if(!draft) return; // no draf available
+    setShowDraftOptions(true);
+  }, [formValues, storeId, dispatch, draft]);
+
+  const pageLoaded = useRef();
+  useEffect(()=> {
+    if(pageLoaded.current && formValues.items && Object.keys(formValues.items).length)
+      dispatch( updateGrnDraft(storeId, {...formValues }) );
+    pageLoaded.current = true;
+  }, [formValues, storeId, dispatch]);
+
   const { supplierId, poId } = formValues;
   const values = formValues.items;
   const supplier = useSelector(state => state.suppliers[storeId] ? state.suppliers[storeId].find(record => record._id === supplierId) : null);
@@ -147,6 +164,37 @@ function CreateGrn(props) {
     renderTimer.current = setTimeout(() => setItems(newItems), 20);
     return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [poId, dispatch, purchaseOrders, allItems])
+
+  const loadDraft = useCallback(()=>{
+    let newItems = [];
+    for(let key in draft.items)
+    {
+      let record = draft.items[key];
+      if(!record) continue;
+      let item = allItems.find(elem => elem._id === record._id);
+      if(!item) continue;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock } = item;
+      let lowStock = item.currentStock < item.minStock;
+      let overStock = item.currentStock > item.maxStock
+      if(item.packParentId)
+      {
+        let parentItem = allItems.find(record => record._id === item.packParentId);
+        if(parentItem)
+        {
+          currentStock = parentItem.currentStock; 
+          lowStock = parentItem.currentStock < parentItem.minStock;
+          overStock = parentItem.currentStock > parentItem.maxStock
+        }
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
+      }
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock, lowStock, overStock, quantity: 1 };
+      newItems.unshift(newItem);
+    }
+    setShowDraftOptions(false);
+    dispatch( initialize(formName, draft) );
+    renderTimer.current = setTimeout(() => setItems(newItems), 20);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
+  }, [draft, allItems, dispatch])
 
   const getItemLastCost = useCallback((itemId) => {
     axios.get('/api/grns/lastCost', { params: { storeId, itemId } }).then(({ data }) => {
@@ -265,8 +313,11 @@ function CreateGrn(props) {
 
   useEffect(() => {
     if(submitSucceeded)
+    {
       history.push('/purchase/grns');
-  }, [submitSucceeded, history])
+      dispatch( updateGrnDraft(storeId, null) );
+    }
+  }, [submitSucceeded, history, dispatch, storeId])
 
   const onSubmit = useCallback((formData, dispatch, { storeId, itemsLastUpdatedOn }) => {
     const payload = {storeId, ...formData};
@@ -650,6 +701,27 @@ function CreateGrn(props) {
         </Box>
         </form>
       </Box>
+      <Dialog open={showDraftOptions} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title" style={{ textAlign: "center" }}>Draft Found</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              There is a draft available. Do you want to load draft? Click Cancel button to create fresh GRN
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Box px={2} display="flex" justifyContent="space-between" alignItems="center">
+              <div>
+                <Button disableElevation type="button" onClick={() => setShowDraftOptions(false)} color="primary">
+                  Cancel
+                </Button>
+                <Button disableElevation type="button"  color="primary" variant="contained" onClick={loadDraft}>
+                  Load Draft
+                </Button>
+              </div>
+            </Box>
+          </DialogActions>
+        
+      </Dialog>
       </>
     )
 }
@@ -703,6 +775,7 @@ const mapStateToProps = state => {
   return{
     storeId,
     store,
+    draft: state.grns[storeId] && state.grns[storeId].draft ? state.grns[storeId].draft : null,
     banks: banks.map(bank => ({ id: bank._id, title: bank.name }) ),
     defaultBankId: defaultBank ? defaultBank._id : null,
     lastEndOfDay: store.lastEndOfDay,

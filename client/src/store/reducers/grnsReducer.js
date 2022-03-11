@@ -6,6 +6,7 @@ const defaultStoreGrns = {
   totalRecords: 0,
   recordsLoaded: false,
   filters: {},
+  draft: null //save new Grn form 
 }
 const grnsReducer = (state = initState, action) => {
   let storeGrns = null;
@@ -21,7 +22,8 @@ const grnsReducer = (state = initState, action) => {
         records: [...storeGrns.records, ...action.grns],
         totalRecords: action.totalRecords,
         recordsLoaded: true,
-        filters: storeGrns.filters
+        filters: storeGrns.filters,
+        draft: storeGrns.draft,
       }
       return{
         ...state,
@@ -33,7 +35,8 @@ const grnsReducer = (state = initState, action) => {
         records: [action.grn, ...storeGrns.records],
         totalRecords: storeGrns.totalRecords + 1,
         recordsLoaded: true,
-        filters: storeGrns.filters
+        filters: storeGrns.filters,
+        draft: storeGrns.draft
       }
       return{
         ...state,
@@ -45,7 +48,8 @@ const grnsReducer = (state = initState, action) => {
         records: storeGrns.records.filter(record => record._id !== action.grnId),
         totalRecords: storeGrns.totalRecords - 1,
         recordsLoaded: storeGrns.recordsLoaded,
-        filters: storeGrns.filters
+        filters: storeGrns.filters,
+        draft: storeGrns.draft
       }
       return{
         ...state,
@@ -57,7 +61,8 @@ const grnsReducer = (state = initState, action) => {
         records: storeGrns.records.map(record => record._id === action.grnId ? action.grn : record),
         totalRecords: storeGrns.totalRecords,
         recordsLoaded: true,
-        filters: storeGrns.filters
+        filters: storeGrns.filters,
+        draft: storeGrns.draft
       }
       return{
         ...state,
@@ -69,15 +74,27 @@ const grnsReducer = (state = initState, action) => {
         ...state,
         [action.storeId]: {
           ...defaultStoreGrns,
-          filters: storeGrns.filters
+          filters: storeGrns.filters,
+          draft: storeGrns.draft
         }
       }
     case actionTypes.FILTERS_CHANGED:
+      storeGrns = state[action.storeId] ? state[action.storeId] : defaultStoreGrns;
       return{
         ...state,
         [action.storeId]: {
           ...defaultStoreGrns,
-          filters: action.filters
+          filters: action.filters,
+          draft: storeGrns.draft
+        }
+      }
+    case actionTypes.UPDATE_GRN_DRAFT:
+      storeGrns = state[action.storeId] ? state[action.storeId] : defaultStoreGrns;
+      return{
+        ...state,
+        [action.storeId]: {
+          ...storeGrns,
+          draft: action.draft
         }
       }
     default:

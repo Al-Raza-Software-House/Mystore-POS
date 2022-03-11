@@ -9,7 +9,8 @@ export const actionTypes = {
   PURCHASE_ORDER_UPDATED: 'purchaseOrderUpdated',
   PURCHASE_ORDER_DELETED: 'purchaseOrderDeleted',
   EMPTY_PURCHASE_ORDERS: 'emptyPurchaseOrders',
-  FILTERS_CHANGED: 'purchaseOrdersFiltersChanged'
+  FILTERS_CHANGED: 'purchaseOrdersFiltersChanged',
+  UPDATE_PO_DRAFT: 'updatePODraft'
 }
 
 export const addNewPO = (storeId, order) => {
@@ -88,4 +89,8 @@ export const changeFilters = (storeId, filters) => {
 
 export const emptyPurchaseOrders = (storeId) => {
   return { type: actionTypes.EMPTY_PURCHASE_ORDERS, storeId }
+}
+
+export const updatePoDraft = (storeId, draft) => {
+  return { type: actionTypes.UPDATE_PO_DRAFT, storeId, draft }
 }

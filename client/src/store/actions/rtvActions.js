@@ -10,7 +10,8 @@ export const actionTypes = {
   RTV_UPDATED: 'rtvUpdated',
   RTV_DELETED: 'rtvDeleted',
   EMPTY_RTVS: 'emptyRtvs',
-  FILTERS_CHANGED: 'rtvsFiltersChanged'
+  FILTERS_CHANGED: 'rtvsFiltersChanged',
+  UPDATE_RTV_DRAFT: 'updateRTVDraft'
 }
 
 export const addNewRtv = (storeId, rtv) => {
@@ -72,4 +73,8 @@ export const changeFilters = (storeId, filters) => {
 
 export const emptyRtvs = (storeId) => {
   return { type: actionTypes.EMPTY_RTVS, storeId }
+}
+
+export const updateRtvDraft = (storeId, draft) => {
+  return { type: actionTypes.UPDATE_RTV_DRAFT, storeId, draft }
 }

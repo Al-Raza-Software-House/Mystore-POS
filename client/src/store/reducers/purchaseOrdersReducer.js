@@ -6,6 +6,7 @@ const defaultStorePurchaseOrders = {
   totalRecords: 0,
   recordsLoaded: false,
   filters: {},
+  draft: null //save new Grn form 
 }
 const purchaseOrdersReducer = (state = initState, action) => {
   let storePOs = null;
@@ -21,7 +22,8 @@ const purchaseOrdersReducer = (state = initState, action) => {
         records: [...storePOs.records, ...action.orders],
         totalRecords: action.totalRecords,
         recordsLoaded: true,
-        filters: storePOs.filters
+        filters: storePOs.filters,
+        draft: storePOs.draft
       }
       return{
         ...state,
@@ -33,7 +35,8 @@ const purchaseOrdersReducer = (state = initState, action) => {
         records: [action.order, ...storePOs.records],
         totalRecords: storePOs.totalRecords + 1,
         recordsLoaded: true,
-        filters: storePOs.filters
+        filters: storePOs.filters,
+        draft: storePOs.draft
       }
       return{
         ...state,
@@ -45,7 +48,8 @@ const purchaseOrdersReducer = (state = initState, action) => {
         records: storePOs.records.filter(record => record._id !== action.poId),
         totalRecords: storePOs.totalRecords - 1,
         recordsLoaded: storePOs.recordsLoaded,
-        filters: storePOs.filters
+        filters: storePOs.filters,
+        draft: storePOs.draft
       }
       return{
         ...state,
@@ -57,7 +61,8 @@ const purchaseOrdersReducer = (state = initState, action) => {
         records: storePOs.records.map(record => record._id === action.poId ? action.order : record),
         totalRecords: storePOs.totalRecords,
         recordsLoaded: true,
-        filters: storePOs.filters
+        filters: storePOs.filters,
+        draft: storePOs.draft
       }
       return{
         ...state,
@@ -69,15 +74,27 @@ const purchaseOrdersReducer = (state = initState, action) => {
         ...state,
         [action.storeId]: {
           ...defaultStorePurchaseOrders,
-          filters: storePOs.filters
+          filters: storePOs.filters,
+          draft: storePOs.draft
         }
       }
     case actionTypes.FILTERS_CHANGED:
+      storePOs = state[action.storeId] ? state[action.storeId] : defaultStorePurchaseOrders;
       return{
         ...state,
         [action.storeId]: {
           ...defaultStorePurchaseOrders,
-          filters: action.filters
+          filters: action.filters,
+          draft: storePOs.draft
+        }
+      }
+    case actionTypes.UPDATE_PO_DRAFT:
+      storePOs = state[action.storeId] ? state[action.storeId] : defaultStorePurchaseOrders;
+      return{
+        ...state,
+        [action.storeId]: {
+          ...storePOs,
+          draft: action.draft
         }
       }
     default:

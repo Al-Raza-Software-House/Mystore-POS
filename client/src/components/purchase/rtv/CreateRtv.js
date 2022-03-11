@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
+import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core'
 import { change, Field, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
@@ -19,7 +19,7 @@ import RtvItemRow from './RtvItemRow';
 import UploadFile from '../../library/UploadFile';
 import { updateSupplier } from '../../../store/actions/supplierActions';
 import { itemsStampChanged, syncItems } from '../../../store/actions/itemActions';
-import { addNewRtv } from '../../../store/actions/rtvActions';
+import { addNewRtv, updateRtvDraft } from '../../../store/actions/rtvActions';
 import ReactGA from "react-ga4";
 
 const useStyles = makeStyles(theme => ({
@@ -42,7 +42,7 @@ const formName = "createRtv";
 function CreateRtv(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { dispatch, storeId, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printRtv} = props;
+  const { dispatch, storeId, draft, lastEndOfDay, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printRtv} = props;
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: "/purchase/rtvs/new", 'title' : "New RTV" });
   }, []);
@@ -61,6 +61,23 @@ function CreateRtv(props) {
   
   const [items, setItems] = useState([]);//selected items
   const [grns, setGrns] = useState([]); //
+
+  const isOldDraft = useRef();
+  const [showDraftOptions, setShowDraftOptions] = useState(false);
+  useEffect(()=> {
+    if(isOldDraft.current) return; // run only once at page load
+    isOldDraft.current = true;
+    if(!draft) return; // no draft available
+    setShowDraftOptions(true);
+  }, [formValues, storeId, dispatch, draft]);
+
+  const pageLoaded = useRef();
+  useEffect(()=> {
+    if(pageLoaded.current && formValues.items && Object.keys(formValues.items).length)
+      dispatch( updateRtvDraft(storeId, {...formValues }) );
+    pageLoaded.current = true;
+  }, [formValues, storeId, dispatch]);
+
 
   useEffect(() => {
     if(!supplierId)
@@ -128,6 +145,37 @@ function CreateRtv(props) {
     renderTimer.current = setTimeout(() => setItems(newItems), 20); 
     return () => renderTimer.current && clearTimeout(renderTimer.current);
   }, [grnId, dispatch, grns, allItems])
+
+  const loadDraft = useCallback(()=>{
+    let newItems = [];
+    for(let key in draft.items)
+    {
+      let record = draft.items[key];
+      if(!record) continue;
+      let item = allItems.find(elem => elem._id === record._id);
+      if(!item) continue;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock, batches } = item;
+      let lowStock = item.currentStock < item.minStock;
+      let overStock = item.currentStock > item.maxStock
+      if(item.packParentId)
+      {
+        let parentItem = allItems.find(record => record._id === item.packParentId);
+        if(parentItem)
+        {
+          currentStock = parentItem.currentStock; 
+          lowStock = parentItem.currentStock < parentItem.minStock;
+          overStock = parentItem.currentStock > parentItem.maxStock
+        }
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
+      }
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, lowStock, overStock, quantity: 1, batches, minStock, maxStock };
+      newItems.unshift(newItem);
+    }
+    setShowDraftOptions(false);
+    dispatch( initialize(formName, draft) );
+    renderTimer.current = setTimeout(() => setItems(newItems), 20);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
+  }, [draft, allItems, dispatch])
 
   const getItemLastCost = useCallback((itemId) => {
     axios.get('/api/grns/lastCost', { params: { storeId, itemId } }).then(({ data }) => {
@@ -231,8 +279,11 @@ function CreateRtv(props) {
 
   useEffect(() => {
     if(submitSucceeded)
+    {
+      dispatch( updateRtvDraft(storeId, null) );
       history.push('/purchase/rtvs');
-  }, [submitSucceeded, history])
+    }
+  }, [submitSucceeded, history, storeId, dispatch])
 
   const onSubmit = useCallback((formData, dispatch, { storeId, itemsLastUpdatedOn }) => {
     const payload = {storeId, ...formData};
@@ -416,6 +467,27 @@ function CreateRtv(props) {
         </Box>
         </form>
       </Box>
+      <Dialog open={showDraftOptions} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title" style={{ textAlign: "center" }}>Draft Found</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              There is a draft available. Do you want to load draft? Click Cancel button to create fresh RTV
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Box px={2} display="flex" justifyContent="space-between" alignItems="center">
+              <div>
+                <Button disableElevation type="button" onClick={() => setShowDraftOptions(false)} color="primary">
+                  Cancel
+                </Button>
+                <Button disableElevation type="button"  color="primary" variant="contained" onClick={loadDraft}>
+                  Load Draft
+                </Button>
+              </div>
+            </Box>
+          </DialogActions>
+        
+      </Dialog>
       </>
     )
 }
@@ -491,6 +563,7 @@ const mapStateToProps = state => {
   return{
     storeId,
     lastEndOfDay: store.lastEndOfDay,
+    draft: state.rtvs[storeId] && state.rtvs[storeId].draft ? state.rtvs[storeId].draft : null,
     itemsLastUpdatedOn
   }
 }

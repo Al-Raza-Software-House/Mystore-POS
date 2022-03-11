@@ -6,6 +6,7 @@ const defaultStoreRtvs = {
   totalRecords: 0,
   recordsLoaded: false,
   filters: {},
+  draft: null //save new Grn form 
 }
 const rtvsReducer = (state = initState, action) => {
   let storeRtvs = null;
@@ -21,7 +22,8 @@ const rtvsReducer = (state = initState, action) => {
         records: [...storeRtvs.records, ...action.rtvs],
         totalRecords: action.totalRecords,
         recordsLoaded: true,
-        filters: storeRtvs.filters
+        filters: storeRtvs.filters,
+        draft: storeRtvs.draft
       }
       return{
         ...state,
@@ -33,7 +35,8 @@ const rtvsReducer = (state = initState, action) => {
         records: [action.rtv, ...storeRtvs.records],
         totalRecords: storeRtvs.totalRecords + 1,
         recordsLoaded: true,
-        filters: storeRtvs.filters
+        filters: storeRtvs.filters,
+        draft: storeRtvs.draft
       }
       return{
         ...state,
@@ -45,7 +48,8 @@ const rtvsReducer = (state = initState, action) => {
         records: storeRtvs.records.filter(record => record._id !== action.rtvId),
         totalRecords: storeRtvs.totalRecords - 1,
         recordsLoaded: storeRtvs.recordsLoaded,
-        filters: storeRtvs.filters
+        filters: storeRtvs.filters,
+        draft: storeRtvs.draft
       }
       return{
         ...state,
@@ -57,7 +61,8 @@ const rtvsReducer = (state = initState, action) => {
         records: storeRtvs.records.map(record => record._id === action.rtvId ? action.rtv : record),
         totalRecords: storeRtvs.totalRecords,
         recordsLoaded: true,
-        filters: storeRtvs.filters
+        filters: storeRtvs.filters,
+        draft: storeRtvs.draft
       }
       return{
         ...state,
@@ -69,15 +74,27 @@ const rtvsReducer = (state = initState, action) => {
         ...state,
         [action.storeId]: {
           ...defaultStoreRtvs,
-          filters: storeRtvs.filters
+          filters: storeRtvs.filters,
+          draft: storeRtvs.draft
         }
       }
     case actionTypes.FILTERS_CHANGED:
+      storeRtvs = state[action.storeId] ? state[action.storeId] : defaultStoreRtvs;
       return{
         ...state,
         [action.storeId]: {
           ...defaultStoreRtvs,
-          filters: action.filters
+          filters: action.filters,
+          draft: storeRtvs.draft
+        }
+      }
+    case actionTypes.UPDATE_RTV_DRAFT:
+      storeRtvs = state[action.storeId] ? state[action.storeId] : defaultStoreRtvs;
+      return{
+        ...state,
+        [action.storeId]: {
+          ...storeRtvs,
+          draft: action.draft
         }
       }
     default:

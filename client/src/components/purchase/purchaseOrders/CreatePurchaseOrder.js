@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core'
-import { change, Field, formValueSelector, initialize, reduxForm, SubmissionError } from 'redux-form';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { makeStyles, Button, Box, Typography, FormHelperText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core'
+import { change, Field, formValueSelector, getFormValues, initialize, reduxForm, SubmissionError } from 'redux-form';
 import axios from 'axios';
 import TextInput from '../../library/form/TextInput';
 import { showProgressBar, hideProgressBar } from '../../../store/actions/progressActions';
@@ -12,7 +12,7 @@ import SelectSupplier from '../../stock/items/itemForm/SelectSupplier';
 import DateInput from '../../library/form/DateInput';
 import { useSelector } from 'react-redux';
 import ItemPicker from '../../library/ItemPicker';
-import { addNewPO } from '../../../store/actions/purchaseOrderActions';
+import { addNewPO, updatePoDraft } from '../../../store/actions/purchaseOrderActions';
 import moment from 'moment';
 import CheckboxInput from '../../library/form/CheckboxInput';
 import PoItemRow from './PoItemRow';
@@ -38,7 +38,16 @@ const formSelector = formValueSelector(formName);
 function CreatePurchaseOrder(props) {
   const history = useHistory();
   const classes = useStyles();
-  const { dispatch, storeId, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printPo} = props;
+  const { dispatch, storeId, draft, handleSubmit, pristine, submitSucceeded, submitting, error, invalid, dirty, printPo} = props;
+
+  const formValues = useSelector(state => {
+    let formData = getFormValues(formName)(state);
+    if(formData)
+      return !formData.items ? { ...formData, items: []} : formData;
+    else
+      return { items: [] }
+  });
+
   const supplierId = useSelector(state => formSelector(state, 'supplierId'));
   const supplier = useSelector(state => state.suppliers[storeId] ? state.suppliers[storeId].find(record => record._id === supplierId) : null);
   const allItems = useSelector(state => state.items[storeId].allItems );
@@ -50,6 +59,22 @@ function CreatePurchaseOrder(props) {
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: "/purchase/orders/new", 'title' : "New Purchase Order" });
   }, []);
+
+  const isOldDraft = useRef();
+  const [showDraftOptions, setShowDraftOptions] = useState(false);
+  useEffect(()=> {
+    if(isOldDraft.current) return; // run only once at page load
+    isOldDraft.current = true;
+    if(!draft) return; // no draft available
+    setShowDraftOptions(true);
+  }, [formValues, storeId, dispatch, draft]);
+
+  const pageLoaded = useRef();
+  useEffect(()=> {
+    if(pageLoaded.current && formValues.items && Object.keys(formValues.items).length)
+      dispatch( updatePoDraft(storeId, {...formValues }) );
+    pageLoaded.current = true;
+  }, [formValues, storeId, dispatch]);
 
   const [items, setItems] = useState([]);
 
@@ -108,6 +133,38 @@ function CreatePurchaseOrder(props) {
     dispatch(initialize(formName, { issueDate: moment().format("DD MMMM, YYYY"), deliveryDate: moment().format("DD MMMM, YYYY") }));
   }, [dispatch]);
 
+  const renderTimer = useRef();
+  const loadDraft = useCallback(()=>{
+    let newItems = [];
+    for(let key in draft.items)
+    {
+      let record = draft.items[key];
+      if(!record) continue;
+      let item = allItems.find(elem => elem._id === record._id);
+      if(!item) continue;
+      let { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock } = item;
+      let lowStock = item.currentStock < item.minStock;
+      let overStock = item.currentStock > item.maxStock
+      if(item.packParentId)
+      {
+        let parentItem = allItems.find(record => record._id === item.packParentId);
+        if(parentItem)
+        {
+          currentStock = parentItem.currentStock; 
+          lowStock = parentItem.currentStock < parentItem.minStock;
+          overStock = parentItem.currentStock > parentItem.maxStock
+        }
+        costPrice = (item.packQuantity * costPrice).toFixed(2);
+      }
+      let newItem = { _id, itemName, itemCode, sizeCode, sizeName, combinationCode, combinationName, costPrice, salePrice, currentStock, packParentId, packQuantity, packSalePrice, minStock, maxStock, lowStock, overStock, quantity: 1 };
+      newItems.unshift(newItem);
+    }
+    setShowDraftOptions(false);
+    dispatch( initialize(formName, draft) );
+    renderTimer.current = setTimeout(() => setItems(newItems), 20);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
+  }, [draft, allItems, dispatch])
+
   const totalQuantity = useMemo(() => {
     let total = 0;
     for(let key in values)
@@ -148,17 +205,20 @@ function CreatePurchaseOrder(props) {
 
   useEffect(() => {
     if(submitSucceeded)
+    {
+      dispatch( updatePoDraft(storeId, null) );
       history.push('/purchase');
-  }, [submitSucceeded, history])
+    }
+  }, [submitSucceeded, history, dispatch, storeId])
 
-  const onSubmit = useCallback((formValues, dispatch, { storeId }) => {
-    const payload = {storeId, ...formValues};
-    payload.issueDate = moment(formValues.issueDate, "DD MMMM, YYYY").toDate();
-    payload.deliveryDate = moment(formValues.deliveryDate, "DD MMMM, YYYY").toDate();
+  const onSubmit = useCallback((formData, dispatch, { storeId }) => {
+    const payload = {storeId, ...formData};
+    payload.issueDate = moment(formData.issueDate, "DD MMMM, YYYY").toDate();
+    payload.deliveryDate = moment(formData.deliveryDate, "DD MMMM, YYYY").toDate();
     payload.items = [];
     items.forEach(item => {
       payload.items.push(
-        formValues.items[item._id]
+        formData.items[item._id]
       )
     });
     dispatch(showProgressBar());
@@ -168,7 +228,7 @@ function CreatePurchaseOrder(props) {
       {
         dispatch( addNewPO(storeId, response.data.order) );
         dispatch( showSuccess("New purchase order added") );
-        if(formValues.printPo)
+        if(formData.printPo)
           printPo({ ...response.data.order, supplier });
       }
 
@@ -330,6 +390,27 @@ function CreatePurchaseOrder(props) {
         </Box>
         </form>
       </Box>
+      <Dialog open={showDraftOptions} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title" style={{ textAlign: "center" }}>Draft Found</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              There is a draft available. Do you want to load draft? Click Cancel button to create fresh Purchase Order
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Box px={2} display="flex" justifyContent="space-between" alignItems="center">
+              <div>
+                <Button disableElevation type="button" onClick={() => setShowDraftOptions(false)} color="primary">
+                  Cancel
+                </Button>
+                <Button disableElevation type="button"  color="primary" variant="contained" onClick={loadDraft}>
+                  Load Draft
+                </Button>
+              </div>
+            </Box>
+          </DialogActions>
+        
+      </Dialog>
       </>
     )
 }
@@ -348,8 +429,10 @@ const validate = (values, props) => {
 }
 
 const mapStateToProps = state => {
+  const storeId = state.stores.selectedStoreId;
   return{
-    storeId: state.stores.selectedStoreId
+    storeId,
+    draft: state.purchaseOrders[storeId] && state.purchaseOrders[storeId].draft ? state.purchaseOrders[storeId].draft : null,
   }
 }
 
