@@ -15,8 +15,8 @@ function ItemsGrid({ selectItem, disabled }){
   }, [items]);
 
   return(
-    <Box display="flex" flexDirection="column" flexGrow={1} style={{ overflowY: "auto" }}>
-      <Box flexGrow={1} width="100%" height="320px" px={2} py={1} borderRadius={5} style={{ boxSizing: "border-box" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
+    <Box display="flex" flexDirection="column" flexGrow={1} style={{ overflowY: "auto" }} maxWidth="45vw" height="60vh">
+      <Box flexGrow={1} width="100%" height="100%" px={2} py={1} borderRadius={5} style={{ boxSizing: "border-box" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
         {
           favoriteItems.map(item => (
             <Item item={item} key={item._id} selectItem={selectItem} disabled={disabled} />

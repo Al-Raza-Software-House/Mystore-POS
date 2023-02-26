@@ -12,7 +12,7 @@ import ReactGA from "react-ga4";
 
 function Customers({ storeId, records, deleteCustomer }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const [query, setQuery] = useState("");
   const [mobile, setMobile] = useState("");
   const [filteredRecords, setFilteredRecords] = useState([]);

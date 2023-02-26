@@ -25,7 +25,7 @@ function CustomerLedger({ lastEndOfDay, banks, printTxn, loadingRecords, dispatc
   const [records, setRecords] = useState([]);
   const [recordsLoaded, setRecordsLoaded] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: "/parties/customers/ledger", 'title' : "Customer Ledger" });

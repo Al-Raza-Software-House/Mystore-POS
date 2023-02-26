@@ -36,7 +36,7 @@ function SaleBatches({ fields, batches,  meta, disabled }){
             disabled={disabled}
           />
         </Box>
-        <Box width={{ xs: '100%', md: '24%' }}>
+        <Box width={{ xs: '100%', md: '30%' }}>
           <Field
             component={TextInput}
             label="Batch Quantity"
@@ -51,7 +51,7 @@ function SaleBatches({ fields, batches,  meta, disabled }){
             onKeyDown={allowOnlyPostiveNumber}
           />
         </Box>
-        <Box width={{ xs: '100%', md: '24%' }} textAlign="left">
+        <Box textAlign="left">
           {
             index === 0 ?
             <IconButton onClick={() => fields.push({ batchNumber: 0, batchQuantity: 0 })} title="Add another batch" disabled={disabled}>

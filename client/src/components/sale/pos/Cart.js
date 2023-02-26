@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react'
-import { Box, Button, Chip, Collapse, IconButton, InputAdornment, Typography, useMediaQuery } from '@material-ui/core';
+import React, { useEffect, useRef } from 'react'
+import { Box, Chip, IconButton, InputAdornment, Typography, useMediaQuery, Popover } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faChevronDown, faChevronUp, faMinus, faPercent, faPlus, faTrash, faTrashRestore } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faCheck, faLayerGroup, faMinus, faPlus, faTimes, faCircleNotch, } from '@fortawesome/free-solid-svg-icons';
 import { useMemo } from 'react';
 import { allowOnlyNumber, allowOnlyPostiveNumber } from 'utils';
 import { change, Field, FieldArray, formValueSelector } from 'redux-form';
@@ -44,17 +44,36 @@ function Cart({ formItems, items, formName, allowNegativeInventory, disabled }){
     let container = document.getElementById("cart-container");
     container.scrollTop = container.scrollHeight;
   }, [items.length]);
+
   return(
     <Box  border="1px solid #ececec" borderRadius={5} flexGrow={1} display="flex" flexDirection="column" >
-      <Box height="53px" display="flex" justifyContent="space-between" borderBottom="1px solid #ececec" flexWrap="wrap" alignItems="center" px={2} py={0} >
-        <Typography>Items: <Chip size="small" component="span" label={ totals.totalItems } /> </Typography>
-        <Typography>Qty: <Chip size="small" component="span" label={ totals.totalQuantity } /></Typography>
-        <Typography>Total: <Chip size="small" component="span" label={ totals.totalAmount } /></Typography>
-        <Typography>Discount: <Chip size="small" component="span" label={ totals.totalDiscount } /></Typography>
+      <Box display="flex" justifyContent="space-between" borderBottom="1px solid #ececec">
+        <Box width={{ xs: "100%", md: "48%" }} >
+          <Box height="53px" display="flex" justifyContent="space-between"  flexWrap="wrap" alignItems="center" px={2} py={0} >
+            <Typography>Items: <Chip size="small" component="span" label={ totals.totalItems } /> </Typography>
+            <Typography>Qty: <Chip size="small" component="span" label={ totals.totalQuantity } /></Typography>
+            <Typography>Total: <Chip size="small" component="span" label={ totals.totalAmount } /></Typography>
+            <Typography>Discount: <Chip size="small" component="span" label={ totals.totalDiscount } /></Typography>
+          </Box>
+        </Box>
+        <Box width={{ xs: "100%", md: "48%" }} >
+          <Field
+              component={TextInput}
+              name="notes"
+              label="Notes"
+              placeholder="Notes..."
+              type="text"
+              fullWidth={true}
+              variant="outlined"
+              margin="dense"
+              disabled={disabled}
+              showError={false}
+            />
+        </Box>
       </Box>
-      <Box width="100%" id="cart-container"  borderRadius={5} style={{ boxSizing: "border-box", overflowY: "auto", height: "calc(100vh - 320px)" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
+      <Box width="100%" id="cart-container"  borderRadius={5} style={{ boxSizing: "border-box", overflowY: "auto", height: "calc(100vh - 298px)" }} display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="flex-start" alignContent="flex-start">
         {
-          items.map(item => (
+          items.length === 0 ? null : items.map(item => (
             <Item item={item} key={item._id} formName={formName} allowNegativeInventory={allowNegativeInventory} disabled={disabled} />
           ))
         }
@@ -69,77 +88,79 @@ const Item = React.memo(
   ({ item, formName, allowNegativeInventory, disabled }) => {
   const dispatch = useDispatch();
   const isDesktop = useMediaQuery((theme) => theme.breakpoints.up('sm'), { noSsr: true });
-  const [open, setOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
   const formItem = useSelector(state => formValueSelector(formName)(state, `items[${item._id}]`));
+  const toggleVoid = useCallback(() => {
+    dispatch( change(formName, `items[${item._id}].isVoided`, !Boolean(formItem.isVoided)) )
+  }, [dispatch, item._id, formItem.isVoided, formName])
+
+  const [showFields, setShowFields] = useState(false);
+  const renderTimer = useRef();
+  useEffect(() => {
+    renderTimer.current = setTimeout(() => setShowFields(true), 5);
+    return () => renderTimer.current && clearTimeout(renderTimer.current);
+  }, [])
+
+  if(!formItem) return null;
+
   let quantity = isNaN(formItem.quantity) ? 0 : Number(formItem.quantity);
   let salePrice = isNaN(formItem.salePrice) ? 0 : Number(formItem.salePrice);
   let discount = isNaN(formItem.discount) ? 0 : Number(formItem.discount);
   let originalPrice = Number(item.packParentId ? item.packSalePrice : item.salePrice);
   
-  const toggleVoid = useCallback(() => {
-    dispatch( change(formName, `items[${item._id}].isVoided`, !Boolean(formItem.isVoided)) )
-  }, [dispatch, item._id, formItem.isVoided, formName])
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   return(
-    <Box width="100%" borderBottom="4px solid #c3c2c2" >
-      <Box px={2} pt={1} style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography style={{ fontSize: 14, fontWeight: "bold" }}>
-            {item.itemName}
-            { item.packParentId ? <span style={{ color: '#7c7c7c' }} title={`Pack of ${item.packQuantity}`}><FontAwesomeIcon style={{ marginLeft: 8 }} icon={faBoxOpen} /> </span> : null }
-          </Typography>
-          <Typography style={{ color: '#6c6a6a', fontSize: 13 }}>{item.sizeName} { item.sizeName && item.combinationName ? "|" : ""  } {item.combinationName}</Typography>
-        </Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography style={{ color: '#6c6a6a', fontSize: 13 }}>{item.itemCode}{item.sizeCode ? '-' : ""}{item.sizeCode}{item.combinationCode ? '-' : ""}{item.combinationCode}</Typography>
-          <Typography style={{ color: '#6c6a6a', fontSize: 13 }}>
-            Price: <span style={{ textDecoration: salePrice !== originalPrice ? "line-through" : "none" }}>{ originalPrice.toLocaleString('en-US') }</span> 
-            { salePrice !== originalPrice ?  <span>&nbsp;&nbsp;&nbsp;{ salePrice.toLocaleString('en-US') }</span> : null }
-          </Typography>
-        </Box>
-      </Box>
-      <Box  display="flex" justifyContent="space-between" alignItems="center" px={2}>
-        <Box maxWidth="228px" display="flex" justifyContent="space-between" alignItems="center">
-          <Box >
-            <IconButton onClick={() => setOpen(!open)}>
-              <FontAwesomeIcon icon={ !open ? faChevronDown : faChevronUp } size="sm" />
-            </IconButton>
+    <Box width="100%" borderBottom="2px solid #c3c2c2" minHeight="52px" display="flex" justifyContent="start" alignItems="center">
+      <Box  display="flex" justifyContent="start" alignItems="center" px={2} width="100%">
+
+          <Box style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }} flexGrow={1} mr={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography style={{ fontSize: 14, fontWeight: "bold" }}>
+                {item.itemName}
+                { item.packParentId ? <span style={{ color: '#7c7c7c' }} title={`Pack of ${item.packQuantity}`}><FontAwesomeIcon style={{ marginLeft: 8 }} icon={faBoxOpen} /> </span> : null }
+              </Typography>
+              <Typography style={{ color: '#6c6a6a', fontSize: 13 }}>{item.sizeName} { item.sizeName && item.combinationName ? "|" : ""  } {item.combinationName}</Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography style={{ color: '#6c6a6a', fontSize: 13 }}>{item.itemCode}{item.sizeCode ? '-' : ""}{item.sizeCode}{item.combinationCode ? '-' : ""}{item.combinationCode}</Typography>
+              <Typography style={{ color: '#6c6a6a', fontSize: 13 }}>
+                Price: <span style={{ textDecoration: salePrice !== originalPrice ? "line-through" : "none" }}>{ originalPrice.toLocaleString('en-US') }</span> 
+                { salePrice !== originalPrice ?  <span style={{ color: "red" }}>&nbsp;&nbsp;&nbsp;{ salePrice.toLocaleString('en-US') }</span> : null }
+              </Typography>
+            </Box>
           </Box>
-          <Box px={1} maxWidth="185px" style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
+          <Box width="171px" style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }} >
             <QuantityInput itemId={item._id} disabled={disabled} allowNegativeInventory={allowNegativeInventory} formName={formName} isDesktop={isDesktop} />
           </Box>
-        </Box>
-        
-        <Box style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
-          <Typography style={{ fontSize: 16, fontWeight: "bold" }}>
-            { (+((quantity * salePrice) - (quantity * discount)).toFixed(2)).toLocaleString() }
-            { discount !== 0 ? <span style={{ color: 'green'}}> &nbsp; &nbsp; <FontAwesomeIcon title="Discount Applied" icon={faPercent}  /> </span>: null }
-          </Typography>
-          
-        </Box>
-        <Box width={ isDesktop ?"90px" : "50px" } textAlign="center">
+          <Box style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }} width="75px" >
+            <Typography style={{ fontSize: 16, fontWeight: "bold", color: discount !== 0 ? "green" : "#0d0d0d" }} align="center">
+              { (+((quantity * salePrice) - (quantity * discount)).toFixed(2)).toLocaleString() }
+            </Typography>
+            
+          </Box>
           {
-            isDesktop ?
-            <Button type="button" disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid} > { formItem.isVoided ? "unVoid" : "Void" } </Button>
+            !showFields ? 
+            <Box width="486px" display="flex" justifyContent="center" alignItems="center" height="52px" style={{ color: '#6c6a6a' }}>
+              <FontAwesomeIcon icon={faCircleNotch} spin={true} size="lg" />
+            </Box> 
             :
-            <IconButton disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } color="primary" onClick={toggleVoid}>
-              <FontAwesomeIcon icon={ formItem.isVoided ? faTrashRestore : faTrash} />
-            </IconButton>
-
-          }
-        </Box>
-      </Box>
-      <Collapse in={open} style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }}>
-        { 
-          !open ? null : 
-          <>
-            <Box >
-              <Box px={1}>
+            <>
+              <Box px={1} width="100px" style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }} >
                 <Field
                   component={TextInput}
                   label="Sale Price"
                   name={`items[${item._id}].salePrice`}
-                  placeholder="Qty..."
+                  placeholder="Price..."
                   fullWidth={true}
                   variant="outlined"
                   margin="dense"
@@ -149,23 +170,57 @@ const Item = React.memo(
                   disabled={disabled}
                 />
               </Box>
-            </Box>
-            <Box px={1}>
-              <DiscountInput itemId={item._id} disabled={disabled} formName={formName} />
-            </Box>
-            <Box px={1}>
-              { 
-                item.sizeName ? null :
-                (
+              <Box  width="280px" style={{ textDecoration: formItem.isVoided ? "line-through" : "none" }} >
+                <DiscountInput itemId={item._id} disabled={disabled} formName={formName} />
+              </Box>
+              
+              
+              <Box width="90px" textAlign="center" display="flex" justifyContent="end">
+                {
+                  item.sizeName ? null :
+                  <IconButton onClick={(event) => handleClick(event) }>
+                    <FontAwesomeIcon icon={ faLayerGroup } size="sm" />
+                  </IconButton>
+                }
+                <IconButton disabled={disabled} variant={ formItem.isVoided ? "outlined" : "contained" } title={formItem.isVoided ? "Add item to bill" : "Remove item form bill"} color="primary" onClick={toggleVoid}>
+                  <FontAwesomeIcon icon={ formItem.isVoided ? faCheck : faTimes} />
+                </IconButton>
+              </Box>
+            </>
+          }
+        </Box>
+      {
+        !showFields ? null : 
+        <Popover 
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          >
+          { 
+            !open ? null : 
+            <>
+              <Box px={2} py={2} minWidth="450px" style={{ backgroundColor: '#f9f9f9' }}>
+                <Typography variant="h6" gutterBottom align="center">{ item.itemName }</Typography>
+                <Typography style={{ color: "#6c6a6a" }} gutterBottom align="center">Total Quantity: { Math.abs(quantity).toLocaleString() }</Typography>
+                <Box >
+                { 
                   quantity > 0 ? <FieldArray name={`items[${item._id}].batches`} component={SaleBatches} {...{batches: item.batches}} disabled={disabled} />  : 
                   (quantity < 0 ? <FieldArray name={`items[${item._id}].batches`} component={ReturnBatches} disabled={disabled} /> : null)
-                  
-                )
-              }
-            </Box> 
-          </>
-        }
-      </Collapse>
+                }
+                </Box>
+              </Box> 
+            </>
+          }
+        </Popover>
+      }
     </Box>
   )
 }
@@ -228,8 +283,8 @@ const  QuantityInput = React.memo(
 ) 
 
 const discountTypes = [
-  {id: 1, title: 'Percent Discount'},
-  {id: 2, title: 'Rupee Discount'}
+  {id: 1, title: '% Disc'},
+  {id: 2, title: 'Rs. Disc'}
 ]
 
 const DiscountInput = React.memo(
@@ -251,7 +306,7 @@ const DiscountInput = React.memo(
 
   return(
     <Box display="flex" justifyContent="space-between">
-      <Box pt={1}>
+      <Box pt={1} width="105px">
         <Field
           component={SelectInput}
           options={discountTypes}
@@ -264,10 +319,10 @@ const DiscountInput = React.memo(
           disabled={disabled}
         />
       </Box>
-      <Box width="120px">
+      <Box width="75px">
         <Field
           component={TextInput}
-          label="Discount"
+          label="Disc"
           name={`items[${itemId}].discountValue`}
           placeholder="Discount..."
           fullWidth={true}
@@ -280,10 +335,10 @@ const DiscountInput = React.memo(
           disabled={disabled}
         />
       </Box>
-      <Box width="120px">
+      <Box width="75px">
         <Field
           component={TextInput}
-          label="Discount (Rs)"
+          label="Disc (Rs)"
           name={`items[${itemId}].discount`}
           placeholder="Discount..."
           fullWidth={true}

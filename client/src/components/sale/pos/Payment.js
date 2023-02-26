@@ -8,8 +8,9 @@ import TextInput from 'components/library/form/TextInput';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import SelectInput from 'components/library/form/SelectInput';
+import SelectCustomer from './SelectCustomer';
 
-function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity, totalAmount, formName, banks, handleSubmit, onSubmit, sale, editSale, disableEdit }) {
+function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity, totalAmount, formName, banks, handleSubmit, onSubmit, sale, editSale, disableEdit, online }) {
   const [open, setOpen] = useState(false);
   const { customerId, cashPaid, creditAmount, bankAmount } = useSelector(state => formValueSelector(formName)(state, "customerId", "creditAmount", "cashPaid", "bankAmount"));
   const customer = useSelector(state => customerId ? state.customers[storeId].find(record => record._id === customerId) : null);
@@ -102,6 +103,15 @@ function Payment({ storeId, pristine, submitting, invalid, dirty, totalQuantity,
           <Box display="flex" justifyContent="space-between" alignItems="center" style={{ backgroundColor: "#2196f3", color: "#fff" }} px={2} py={1}>
             <Typography variant="h5">Net Total</Typography>
             <Typography variant="h5">{totalAmount.toLocaleString()}</Typography>
+          </Box>
+          <Box px={2} mt={1}>
+            <Field
+              component={SelectCustomer}
+              formName={formName}
+              name="customerId"
+              disabled={disableEdit}
+              addNewRecord={online}
+            />
           </Box>
           <Box px={2} mt={1}>
             <Field

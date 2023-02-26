@@ -41,7 +41,6 @@ function startWorker(){
 
   if(process.env.NODE_ENV !== 'production') {
     app.use((req, res, next) => {
-      console.log(process.pid);
       setTimeout(next, 200);
     });
   }

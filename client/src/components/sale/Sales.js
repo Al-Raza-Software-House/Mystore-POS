@@ -12,7 +12,7 @@ import ReactGA from "react-ga4";
 
 function Sales({ storeId, records, filters, totalRecords, recordsLoaded, loadingRecords, loadSales, emptySales, printSale }) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const filterRef = useRef();
   const userRole = useSelector(state => state.stores.userRole);
   useEffect(() => {
